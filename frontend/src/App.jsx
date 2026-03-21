@@ -15,7 +15,7 @@ function App() {
   // Clear stale legacy caches
   if (user && !user.designation) {
     localStorage.clear();
-    window.location.href = '/login';
+    window.location.href = import.meta.env.BASE_URL + 'login';
     return null;
   }
 
@@ -28,7 +28,7 @@ function App() {
   };
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <Routes>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />

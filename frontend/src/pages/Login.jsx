@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import { Lock, Mail, ArrowRight } from 'lucide-react';
+import iamsLogo from '../assets/IAMS logo.png';
 
 export default function Login() {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -37,7 +38,7 @@ export default function Login() {
                     <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                         <div>
                             <div className="flex items-center gap-4 mb-4">
-                                <img src="/IAMS logo.png" alt="IAMS Logo" className="h-16 w-16 object-contain drop-shadow-sm" />
+                                <img src={iamsLogo} alt="IAMS Logo" className="h-16 w-16 object-contain drop-shadow-sm" />
                                 <div>
                                     <h2 className="text-slate-500 font-black uppercase tracking-widest text-[10px]">Department of the Interior and Local Government</h2>
                                     <h1 className="text-3xl font-black uppercase tracking-tight text-slate-900">Internal Audit Management System</h1>
@@ -119,7 +120,7 @@ export default function Login() {
 
                         <div className="px-10 py-6 bg-slate-50 text-center border-t border-slate-100 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-slate-400">
                             <span>Authorized Personnel Only</span>
-                            <a href="/signup" className="text-blue-500 hover:text-blue-600">Register New Account</a>
+                            <Link to="/signup" className="text-blue-500 hover:text-blue-600">Register New Account</Link>
                         </div>
                     </div>
                 </div>

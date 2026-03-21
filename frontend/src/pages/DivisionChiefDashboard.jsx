@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, LayoutGrid, Database, Users, ShieldCheck, XCircle, Trash2, Bell, AlertCircle, Clock, ArrowRightLeft, ChevronRight } from 'lucide-react';
+import iamsLogo from '../assets/IAMS logo.png';
 
 export default function DivisionChiefDashboard() {
     const [engagements, setEngagements] = useState([]);
@@ -135,7 +136,7 @@ export default function DivisionChiefDashboard() {
         <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
             <aside className="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
                 <div className="mb-8">
-                    <img src="/IAMS logo.png" className="w-12 h-12 object-contain drop-shadow-sm" alt="IAMS Logo" />
+                    <img src={iamsLogo} className="w-12 h-12 object-contain drop-shadow-sm" alt="IAMS Logo" />
                 </div>
                 <img src={`https://ui-avatars.com/api/?name=${user.name}&background=3b82f6&color=fff`} className="w-10 h-10 rounded-xl mb-4 border border-slate-700" title={user.name} alt="Profile" />
                 <nav className="flex-1 flex flex-col gap-4 mt-4 w-full px-4">

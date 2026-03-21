@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, User, Briefcase, Building2 } from 'lucide-react';
 import api from '../api';
+import iamsLogo from '../assets/IAMS logo.png';
 
 function Signup() {
     const [name, setName] = useState('');
@@ -55,7 +56,7 @@ function Signup() {
 
                 <div className="mb-10 text-center">
                     <div className="w-24 h-24 mx-auto mb-4 flex justify-center items-center">
-                        <img src="/IAMS logo.png" alt="IAMS Logo" className="w-full h-full object-contain drop-shadow-md" />
+                        <img src={iamsLogo} alt="IAMS Logo" className="w-full h-full object-contain drop-shadow-md" />
                     </div>
                     <h2 className="text-3xl font-black text-slate-800 tracking-tight">Create Account</h2>
                     <p className="text-xs font-bold text-slate-400 mt-2 uppercase tracking-widest">Compliance & Audit System</p>

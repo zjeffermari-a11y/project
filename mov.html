@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory of MOVs | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        [x-cloak] { display: none !important; }
+        
+        /* Formal Report Styling */
+        .report-table th, .report-table td {
+            border: 1px solid #000;
+            padding: 8px 12px;
+            text-align: left;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+
+    <div class="flex h-screen overflow-hidden" 
+         x-data="{ 
+            asOfDate: '2026-03-18',
+            viewMode: 'all', // 'all', 'missing'
+            showReport: false,
+            movs: [
+                { id: 'MOV-001', office: 'Registrar\'s Office', document: 'Organizational Chart', requested: '2026-03-01', submitted: '2026-03-05', status: 'Submitted' },
+                { id: 'MOV-002', office: 'Registrar\'s Office', document: 'IT Security Policy Handbook', requested: '2026-03-01', submitted: null, status: 'Pending' },
+                { id: 'MOV-003', office: 'Registrar\'s Office', document: 'Server Access Logs (Jan-Feb)', requested: '2026-03-01', submitted: null, status: 'Pending' },
+                { id: 'MOV-004', office: 'Human Resources', document: 'Employee Roster 2026', requested: '2026-03-01', submitted: '2026-03-04', status: 'Submitted' },
+                { id: 'MOV-005', office: 'Human Resources', document: 'Training Certificates (Cybersecurity)', requested: '2026-03-01', submitted: null, status: 'Pending' },
+                { id: 'MOV-006', office: 'IT Department', document: 'Network Topology Diagram', requested: '2026-03-01', submitted: '2026-03-15', status: 'Submitted' },
+                { id: 'MOV-007', office: 'IT Department', document: 'Disaster Recovery Plan', requested: '2026-03-01', submitted: null, status: 'Pending' }
+            ],
+            // Logic to determine if a document is missing as of the selected date
+            isMissing(mov) {
+                if (!mov.submitted) return true;
+                // If submitted AFTER the 'As of Date', it's considered missing for the report
+                return new Date(mov.submitted) > new Date(this.asOfDate);
+            },
+            get filteredMovs() {
+                if (this.viewMode === 'missing') {
+                    return this.movs.filter(m => this.isMissing(m));
+                }
+                return this.movs;
+            },
+            get missingCount() {
+                return this.movs.filter(m => this.isMissing(m)).length;
+            },
+            get submittedCount() {
+                return this.movs.length - this.missingCount;
+            }
+         }">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8 shadow-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <nav class="flex-1 flex flex-col gap-4 mt-4 w-full px-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl flex justify-center transition-colors" title="Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-8 shrink-0 z-10">
+                <div class="flex justify-between items-end">
+                    <div>
+                        <h2 class="text-indigo-600 font-black uppercase tracking-widest text-[10px] mb-1">Planning & Execution Phase</h2>
+                        <h1 class="text-3xl font-black uppercase tracking-tight text-slate-900">Inventory of MOVs</h1>
+                        <p class="text-slate-500 font-medium text-sm mt-1">Track requested documents and generate deficiency lists for Audit Inquiries.</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Active Engagement</p>
+                        <div class="bg-indigo-50 text-indigo-700 font-bold px-4 py-2 rounded-xl text-sm border border-indigo-100">
+                            AE-2026-04 : Annual IT Security Audit
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-10">
+                
+                <div class="max-w-7xl mx-auto space-y-8">
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-end">
+                        
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Requested</p>
+                                <p class="text-3xl font-black text-slate-800" x-text="movs.length"></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-400"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg></div>
+                        </div>
+                        
+                        <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] font-black text-emerald-500 uppercase tracking-widest mb-1">Submitted</p>
+                                <p class="text-3xl font-black text-emerald-600" x-text="submittedCount"></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center text-emerald-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg></div>
+                        </div>
+
+                        <div class="bg-white p-5 rounded-2xl border border-rose-200 shadow-sm flex items-center justify-between bg-rose-50/30">
+                            <div>
+                                <p class="text-[10px] font-black text-rose-500 uppercase tracking-widest mb-1">Missing / Unsubmitted</p>
+                                <p class="text-3xl font-black text-rose-600" x-text="missingCount"></p>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-rose-100 flex items-center justify-center text-rose-500"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg></div>
+                        </div>
+
+                        <div class="bg-slate-900 p-5 rounded-2xl shadow-lg flex flex-col justify-center h-full">
+                            <label class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">AIM Writing Date (As of)</label>
+                            <input type="date" x-model="asOfDate" class="w-full bg-slate-800 border border-slate-700 text-white rounded-lg px-3 py-1.5 text-sm font-bold focus:outline-none focus:border-indigo-500 mb-3">
+                            <button @click="showReport = true; viewMode = 'missing'" class="w-full bg-indigo-500 hover:bg-indigo-400 text-white font-black text-[10px] uppercase tracking-widest py-2 rounded-lg transition-colors shadow-md flex items-center justify-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                Generate Deficiency List
+                            </button>
+                        </div>
+                    </div>
+
+                    <div x-show="!showReport" x-transition.opacity class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        
+                        <div class="px-6 py-4 border-b border-slate-100 bg-slate-50 flex justify-between items-center">
+                            <h3 class="text-sm font-black text-slate-700 uppercase tracking-widest">Master List of Requested MOVs</h3>
+                            
+                            <div class="flex bg-slate-200/50 p-1 rounded-lg">
+                                <button @click="viewMode = 'all'" :class="viewMode === 'all' ? 'bg-white shadow-sm text-indigo-600' : 'text-slate-500'" class="px-4 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all">All Documents</button>
+                                <button @click="viewMode = 'missing'" :class="viewMode === 'missing' ? 'bg-rose-500 shadow-sm text-white' : 'text-slate-500'" class="px-4 py-1 rounded-md text-[10px] font-black uppercase tracking-widest transition-all">Missing Only</button>
+                            </div>
+                        </div>
+
+                        <table class="w-full text-left border-collapse">
+                            <thead class="bg-white border-b border-slate-200">
+                                <tr>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">ID</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Auditee Office</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Document Requested</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Requested</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Date Submitted</th>
+                                    <th class="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status (As of Date)</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-50">
+                                <template x-for="mov in filteredMovs" :key="mov.id">
+                                    <tr class="hover:bg-slate-50 transition-colors" :class="isMissing(mov) ? 'bg-rose-50/10' : ''">
+                                        <td class="p-4 text-xs font-black text-slate-500" x-text="mov.id"></td>
+                                        <td class="p-4 text-xs font-bold text-slate-700" x-text="mov.office"></td>
+                                        <td class="p-4 text-sm font-bold text-slate-900" x-text="mov.document"></td>
+                                        <td class="p-4 text-xs font-medium text-slate-500" x-text="mov.requested"></td>
+                                        <td class="p-4 text-xs font-medium text-slate-500" x-text="mov.submitted ? mov.submitted : '-'"></td>
+                                        <td class="p-4">
+                                            <span class="px-2.5 py-1 rounded text-[9px] font-black uppercase tracking-widest border"
+                                                  :class="isMissing(mov) ? 'bg-rose-50 text-rose-600 border-rose-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'" 
+                                                  x-text="isMissing(mov) ? 'Unsubmitted' : 'Received'"></span>
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div x-show="showReport" x-cloak x-transition.opacity class="bg-slate-200 p-8 rounded-3xl border border-slate-300 shadow-inner flex flex-col items-center">
+                        
+                        <div class="w-full flex justify-between items-center mb-6">
+                            <button @click="showReport = false" class="text-sm font-bold text-slate-500 hover:text-slate-800 flex items-center gap-2 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                                Back to Inventory
+                            </button>
+                            <button class="px-5 py-2.5 bg-blue-600 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-blue-700 transition-colors shadow-md flex items-center gap-2">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                Export Annex for AIM
+                            </button>
+                        </div>
+
+                        <div class="bg-white shadow-xl w-[800px] min-h-[1000px] px-16 py-16 font-serif text-black relative">
+                            
+                            <h2 class="text-center font-bold text-lg mb-2 uppercase">Annex A</h2>
+                            <h1 class="text-center font-black text-xl mb-8 uppercase tracking-wide">List of Unsubmitted Documents</h1>
+                            
+                            <p class="mb-6 text-sm">
+                                <strong>Audit Engagement:</strong> Annual IT Security Audit 2026 (AE-2026-04)<br>
+                                <strong>As of Date:</strong> <span x-text="new Date(asOfDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })"></span>
+                            </p>
+
+                            <p class="mb-6 text-sm text-justify">
+                                The following is the inventory of Means of Verification (MOVs) requested during the audit planning phase that have <strong>not yet been submitted</strong> or received by the Internal Audit Service as of the date indicated above. These items require immediate action as referenced in the accompanying Audit Inquiry Memorandum (AIM).
+                            </p>
+
+                            <table class="w-full text-sm report-table border-collapse mb-10">
+                                <thead class="bg-slate-100 font-bold">
+                                    <tr>
+                                        <th class="w-16 text-center">No.</th>
+                                        <th class="w-1/3">Auditee Office</th>
+                                        <th>Unsubmitted Document / MOV</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <template x-for="(mov, index) in filteredMovs" :key="mov.id">
+                                        <tr>
+                                            <td class="text-center" x-text="index + 1"></td>
+                                            <td class="font-bold" x-text="mov.office"></td>
+                                            <td x-text="mov.document"></td>
+                                        </tr>
+                                    </template>
+                                </tbody>
+                            </table>
+
+                            <div class="mt-20">
+                                <p class="text-sm mb-8">Generated by:</p>
+                                <p class="font-bold text-sm uppercase">Lyra Zel Bedayo</p>
+                                <p class="text-xs italic">Lead Auditor, IAS</p>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

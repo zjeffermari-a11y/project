@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Work Program | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Document specific styling to look like paper/forms */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px solid #000;
+            width: 100%;
+            outline: none;
+            font-family: serif;
+            font-size: 13px;
+            padding: 2px 4px;
+        }
+        .doc-input:focus, .doc-input:hover {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #6366f1;
+        }
+        .tbl-input {
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-family: serif;
+            font-size: 12px;
+            padding: 4px;
+        }
+        .tbl-input:focus {
+            background-color: #eef2ff;
+        }
+        
+        /* Checkbox styling */
+        .doc-checkbox {
+            appearance: none;
+            width: 12px;
+            height: 12px;
+            border: 1px solid #000;
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            margin-right: 4px;
+        }
+        .doc-checkbox:checked::after {
+            content: '✔';
+            position: absolute;
+            top: -4px;
+            left: 1px;
+            font-size: 12px;
+            color: #000;
+        }
+
+        /* Table Borders */
+        .awp-table, .awp-table th, .awp-table td {
+            border: 1px solid #000;
+            border-collapse: collapse;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden" 
+         x-data="{ 
+            planningRows: [{}, {}, {}], 
+            executionRows: [{}, {}, {}], 
+            reportingRows: [{}, {}, {}] 
+         }">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Lyra+Zel+Bedayo&background=6366f1&color=fff" class="w-10 h-10 rounded-xl mb-4 border border-slate-700">
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Planning</a> <span>/</span>
+                    <span class="text-indigo-600">Audit Work Program (AWP)</span>
+                </nav>
+                <div class="flex gap-2">
+                    <button onclick="exportToWord('awpDocument', 'Audit_Work_Program')" class="px-4 py-2 bg-white border border-slate-200 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Word
+                    </button>
+                    <button onclick="exportToExcel('awpTable', 'Audit_Work_Program')" class="px-4 py-2 bg-white border border-slate-200 text-emerald-600 font-bold text-xs rounded-lg hover:bg-emerald-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        Excel
+                    </button>
+                    <button class="px-4 py-2 bg-white border border-slate-200 text-rose-600 font-bold text-xs rounded-lg hover:bg-rose-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        PDF
+                    </button>
+                    
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all ml-2">
+                        Save AWP
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-10 flex justify-center items-start">
+                
+                <div id="awpDocument" class="bg-white shadow-2xl w-[1200px] min-h-[1500px] px-12 py-12 relative flex flex-col font-serif my-auto">
+                    
+                    <div class="flex items-center gap-4 mb-8">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" class="h-20 w-20">
+                        <div>
+                            <p class="text-xs font-serif text-gray-700">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                            <h1 class="text-2xl font-black font-serif tracking-wide leading-tight">AUDIT WORK PROGRAM</h1>
+                            <p class="text-[10px] font-serif text-gray-500 italic">FM-QP-DILG-IAS-33-05 | Rev01 | 10.10.22</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-[180px_10px_1fr] gap-y-2 mb-6 text-xs font-bold items-center max-w-3xl">
+                        
+                        <div>AWP Reference No.</div><div>:</div>
+                        <div><input type="text" value="AWP-2026-001" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div>Audit Engagement No.</div><div>:</div>
+                        <div><input type="text" value="AE-2026-04" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div>Audit Engagement Title</div><div>:</div>
+                        <div><input type="text" value="Annual Audit 2026" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div>Audit Duration</div><div>:</div>
+                        <div><input type="text" value="March 10 - April 10, 2026" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div>Agency/Office</div><div>:</div>
+                        <div><input type="text" value="Example Office" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                    </div>
+
+                    <div class="flex items-center gap-4 text-xs font-bold mb-2">
+                        <div class="w-[180px]">Audit Engagement Type</div><div>:</div>
+                        <label class="flex items-center cursor-default pointer-events-none"><input type="checkbox" class="doc-checkbox"> Compliance</label>
+                        <label class="flex items-center cursor-default pointer-events-none"><input type="checkbox" class="doc-checkbox"> Management</label>
+                        <label class="flex items-center cursor-default pointer-events-none"><input type="checkbox" class="doc-checkbox" checked> Operations</label>
+                        <label class="flex items-center cursor-default pointer-events-none"><input type="checkbox" class="doc-checkbox"> Follow-up</label>
+                        <label class="flex items-center cursor-default gap-2 pointer-events-none">
+                            <input type="checkbox" class="doc-checkbox"> Others (specify)
+                            <input type="text" readonly tabindex="-1" class="bg-transparent border-none outline-none w-48" style="margin-top: -5px;">
+                        </label>
+                    </div>
+
+                    <div class="grid grid-cols-[180px_10px_1fr] gap-y-2 mb-8 text-xs font-bold items-center max-w-4xl">
+                        <div>Audit Objective</div><div>:</div>
+                        <div><input type="text" value="To evaluate the security protocols of the Information Systems." readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div class="mt-4">Team Leader</div><div class="mt-4">:</div>
+                        <div class="mt-4"><input type="text" value="Lyra Zel Bedayo" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div>Assistant Team Leader/s</div><div>:</div>
+                        <div><input type="text" value="Aries Domanais" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+
+                        <div>Team Member/s</div><div>:</div>
+                        <div><input type="text" value="Menchie Eusebio, Charls Anjelo Villegas, Aldrick Tabo" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black" title="System Generated"></div>
+                    </div>
+
+                    <div class="mb-4 flex-1">
+                        <table id="awpTable" class="awp-table w-full text-center text-xs">
+                            <thead class="bg-amber-50/30">
+                                <tr>
+                                    <th rowspan="2" class="w-12 py-2">Item No.</th>
+                                    <th rowspan="2" class="w-64">Activities/Procedures</th>
+                                    <th rowspan="2" class="w-24 px-2">Required No. of Days</th>
+                                    <th colspan="2" class="py-1 border-b border-black">Target</th>
+                                    <th rowspan="2" class="w-32 px-2">Responsible Personnel <br><span class="text-[9px] font-normal">(include specific no. of tasks)</span></th>
+                                    <th colspan="2" class="py-1 border-b border-black">Actual</th>
+                                    <th rowspan="2" class="w-32">Accomplished by</th>
+                                    <th rowspan="2" class="w-48 px-2">Remarks to include link of actual documents/records</th>
+                                </tr>
+                                <tr>
+                                    <th class="w-24 py-1">Output</th>
+                                    <th class="w-24 border-r border-black">Date</th>
+                                    <th class="w-24 py-1">Output</th>
+                                    <th class="w-24 border-r border-black">Date</th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                <tr class="bg-amber-100/50 group">
+                                    <td colspan="10" class="text-left font-bold py-1 px-2 uppercase tracking-widest flex justify-between items-center border-b border-black">
+                                        <span>Audit Planning</span>
+                                        <button @click="planningRows.push({})" class="text-indigo-600 text-[10px] hover:underline opacity-0 group-hover:opacity-100 transition-opacity hide-on-export">+ Add Row</button>
+                                    </td>
+                                </tr>
+                                <template x-for="(row, index) in planningRows" :key="'plan'+index">
+                                    <tr>
+                                        <td><input type="text" class="tbl-input text-center font-bold" :value="index + 1"></td>
+                                        <td><textarea class="tbl-input resize-none h-8" placeholder="..."></textarea></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center text-blue-600 underline"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+
+                            <tbody>
+                                <tr class="bg-amber-100/50 group">
+                                    <td colspan="10" class="text-left font-bold py-1 px-2 uppercase tracking-widest flex justify-between items-center border-t border-b border-black">
+                                        <span>Audit Execution</span>
+                                        <button @click="executionRows.push({})" class="text-indigo-600 text-[10px] hover:underline opacity-0 group-hover:opacity-100 transition-opacity hide-on-export">+ Add Row</button>
+                                    </td>
+                                </tr>
+                                <template x-for="(row, index) in executionRows" :key="'exec'+index">
+                                    <tr>
+                                        <td><input type="text" class="tbl-input text-center font-bold" :value="index + 1"></td>
+                                        <td><textarea class="tbl-input resize-none h-8"></textarea></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center text-blue-600 underline"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+
+                            <tbody>
+                                <tr class="bg-amber-100/50 group">
+                                    <td colspan="10" class="text-left font-bold py-1 px-2 uppercase tracking-widest flex justify-between items-center border-t border-b border-black">
+                                        <span>Audit Reporting</span>
+                                        <button @click="reportingRows.push({})" class="text-indigo-600 text-[10px] hover:underline opacity-0 group-hover:opacity-100 transition-opacity hide-on-export">+ Add Row</button>
+                                    </td>
+                                </tr>
+                                <template x-for="(row, index) in reportingRows" :key="'rep'+index">
+                                    <tr>
+                                        <td><input type="text" class="tbl-input text-center font-bold" :value="index + 1"></td>
+                                        <td><textarea class="tbl-input resize-none h-8"></textarea></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center text-blue-600 underline"></td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                        <p class="text-[10px] font-bold italic mt-1">Note: Objective is either Quality Objective or Audit Objective whichever is applicable</p>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-20 mt-12 text-xs font-bold text-black mb-16">
+                        <div>
+                            <p class="mb-6 italic">Prepared by:</p>
+                            <input type="text" value="Example" class="w-full bg-transparent outline-none border-b border-black text-center font-bold">
+                            <p class="text-[10px] font-normal italic mt-0.5">Auditor's Name over Signature/Date</p>
+                            <input type="text" value="Lead Auditor" class="w-full bg-transparent outline-none text-[11px]">
+                        </div>
+                        <div>
+                            <p class="mb-6 italic">Reviewed by:</p>
+                            <input type="text" class="w-full bg-transparent outline-none border-b border-black text-center font-bold">
+                            <p class="text-[10px] font-bold italic mt-0.5">Team Leader's Name over Signature/Date</p>
+                            <input type="text" placeholder="Position" class="w-full bg-transparent outline-none text-[11px] italic">
+                        </div>
+                        <div class="col-span-2 w-1/2 pr-10 mt-6">
+                            <p class="mb-6 italic">Approved by:</p>
+                            <input type="text" class="w-full bg-transparent outline-none border-b border-black text-center font-bold">
+                            <p class="text-[10px] font-bold italic mt-0.5 text-center">Head of Internal Audit Service/Date</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Export specific table to Excel
+        function exportToExcel(tableID, filename = '') {
+            var downloadLink;
+            var dataType = 'application/vnd.ms-excel';
+            var tableSelect = document.getElementById(tableID);
+            var tableHTML = tableSelect.outerHTML.replace(/ /g, '%20');
+            
+            filename = filename?filename+'.xls':'excel_data.xls';
+            downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob){
+                var blob = new Blob(['\ufeff', tableHTML], { type: dataType });
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = 'data:' + dataType + ', ' + tableHTML;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+        }
+
+        // Export whole document to Word
+        function exportToWord(elementID, filename = ''){
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+            var postHtml = "</body></html>";
+            var html = preHtml + document.getElementById(elementID).innerHTML + postHtml;
+
+            var blob = new Blob(['\ufeff', html], {
+                type: 'application/msword'
+            });
+            
+            var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

@@ -31,7 +31,8 @@ class DocumentController extends Controller
 
         $file = $request->file('file');
 
-        $path = $file->storeAs('documents', time() . '_' . $file->getClientOriginalName(), 'local');
+        $disk = config('filesystems.default');
+        $path = $file->storeAs('documents', time() . '_' . $file->getClientOriginalName(), $disk);
 
         $document = Document::create([
             'engagement_id' => $request->engagement_id,
@@ -54,10 +55,12 @@ class DocumentController extends Controller
 
     public function download(Document $document)
     {
-        if (!Storage::disk('local')->exists($document->file_path)) {
+        $disk = config('filesystems.default');
+        
+        if (!Storage::disk($disk)->exists($document->file_path)) {
             return response()->json(['message' => 'File not found'], 404);
         }
-        return Storage::disk('local')->download($document->file_path, $document->file_name);
+        return Storage::disk($disk)->download($document->file_path, $document->file_name);
     }
 
     public function sign(Request $request, Document $document)

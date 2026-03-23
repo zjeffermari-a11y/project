@@ -11,6 +11,7 @@ export default function DivisionChiefDashboard() {
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
+    const [showNotifications, setShowNotifications] = useState(false);
     
     // Form State for new audit
     const [formData, setFormData] = useState({ title: '', description: '', start_date: '', end_date: '', requirement_name: '', auditee_id: '' });
@@ -159,9 +160,33 @@ export default function DivisionChiefDashboard() {
                             <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
                             <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">System Administration & Audits</h2>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex items-center justify-end gap-4">
+                            <div className="relative">
+                                <button onClick={() => setShowNotifications(!showNotifications)} className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-full transition-colors relative border border-blue-100">
+                                    <Bell className="w-5 h-5" />
+                                    {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-white rounded-full animate-ping"></span>}
+                                    {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-white rounded-full"></span>}
+                                </button>
+                                {showNotifications && (
+                                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl overflow-hidden z-50 border border-slate-100 text-left">
+                                        <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                            <h3 className="text-slate-800 font-black text-xs uppercase tracking-widest">Tasks & Deadlines</h3>
+                                            <span className="bg-blue-100 text-blue-700 font-bold text-[10px] px-2 py-1 rounded-lg">{pendingReview} Pending</span>
+                                        </div>
+                                        <div className="max-h-64 overflow-y-auto">
+                                            {pendingReview > 0 ? (
+                                                <div className="p-4 text-sm text-slate-600 font-medium">
+                                                    You have <span className="font-bold text-rose-500">{pendingReview} document(s)</span> awaiting your review across your engagements. Please check the Master File.
+                                                </div>
+                                            ) : (
+                                                <div className="p-8 text-center text-slate-400 font-bold text-xs">No pending tasks. You are all caught up!</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-md">
-                                <Plus className="w-4 h-4" /> Register New Audit
+                                <Plus className="w-4 h-4" /> + Audit Engagement
                             </button>
                         </div>
                     </div>
@@ -231,7 +256,7 @@ export default function DivisionChiefDashboard() {
                                     <div className="absolute top-6 right-6 p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
                                         <Clock className="h-8 w-8 text-blue-200" strokeWidth="2" />
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Total Ongoing</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Master File</p>
                                     <div className="flex items-baseline gap-2 mb-6">
                                         <span className="text-5xl font-black text-blue-600 tracking-tight">{totalOngoing}</span>
                                         <span className="text-sm font-bold text-slate-400 ml-2">Audits</span>
@@ -271,7 +296,7 @@ export default function DivisionChiefDashboard() {
                             <div className="flex-1 w-full min-w-0">
                                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
                                     <Database className="w-5 h-5 text-indigo-500" />
-                                    Ongoing Audits Directory
+                                    Ongoing Master File Directory
                                     {filter !== 'all' && (
                                         <span className="ml-3 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">Filtered</span>
                                     )}
@@ -372,16 +397,16 @@ export default function DivisionChiefDashboard() {
                                      <div className="space-y-4">
                                          <div className="flex justify-between items-center border-b border-indigo-800/50 pb-4">
                                              <span className="text-sm font-medium text-indigo-200">Last Audit:</span>
-                                             <span className="text-sm font-bold text-white">Feb 18, 2026</span>
+                                             <span className="text-sm font-bold text-white">{engagements.length > 0 ? engagements[0].start_date : 'N/A'}</span>
                                          </div>
                                          
                                          <div className="flex justify-between items-center border-b border-indigo-800/50 pb-4">
                                              <span className="text-sm font-medium text-indigo-200">Compliance Rate:</span>
-                                             <span className="text-sm font-black text-emerald-400">92%</span>
+                                             <span className="text-sm font-black text-emerald-400">{overallCompliance}%</span>
                                          </div>
                                      </div>
 
-                                     <button className="w-full mt-6 py-3 px-4 border border-indigo-500 hover:bg-indigo-800 text-indigo-100 text-[10px] uppercase tracking-widest font-bold rounded-xl transition-colors">
+                                     <button onClick={() => engagements.length > 0 ? navigate(`/auditor/workspace/${engagements[0].id}`) : alert('Register an audit engagement first.')} className="w-full mt-6 py-3 px-4 border border-indigo-500 hover:bg-indigo-800 text-indigo-100 text-[10px] uppercase tracking-widest font-bold rounded-xl transition-colors">
                                          View Full History
                                      </button>
                                  </div>
@@ -397,7 +422,7 @@ export default function DivisionChiefDashboard() {
                         <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-8 border border-slate-200">
                             {/* Same Modal contents as Auditor Dashboard */}
                             <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                                <div><h1 className="text-2xl font-black text-slate-800">Register New Audit</h1></div>
+                                <div><h1 className="text-2xl font-black text-slate-800">+ Audit Engagement</h1></div>
                                 <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors p-2 border border-slate-200 rounded-xl"><X className="w-5 h-5"/></button>
                             </div>
                             <form onSubmit={handleSubmitAudit} className="bg-white">

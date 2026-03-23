@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { Mail, Lock, User, Briefcase, Building2 } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, Building2, Eye, EyeOff } from 'lucide-react';
 import api from '../api';
 import iamsLogo from '../assets/IAMS logo.png';
 
@@ -8,6 +8,7 @@ function Signup() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [designation, setDesignation] = useState('auditee');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
@@ -101,10 +102,22 @@ function Signup() {
                             <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                                 <Lock className="h-5 w-5 text-slate-300" />
                             </div>
-                            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required minLength={8}
-                                className="block w-full pl-11 pr-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all placeholder-slate-300" 
-                                placeholder={"\u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022"}
+                            <input 
+                                type={showPassword ? 'text' : 'password'} 
+                                value={password} 
+                                onChange={e => setPassword(e.target.value)} 
+                                required 
+                                minLength={8}
+                                className="block w-full pl-11 pr-12 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all placeholder-slate-300" 
+                                placeholder={"••••••••"}
                             />
+                            <button 
+                                type="button" 
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                            >
+                                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            </button>
                         </div>
                     </div>
 

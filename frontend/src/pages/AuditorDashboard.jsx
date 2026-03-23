@@ -11,6 +11,7 @@ export default function AuditorDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     const [selectedEngagement, setSelectedEngagement] = useState(null);
+    const [showNotifications, setShowNotifications] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -209,11 +210,35 @@ export default function AuditorDashboard() {
                         <div>
                             <h2 className="text-indigo-300 font-black uppercase tracking-widest text-xs mb-2">Welcome Back, Lead Auditor</h2>
                             <h1 className="text-4xl font-black uppercase tracking-tight mb-2">{user.name}</h1>
-                            <p className="text-indigo-200 font-medium text-sm">You have <span className="text-white font-bold bg-indigo-500 px-2 py-0.5 rounded ml-1">{pendingReview} pending tasks</span> to review today.</p>
+                            <p className="text-indigo-200 font-medium text-sm">Auditor Operations Center</p>
                         </div>
-                        <div className="text-right">
+                        <div className="text-right flex items-center gap-4">
+                            <div className="relative">
+                                <button onClick={() => setShowNotifications(!showNotifications)} className="p-3 bg-indigo-800 text-indigo-300 hover:text-white rounded-full transition-colors relative">
+                                    <Bell className="w-5 h-5" />
+                                    {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-indigo-900 rounded-full animate-ping"></span>}
+                                    {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-indigo-900 rounded-full"></span>}
+                                </button>
+                                {showNotifications && (
+                                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl overflow-hidden z-50 border border-slate-100 text-left">
+                                        <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                                            <h3 className="text-slate-800 font-black text-xs uppercase tracking-widest">Tasks & Deadlines</h3>
+                                            <span className="bg-indigo-100 text-indigo-700 font-bold text-[10px] px-2 py-1 rounded-lg">{pendingReview} Pending</span>
+                                        </div>
+                                        <div className="max-h-64 overflow-y-auto">
+                                            {pendingReview > 0 ? (
+                                                <div className="p-4 text-sm text-slate-600 font-medium">
+                                                    You have <span className="font-bold text-rose-500">{pendingReview} document(s)</span> awaiting your review across your engagements. Please check the Master File.
+                                                </div>
+                                            ) : (
+                                                <div className="p-8 text-center text-slate-400 font-bold text-xs">No pending tasks. You are all caught up!</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
                             <button onClick={() => { fetchAuditees(); setIsModalOpen(true); }} className="bg-indigo-500 hover:bg-indigo-400 text-white px-5 py-3 rounded-2xl backdrop-blur-sm transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-lg">
-                                <Plus className="w-4 h-4" /> Register New Audit
+                                <Plus className="w-4 h-4" /> + Audit Engagement
                             </button>
                         </div>
                     </div>
@@ -260,7 +285,7 @@ export default function AuditorDashboard() {
                                     <div className="absolute top-6 right-6 p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
                                         <Clock className="h-8 w-8 text-blue-200" strokeWidth="2" />
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Total Ongoing</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Master File</p>
                                     <div className="flex items-baseline gap-2 mb-6">
                                         <span className="text-5xl font-black text-blue-600 tracking-tight">{totalOngoing}</span>
                                         <span className="text-sm font-bold text-slate-400 ml-2">Audits</span>
@@ -302,7 +327,7 @@ export default function AuditorDashboard() {
                             <div className="flex-1 w-full min-w-0">
                                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                                    Ongoing Audits
+                                    Master File Directory
                                     {filter !== 'all' && (
                                         <span className="ml-3 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">Filtered</span>
                                     )}
@@ -315,7 +340,7 @@ export default function AuditorDashboard() {
                                         <div className="p-16 flex flex-col items-center justify-center text-slate-400">
                                             <FileText className="w-12 h-12 mb-4 opacity-50" />
                                             <p className="text-sm font-black uppercase tracking-widest">No Active Engagements</p>
-                                            <p className="text-xs text-slate-400 mt-2">Click "Register New Audit" to create your first engagement.</p>
+                                            <p className="text-xs text-slate-400 mt-2">Click "+ Audit Engagement" to create your first engagement.</p>
                                         </div>
                                     ) : (
                                         <table className="min-w-full text-left">
@@ -408,16 +433,16 @@ export default function AuditorDashboard() {
                                      <div className="space-y-4">
                                          <div className="flex justify-between items-center border-b border-indigo-800/50 pb-4">
                                              <span className="text-sm font-medium text-indigo-200">Last Audit:</span>
-                                             <span className="text-sm font-bold text-white">Feb 18, 2026</span>
+                                             <span className="text-sm font-bold text-white">{engagements.length > 0 ? engagements[0].start_date : 'N/A'}</span>
                                          </div>
                                          
                                          <div className="flex justify-between items-center border-b border-indigo-800/50 pb-4">
                                              <span className="text-sm font-medium text-indigo-200">Compliance Rate:</span>
-                                             <span className="text-sm font-black text-emerald-400">92%</span>
+                                             <span className="text-sm font-black text-emerald-400">{overallCompliance}%</span>
                                          </div>
                                      </div>
 
-                                     <button className="w-full mt-6 py-3 px-4 border border-indigo-500 hover:bg-indigo-800 text-indigo-100 text-[10px] uppercase tracking-widest font-bold rounded-xl transition-colors">
+                                     <button onClick={() => engagements.length > 0 ? navigate(`/auditor/workspace/${engagements[0].id}`) : alert('Register an audit engagement first.')} className="w-full mt-6 py-3 px-4 border border-indigo-500 hover:bg-indigo-800 text-indigo-100 text-[10px] uppercase tracking-widest font-bold rounded-xl transition-colors">
                                          View Full History
                                      </button>
                                  </div>
@@ -436,7 +461,7 @@ export default function AuditorDashboard() {
                                         <span>Auditor Dashboard</span> <span>/</span>
                                         <span className="text-indigo-600">New Registration</span>
                                     </nav>
-                                    <h1 className="text-2xl font-black text-slate-800">Register New Audit</h1>
+                                    <h1 className="text-2xl font-black text-slate-800">+ Audit Engagement</h1>
                                 </div>
                                 <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200">
                                     <X className="w-5 h-5" />

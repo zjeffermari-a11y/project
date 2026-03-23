@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, ChevronRight, LayoutGrid, Folder, Database, BarChart3, Trash2, Bell, Clock, ArrowRightLeft } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
 
 export default function AuditorDashboard() {
@@ -11,7 +12,6 @@ export default function AuditorDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     const [selectedEngagement, setSelectedEngagement] = useState(null);
-    const [showNotifications, setShowNotifications] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -213,30 +213,30 @@ export default function AuditorDashboard() {
                             <p className="text-indigo-200 font-medium text-sm">Auditor Operations Center</p>
                         </div>
                         <div className="text-right flex items-center gap-4">
-                            <div className="relative">
-                                <button onClick={() => setShowNotifications(!showNotifications)} className="p-3 bg-indigo-800 text-indigo-300 hover:text-white rounded-full transition-colors relative">
-                                    <Bell className="w-5 h-5" />
-                                    {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-indigo-900 rounded-full animate-ping"></span>}
-                                    {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-indigo-900 rounded-full"></span>}
-                                </button>
-                                {showNotifications && (
-                                    <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl overflow-hidden z-50 border border-slate-100 text-left">
-                                        <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                                            <h3 className="text-slate-800 font-black text-xs uppercase tracking-widest">Tasks & Deadlines</h3>
-                                            <span className="bg-indigo-100 text-indigo-700 font-bold text-[10px] px-2 py-1 rounded-lg">{pendingReview} Pending</span>
-                                        </div>
-                                        <div className="max-h-64 overflow-y-auto">
-                                            {pendingReview > 0 ? (
-                                                <div className="p-4 text-sm text-slate-600 font-medium">
-                                                    You have <span className="font-bold text-rose-500">{pendingReview} document(s)</span> awaiting your review across your engagements. Please check the Master File.
-                                                </div>
-                                            ) : (
-                                                <div className="p-8 text-center text-slate-400 font-bold text-xs">No pending tasks. You are all caught up!</div>
-                                            )}
-                                        </div>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="p-3 bg-indigo-800 text-indigo-300 hover:text-white outline-none rounded-full transition-colors relative cursor-pointer">
+                                        <Bell className="w-5 h-5" />
+                                        {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-indigo-900 rounded-full animate-ping"></span>}
+                                        {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-indigo-900 rounded-full"></span>}
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-80 rounded-2xl shadow-2xl border-slate-100 p-0 text-left bg-white font-sans overflow-hidden z-[100]">
+                                    <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
+                                        <h3 className="text-slate-800 font-black text-xs uppercase tracking-widest">Tasks & Deadlines</h3>
+                                        <span className="bg-indigo-100 text-indigo-700 font-bold text-[10px] px-2 py-1 rounded-lg">{pendingReview} Pending</span>
                                     </div>
-                                )}
-                            </div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {pendingReview > 0 ? (
+                                            <div className="p-4 text-sm text-slate-600 font-medium tracking-tight">
+                                                You have <span className="font-bold text-rose-500">{pendingReview} document(s)</span> awaiting your review across your engagements. Please check the Master File.
+                                            </div>
+                                        ) : (
+                                            <div className="p-8 text-center text-slate-400 font-bold text-xs tracking-tight">No pending tasks. You are all caught up!</div>
+                                        )}
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <button onClick={() => { fetchAuditees(); setIsModalOpen(true); }} className="bg-indigo-500 hover:bg-indigo-400 text-white px-5 py-3 rounded-2xl backdrop-blur-sm transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-lg">
                                 <Plus className="w-4 h-4" /> + Audit Engagement
                             </button>

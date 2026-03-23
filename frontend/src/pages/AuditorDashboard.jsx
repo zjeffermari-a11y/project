@@ -238,7 +238,7 @@ export default function AuditorDashboard() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                             <button onClick={() => { fetchAuditees(); setIsModalOpen(true); }} className="bg-indigo-500 hover:bg-indigo-400 text-white px-5 py-3 rounded-2xl backdrop-blur-sm transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-lg">
-                                <Plus className="w-4 h-4" /> + Audit Engagement
+                                + Audit Engagement
                             </button>
                         </div>
                     </div>

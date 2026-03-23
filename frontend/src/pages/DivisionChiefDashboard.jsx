@@ -186,7 +186,7 @@ export default function DivisionChiefDashboard() {
                                 </DropdownMenuContent>
                             </DropdownMenu>
                             <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-md">
-                                <Plus className="w-4 h-4" /> + Audit Engagement
+                                + Audit Engagement
                             </button>
                         </div>
                     </div>

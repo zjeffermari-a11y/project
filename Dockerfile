@@ -51,8 +51,8 @@ RUN php artisan key:generate
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
 
-# Expose port
+# Expose port (Documentation)
 EXPOSE 80
 
-# Start: migrate DB then run Apache
-CMD php artisan migrate:fresh --seed && apache2-foreground
+# Start: dynamically bind Apache to Render's $PORT, migrate DB, then run Apache
+CMD sed -i "s/80/\${PORT:-80}/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf && php artisan migrate:fresh --seed && apache2-foreground

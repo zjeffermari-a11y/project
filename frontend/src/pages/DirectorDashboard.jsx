@@ -8,6 +8,21 @@ export default function DirectorDashboard() {
     const [pendingUsers, setPendingUsers] = useState([]);
     const [stats, setStats] = useState({ totalEngagements: 0, totalMovs: 0, complianceRate: 0 });
     const [loading, setLoading] = useState(true);
+    const [engagements, setEngagements] = useState([]);
+    const [auditees, setAuditees] = useState([]);
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [filter, setFilter] = useState('all');
+    
+    // Form State for new audit
+    const [formData, setFormData] = useState({ title: '', description: '', start_date: '', end_date: '', requirement_name: '', auditee_id: '' });
+    const [doNumber, setDoNumber] = useState('');
+    const [newOffice, setNewOffice] = useState('');
+    const [offices, setOffices] = useState([]);
+    const [newLeadAuditor, setNewLeadAuditor] = useState('');
+    const [leadAuditors, setLeadAuditors] = useState([]);
+    const [newMember, setNewMember] = useState('');
+    const [members, setMembers] = useState([]);
+
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
 

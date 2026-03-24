@@ -41,7 +41,7 @@ export default function DirectorDashboard() {
             });
 
             setStats({
-                totalEngagements: engagements.length,
+                totalEngagements: engagementsData.length,
                 totalMovs: mCount,
                 complianceRate: mCount === 0 ? 0 : Math.round((mSub / mCount) * 100)
             });

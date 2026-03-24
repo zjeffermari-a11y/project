@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft } from 'lucide-react';
+import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft, Bell } from 'lucide-react';
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
 
 export default function DirectorDashboard() {
@@ -125,6 +126,14 @@ export default function DirectorDashboard() {
         }
     };
 
+    let pendingReview = 0;
+    engagements.forEach(eng => {
+        const movs = eng.movs || [];
+        movs.forEach(m => {
+            if (m.status === 'submitted') pendingReview++;
+        });
+    });
+
     const totalOngoing = engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length;
     const totalFollowUp = engagements.filter(e => e.status === 'follow_up').length;
     const totalCompleted = engagements.filter(e => e.status === 'completed').length;
@@ -165,6 +174,30 @@ export default function DirectorDashboard() {
                             <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">System Performance & KPIs</h2>
                         </div>
                         <div className="text-right flex items-center justify-end gap-4">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="p-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 outline-none rounded-full transition-colors relative border border-indigo-100 cursor-pointer">
+                                        <Bell className="w-5 h-5" />
+                                        {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-white rounded-full animate-ping"></span>}
+                                        {pendingReview > 0 && <span className="absolute top-0 right-0 w-3 h-3 bg-rose-500 border-2 border-white rounded-full"></span>}
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-80 rounded-2xl shadow-2xl border-slate-100 p-0 text-left bg-white font-sans overflow-hidden z-[100]">
+                                    <div className="p-4 bg-slate-50 border-b border-slate-100 flex justify-between items-center rounded-t-2xl">
+                                        <h3 className="text-slate-800 font-black text-xs uppercase tracking-widest">Tasks & Deadlines</h3>
+                                        <span className="bg-indigo-100 text-indigo-700 font-bold text-[10px] px-2 py-1 rounded-lg">{pendingReview} Pending</span>
+                                    </div>
+                                    <div className="max-h-64 overflow-y-auto">
+                                        {pendingReview > 0 ? (
+                                            <div className="p-4 text-sm text-slate-600 font-medium tracking-tight">
+                                                There are <span className="font-bold text-rose-500">{pendingReview} document(s)</span> pending review system-wide. Check the Master File for details.
+                                            </div>
+                                        ) : (
+                                            <div className="p-8 text-center text-slate-400 font-bold text-xs tracking-tight">No pending tasks. System is clear!</div>
+                                        )}
+                                    </div>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                             <button onClick={() => setIsModalOpen(true)} className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-md">
                                 + Audit Engagement
                             </button>

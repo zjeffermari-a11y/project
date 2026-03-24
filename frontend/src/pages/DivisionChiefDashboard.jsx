@@ -416,27 +416,132 @@ export default function DivisionChiefDashboard() {
                     </div>
                 </div>
 
-                {/* Registration Modal Copy Setup (Inherited from Auditor powers) */}
+                {/* Registration Modal */}
                 {isModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
                         <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-8 border border-slate-200">
-                            {/* Same Modal contents as Auditor Dashboard */}
                             <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                                <div><h1 className="text-2xl font-black text-slate-800">+ Audit Engagement</h1></div>
-                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors p-2 border border-slate-200 rounded-xl"><X className="w-5 h-5"/></button>
+                                <div>
+                                    <nav className="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
+                                        <span>Division Chief Operations</span> <span>/</span>
+                                        <span className="text-blue-600">New Registration</span>
+                                    </nav>
+                                    <h1 className="text-2xl font-black text-slate-800">+ Audit Engagement</h1>
+                                </div>
+                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
-                            <form onSubmit={handleSubmitAudit} className="bg-white">
-                                <div className="p-8 border-b border-slate-100 flex flex-col gap-4">
-                                    <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Engagement Title..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3" />
-                                    <textarea required rows="3" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Directive Objective/Description..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 resize-none"></textarea>
-                                    <div className="flex gap-4">
-                                        <input required type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-1/2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3" />
-                                        <input type="date" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} className="w-1/2 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3" />
+
+                            <form onSubmit={handleSubmitAudit} className="bg-white rounded-3xl overflow-hidden border border-slate-200">
+                                <div className="p-8 border-b border-slate-100 space-y-6">
+                                    <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm">1</span>
+                                        General Information
+                                    </h2>
+                                    
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span className="text-red-500">*</span></label>
+                                            <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="e.g. DO-2026-001" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">AE Number</label>
+                                            <input type="text" value={doNumber ? doNumber.replace('DO', 'AE') : ''} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl px-4 py-3 cursor-not-allowed" />
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Title <span className="text-red-500">*</span></label>
+                                            <input required type="text" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Enter Directive Order Title..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Engagement Title <span className="text-red-500">*</span></label>
+                                            <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Enter Engagement Title..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                        </div>
+
+                                        <div className="col-span-2">
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Auditee Offices <span className="text-red-500">*</span></label>
+                                            <div className="flex gap-2 mb-3">
+                                                <select 
+                                                    value={newOffice} 
+                                                    onChange={e => setNewOffice(e.target.value)} 
+                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                >
+                                                    <option value="">Select office...</option>
+                                                    {auditees.map(a => (
+                                                        <option key={a.id} value={a.id}>{a.agency_name} ({a.name})</option>
+                                                    ))}
+                                                </select>
+                                                <button type="button" onClick={() => { 
+                                                    if (newOffice && !offices.some(o => o.id === parseInt(newOffice))) { 
+                                                        const auditee = auditees.find(a => a.id === parseInt(newOffice));
+                                                        setOffices([...offices, { id: auditee.id, name: auditee.agency_name }]); 
+                                                        setNewOffice(''); 
+                                                    } 
+                                                }} className="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700 transition-all">+</button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {offices.map((office, index) => (
+                                                    <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-sm font-bold">
+                                                        <span>{office.name}</span>
+                                                        <button type="button" onClick={() => setOffices(offices.filter((_, i) => i !== index))} className="text-blue-400 hover:text-blue-600 font-bold">&times;</button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Lead Auditor <span className="text-red-500">*</span></label>
+                                            <div className="flex gap-2 mb-3">
+                                                <input type="text" value={newLeadAuditor} onChange={e => setNewLeadAuditor(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newLeadAuditor) { setLeadAuditors([...leadAuditors, newLeadAuditor]); setNewLeadAuditor(''); } } }} placeholder="Add Lead Auditor..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                                <button type="button" onClick={() => { if (newLeadAuditor) { setLeadAuditors([...leadAuditors, newLeadAuditor]); setNewLeadAuditor(''); } }} className="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition-all">+</button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {leadAuditors.map((lead, index) => (
+                                                    <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-sm font-bold">
+                                                        <span>{lead}</span>
+                                                        <button type="button" onClick={() => setLeadAuditors(leadAuditors.filter((_, i) => i !== index))} className="text-blue-400 hover:text-blue-600 font-bold">&times;</button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Audit Team Members</label>
+                                            <div className="flex gap-2 mb-3">
+                                                <input type="text" value={newMember} onChange={e => setNewMember(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newMember) { setMembers([...members, newMember]); setNewMember(''); } } }} placeholder="Add member..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                                <button type="button" onClick={() => { if (newMember) { setMembers([...members, newMember]); setNewMember(''); } }} className="bg-slate-800 text-white px-4 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
+                                            </div>
+                                            <div className="flex flex-wrap gap-2">
+                                                {members.map((member, index) => (
+                                                    <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-sm font-bold">
+                                                        <span>{member}</span>
+                                                        <button type="button" onClick={() => setMembers(members.filter((_, i) => i !== index))} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+                                                    </span>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="p-8 bg-slate-50 flex justify-end gap-3 rounded-b-3xl">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-bold text-sm text-slate-500">Cancel</button>
-                                    <button type="submit" className="px-8 py-3 bg-blue-600 text-white rounded-xl font-bold shadow-lg shadow-blue-200 hover:bg-blue-700">Register</button>
+
+                                <div className="p-8 border-b border-slate-100">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date <span className="text-red-500">*</span></label>
+                                            <input required type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                        </div>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Planned Start Date</label>
+                                            <input type="date" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="p-8 bg-white flex items-center justify-end gap-4">
+                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-bold text-sm text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
+                                    <button type="submit" className="px-10 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-blue-200 transition-all active:scale-95">Register Audit</button>
                                 </div>
                             </form>
                         </div>

@@ -51,12 +51,12 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'division_chief']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'division_chief', 'director']}>
             <AuditWorkspace />
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id/generate/:doc" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'division_chief']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'division_chief', 'director']}>
             <GenerateDocument />
           </ProtectedRoute>
         } />

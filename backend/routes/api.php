@@ -9,6 +9,7 @@ Route::post('/register', [AuthController::class , 'register']);
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/pending', [App\Http\Controllers\Api\UserController::class, 'pending']);
+    Route::get('/users/auditors', [App\Http\Controllers\Api\UserController::class, 'auditors']);
     Route::patch('/users/{id}/approve', [App\Http\Controllers\Api\UserController::class, 'approve']);
 
     Route::get('/user', [AuthController::class , 'user']);

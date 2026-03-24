@@ -11,6 +11,7 @@ export default function DirectorDashboard() {
     const [loading, setLoading] = useState(true);
     const [engagements, setEngagements] = useState([]);
     const [auditees, setAuditees] = useState([]);
+    const [availableAuditors, setAvailableAuditors] = useState([]);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     
@@ -34,15 +35,17 @@ export default function DirectorDashboard() {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [usersRes, engRes, audRes] = await Promise.all([
+            const [usersRes, engRes, audRes, auditorsRes] = await Promise.all([
                 api.get('/users/pending'),
                 api.get('/engagements'),
-                api.get('/auditees')
+                api.get('/auditees'),
+                api.get('/users/auditors')
             ]);
             
             setPendingUsers(usersRes.data);
             setEngagements(engRes.data);
             setAuditees(audRes.data);
+            setAvailableAuditors(auditorsRes.data);
 
             const engagementsData = engRes.data;
             let mCount = 0;
@@ -93,11 +96,16 @@ export default function DirectorDashboard() {
                 description: combinedDescription,
                 start_date: formData.start_date,
                 end_date: formData.end_date,
-                offices: offices.map(o => o.id)
+                offices: offices.map(o => o.id),
+                leadAuditors: leadAuditors.map(l => l.id),
+                members: members.map(m => m.id)
             });
 
             setIsModalOpen(false);
             setFormData({ title: '', description: '', start_date: '', end_date: '', requirement_name: '', auditee_id: '' });
+            setOffices([]);
+            setLeadAuditors([]);
+            setMembers([]);
             setDoNumber(''); setOffices([]); setLeadAuditors([]); setMembers([]);
             fetchData();
         } catch (err) {
@@ -522,13 +530,28 @@ export default function DirectorDashboard() {
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Lead Auditor <span className="text-red-500">*</span></label>
                                             <div className="flex gap-2 mb-3">
-                                                <input type="text" value={newLeadAuditor} onChange={e => setNewLeadAuditor(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newLeadAuditor) { setLeadAuditors([...leadAuditors, newLeadAuditor]); setNewLeadAuditor(''); } } }} placeholder="Add Lead Auditor..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                                <button type="button" onClick={() => { if (newLeadAuditor) { setLeadAuditors([...leadAuditors, newLeadAuditor]); setNewLeadAuditor(''); } }} className="bg-indigo-600 text-white px-4 rounded-xl font-bold hover:bg-indigo-700 transition-all">+</button>
+                                                <select 
+                                                    value={newLeadAuditor} 
+                                                    onChange={e => setNewLeadAuditor(e.target.value)} 
+                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                >
+                                                    <option value="">Select Lead Auditor...</option>
+                                                    {availableAuditors.map(a => (
+                                                        <option key={a.id} value={a.id}>{a.name} ({a.agency_name})</option>
+                                                    ))}
+                                                </select>
+                                                <button type="button" onClick={() => { 
+                                                    if (newLeadAuditor && !leadAuditors.some(l => l.id === parseInt(newLeadAuditor))) { 
+                                                        const user = availableAuditors.find(a => a.id === parseInt(newLeadAuditor));
+                                                        setLeadAuditors([...leadAuditors, { id: user.id, name: user.name }]); 
+                                                        setNewLeadAuditor(''); 
+                                                    } 
+                                                }} className="bg-indigo-600 text-white px-6 rounded-xl font-bold hover:bg-indigo-700 transition-all">+</button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {leadAuditors.map((lead, index) => (
                                                     <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-sm font-bold">
-                                                        <span>{lead}</span>
+                                                        <span>{lead.name}</span>
                                                         <button type="button" onClick={() => setLeadAuditors(leadAuditors.filter((_, i) => i !== index))} className="text-indigo-400 hover:text-indigo-600 font-bold">&times;</button>
                                                     </span>
                                                 ))}
@@ -538,13 +561,28 @@ export default function DirectorDashboard() {
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Audit Team Members</label>
                                             <div className="flex gap-2 mb-3">
-                                                <input type="text" value={newMember} onChange={e => setNewMember(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newMember) { setMembers([...members, newMember]); setNewMember(''); } } }} placeholder="Add member..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                                <button type="button" onClick={() => { if (newMember) { setMembers([...members, newMember]); setNewMember(''); } }} className="bg-slate-800 text-white px-4 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
+                                                <select 
+                                                    value={newMember} 
+                                                    onChange={e => setNewMember(e.target.value)} 
+                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
+                                                >
+                                                    <option value="">Select Audit Team Member...</option>
+                                                    {availableAuditors.map(a => (
+                                                        <option key={a.id} value={a.id}>{a.name} ({a.agency_name})</option>
+                                                    ))}
+                                                </select>
+                                                <button type="button" onClick={() => { 
+                                                    if (newMember && !members.some(m => m.id === parseInt(newMember))) { 
+                                                        const user = availableAuditors.find(a => a.id === parseInt(newMember));
+                                                        setMembers([...members, { id: user.id, name: user.name }]); 
+                                                        setNewMember(''); 
+                                                    } 
+                                                }} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {members.map((member, index) => (
                                                     <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-sm font-bold">
-                                                        <span>{member}</span>
+                                                        <span>{member.name}</span>
                                                         <button type="button" onClick={() => setMembers(members.filter((_, i) => i !== index))} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
                                                     </span>
                                                 ))}

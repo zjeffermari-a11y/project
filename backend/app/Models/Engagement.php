@@ -12,4 +12,5 @@ class Engagement extends Model
 
     public function movs() { return $this->hasMany(Mov::class); }
     public function documents() { return $this->hasMany(Document::class); }
+    public function users() { return $this->belongsToMany(User::class)->withPivot('role_in_engagement')->withTimestamps(); }
 }

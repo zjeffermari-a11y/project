@@ -8,6 +8,7 @@ import iamsLogo from '../assets/IAMS logo.png';
 export default function DivisionChiefDashboard() {
     const [engagements, setEngagements] = useState([]);
     const [auditees, setAuditees] = useState([]);
+    const [availableAuditors, setAvailableAuditors] = useState([]);
     const [pendingUsers, setPendingUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -33,14 +34,16 @@ export default function DivisionChiefDashboard() {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const [engRes, audRes, pendingRes] = await Promise.all([
+            const [engRes, audRes, pendingRes, auditorsRes] = await Promise.all([
                 api.get('/engagements'),
                 api.get('/auditees'),
-                api.get('/users/pending')
+                api.get('/users/pending'),
+                api.get('/users/auditors')
             ]);
             setEngagements(engRes.data);
             setAuditees(audRes.data);
             setPendingUsers(pendingRes.data);
+            setAvailableAuditors(auditorsRes.data);
         } catch (err) {
             console.error('Failed to load dashboard data:', err);
         } finally {
@@ -72,7 +75,9 @@ export default function DivisionChiefDashboard() {
                 description: combinedDescription,
                 start_date: formData.start_date,
                 end_date: formData.end_date,
-                offices: offices.map(o => o.id)
+                offices: offices.map(o => o.id),
+                leadAuditors: leadAuditors.map(l => l.id),
+                members: members.map(m => m.id)
             });
 
             setIsModalOpen(false);
@@ -495,13 +500,28 @@ export default function DivisionChiefDashboard() {
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Lead Auditor <span className="text-red-500">*</span></label>
                                             <div className="flex gap-2 mb-3">
-                                                <input type="text" value={newLeadAuditor} onChange={e => setNewLeadAuditor(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newLeadAuditor) { setLeadAuditors([...leadAuditors, newLeadAuditor]); setNewLeadAuditor(''); } } }} placeholder="Add Lead Auditor..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
-                                                <button type="button" onClick={() => { if (newLeadAuditor) { setLeadAuditors([...leadAuditors, newLeadAuditor]); setNewLeadAuditor(''); } }} className="bg-blue-600 text-white px-4 rounded-xl font-bold hover:bg-blue-700 transition-all">+</button>
+                                                <select 
+                                                    value={newLeadAuditor} 
+                                                    onChange={e => setNewLeadAuditor(e.target.value)} 
+                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                >
+                                                    <option value="">Select Lead Auditor...</option>
+                                                    {availableAuditors.map(a => (
+                                                        <option key={a.id} value={a.id}>{a.name} ({a.agency_name})</option>
+                                                    ))}
+                                                </select>
+                                                <button type="button" onClick={() => { 
+                                                    if (newLeadAuditor && !leadAuditors.some(l => l.id === parseInt(newLeadAuditor))) { 
+                                                        const user = availableAuditors.find(a => a.id === parseInt(newLeadAuditor));
+                                                        setLeadAuditors([...leadAuditors, { id: user.id, name: user.name }]); 
+                                                        setNewLeadAuditor(''); 
+                                                    } 
+                                                }} className="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700 transition-all">+</button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {leadAuditors.map((lead, index) => (
                                                     <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-50 text-blue-700 border border-blue-100 rounded-lg text-sm font-bold">
-                                                        <span>{lead}</span>
+                                                        <span>{lead.name}</span>
                                                         <button type="button" onClick={() => setLeadAuditors(leadAuditors.filter((_, i) => i !== index))} className="text-blue-400 hover:text-blue-600 font-bold">&times;</button>
                                                     </span>
                                                 ))}
@@ -511,13 +531,28 @@ export default function DivisionChiefDashboard() {
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Audit Team Members</label>
                                             <div className="flex gap-2 mb-3">
-                                                <input type="text" value={newMember} onChange={e => setNewMember(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); if (newMember) { setMembers([...members, newMember]); setNewMember(''); } } }} placeholder="Add member..." className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
-                                                <button type="button" onClick={() => { if (newMember) { setMembers([...members, newMember]); setNewMember(''); } }} className="bg-slate-800 text-white px-4 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
+                                                <select 
+                                                    value={newMember} 
+                                                    onChange={e => setNewMember(e.target.value)} 
+                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none"
+                                                >
+                                                    <option value="">Select Audit Team Member...</option>
+                                                    {availableAuditors.map(a => (
+                                                        <option key={a.id} value={a.id}>{a.name} ({a.agency_name})</option>
+                                                    ))}
+                                                </select>
+                                                <button type="button" onClick={() => { 
+                                                    if (newMember && !members.some(m => m.id === parseInt(newMember))) { 
+                                                        const user = availableAuditors.find(a => a.id === parseInt(newMember));
+                                                        setMembers([...members, { id: user.id, name: user.name }]); 
+                                                        setNewMember(''); 
+                                                    } 
+                                                }} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {members.map((member, index) => (
                                                     <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-sm font-bold">
-                                                        <span>{member}</span>
+                                                        <span>{member.name}</span>
                                                         <button type="button" onClick={() => setMembers(members.filter((_, i) => i !== index))} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
                                                     </span>
                                                 ))}

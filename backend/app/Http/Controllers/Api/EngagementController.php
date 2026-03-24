@@ -13,7 +13,7 @@ class EngagementController extends Controller
     {
         $user = Auth::user();
         if ($user->role === 'auditor') {
-            return response()->json(Engagement::with(['movs.auditee', 'documents.uploader'])->get());
+            return response()->json(Engagement::with(['movs.auditee', 'documents.uploader', 'users'])->get());
         }
         else {
             // Auditees only see engagements they are involved in (via MOVs)
@@ -21,7 +21,7 @@ class EngagementController extends Controller
                 $q->where('auditee_id', $user->id);
             })->with(['movs' => function ($q) use ($user) {
                 $q->where('auditee_id', $user->id);
-            }])->get();
+            }, 'users'])->get();
             return response()->json($engagements);
         }
     }
@@ -39,10 +39,25 @@ class EngagementController extends Controller
             'start_date' => 'nullable|date',
             'end_date' => 'nullable|date',
             'offices' => 'nullable|array',
-            'offices.*' => 'exists:users,id'
+            'offices.*' => 'exists:users,id',
+            'leadAuditors' => 'nullable|array',
+            'leadAuditors.*' => 'exists:users,id',
+            'members' => 'nullable|array',
+            'members.*' => 'exists:users,id'
         ]);
 
         $engagement = Engagement::create($validated);
+
+        if (!empty($validated['leadAuditors'])) {
+            foreach ($validated['leadAuditors'] as $userId) {
+                $engagement->users()->attach($userId, ['role_in_engagement' => 'lead_auditor']);
+            }
+        }
+        if (!empty($validated['members'])) {
+            foreach ($validated['members'] as $userId) {
+                $engagement->users()->attach($userId, ['role_in_engagement' => 'member']);
+            }
+        }
 
         if (!empty($validated['offices'])) {
             // Generate a default tracking MOV for each auditee
@@ -61,7 +76,7 @@ class EngagementController extends Controller
 
     public function show($id)
     {
-        return response()->json(Engagement::with(['movs.auditee', 'documents'])->findOrFail($id));
+        return response()->json(Engagement::with(['movs.auditee', 'documents', 'users'])->findOrFail($id));
     }
 
     public function update(Request $request, $id)

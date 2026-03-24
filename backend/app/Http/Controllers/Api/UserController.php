@@ -15,6 +15,15 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    public function auditors()
+    {
+        // Return only approved auditors (including directors and division chiefs)
+        $auditors = User::where('role', 'auditor')
+            ->where('approval_status', 'approved')
+            ->get(['id', 'name', 'email', 'agency_name', 'designation']);
+        return response()->json($auditors);
+    }
+
     public function approve(Request $request, $id)
     {
         $validated = $request->validate([

@@ -604,11 +604,18 @@ export default function AuditorDashboard() {
                                     </div>
                                 </div>
 
-                                <div className="p-8 border-b border-slate-100">
-                                    <div className="grid grid-cols-1 gap-6">
+                                <div className="p-8 border-b border-slate-100 space-y-6">
+                                    <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                                        <span className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">2</span>
+                                        Dates &amp; Timeline
+                                    </h2>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date <span className="text-red-500">*</span></label>
                                             <input required type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                        </div>
+                                        <div className="flex items-end">
+                                            <p className="text-xs text-slate-400 font-medium leading-relaxed">This date corresponds to the Directive Order issuance date. The engagement will become active immediately upon registration.</p>
                                         </div>
                                     </div>
                                 </div>

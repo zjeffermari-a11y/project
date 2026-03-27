@@ -248,7 +248,7 @@ export default function AuditWorkspace() {
                         <div className="animate-in fade-in slide-in-from-bottom-2">
                             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                                 <div className="px-6 py-5 border-b border-slate-100 bg-emerald-50 text-emerald-900">
-                                    <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2"><FileCheck2 className="w-5 h-5 text-emerald-600" /> Compliance Tracker</h3>
+                                    <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2"><FileCheck2 className="w-5 h-5 text-emerald-600" /> Status Tracker</h3>
                                     <p className="text-xs text-emerald-600/70 mt-1 font-bold">Review and approve initial requirement submissions from assigned auditees.</p>
                                 </div>
                                 <div className="divide-y divide-slate-100">
@@ -263,6 +263,12 @@ export default function AuditWorkspace() {
                                                     <div className="mt-3">
                                                         <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-widest border ${getStatusBadge(mov.status)}`}>{mov.status}</span>
                                                     </div>
+                                                    {mov.management_comment && (
+                                                        <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+                                                            <p className="text-[10px] font-black text-amber-600 uppercase tracking-widest mb-1">Management Comment:</p>
+                                                            <p className="text-xs text-amber-800 font-medium">{mov.management_comment}</p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                                 {mov.status === 'submitted' && (
                                                     <div className="flex flex-row md:flex-col gap-2 shrink-0">

@@ -491,7 +491,7 @@ export default function AuditorDashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span className="text-red-500">*</span></label>
-                                            <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="e.g. DO-2026-001" className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="e.g. DO-2026-001" pattern="[A-Za-z]+-[0-9]{4}-[0-9]+" title="Format: DO-YYYY-NNN (e.g. DO-2026-001). Only letters, numbers, and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
                                         </div>
 
                                         <div>
@@ -605,14 +605,10 @@ export default function AuditorDashboard() {
                                 </div>
 
                                 <div className="p-8 border-b border-slate-100">
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="grid grid-cols-1 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date <span className="text-red-500">*</span></label>
                                             <input required type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                        </div>
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Planned Start Date</label>
-                                            <input type="date" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
                                         </div>
                                     </div>
                                 </div>

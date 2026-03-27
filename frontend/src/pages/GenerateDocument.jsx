@@ -8,6 +8,41 @@ export default function GenerateDocument() {
     const navigate = useNavigate();
     const [engagement, setEngagement] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
+    const [submitted, setSubmitted] = useState(false);
+
+    const handleSubmitForReview = async () => {
+        if (!engagement) return;
+        setSubmitting(true);
+        try {
+            // Capture the current inputs from the rendered form
+            const inputs = Array.from(document.querySelectorAll('#generated-document input, #generated-document textarea'));
+            const summaryValues = inputs.slice(0, 5).map(inp => inp.value).join(' | ');
+            
+            // Create a minimal text blob representing the draft
+            const blob = new Blob(
+                [`DRAFT ${doc.toUpperCase()} – ${engagement.title}\nValues: ${summaryValues}`],
+                { type: 'text/plain' }
+            );
+            const file = new File([blob], `DRAFT_${doc.toUpperCase()}_${engagement.title.replace(/ /g,'_')}.txt`, { type: 'text/plain' });
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('engagement_id', engagement.id);
+            formData.append('document_type', doc === 'anm' ? 'Audit Notification Memorandum (ANM)' : 'Audit Work Program (AWP)');
+            formData.append('phase', 'planning');
+            
+            await api.post('/documents/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            setSubmitted(true);
+            alert('Draft submitted for review! The reviewer can now sign off in the Workspace.');
+        } catch (err) {
+            alert('Submission failed: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setSubmitting(false);
+        }
+    };
 
     useEffect(() => {
         const fetchEng = async () => {
@@ -149,10 +184,70 @@ export default function GenerateDocument() {
             r++;
         };
 
-        addPhase('AUDIT PLANNING'); addRow();
-        addPhase('AUDIT EXECUTION'); addRow();
-        addPhase('AUDIT REPORTING'); addRow();
-        addPhase('AUDIT FOLLOW-UP'); addRow();
+        // Track rows where Days Required (column C, index 3) are entered for formula summation
+        const phaseDataRows = [];
+
+        const addPhaseWithData = (title) => {
+            // Phase header
+            sheet.mergeCells(`A${r}:J${r}`);
+            const c = sheet.getCell(`A${r}`);
+            c.value = title;
+            c.font = fontBoldCenter;
+            c.fill = bgAmber;
+            c.border = borderAll;
+            c.alignment = { vertical: 'middle', horizontal: 'left' };
+            r++;
+
+            // Data row
+            const dataRow = sheet.getRow(r);
+            const dataRowNum = r;
+            for (let i = 1; i <= 10; i++) {
+                const cell = dataRow.getCell(i);
+                if (i === 3) {
+                    // Days Required: read value but also store as number for formula
+                    const rawVal = inputs[inputIdx]?.value || '';
+                    cell.value = rawVal ? (isNaN(rawVal) ? rawVal : Number(rawVal)) : '';
+                } else {
+                    cell.value = inputs[inputIdx]?.value || '';
+                }
+                inputIdx++;
+                cell.font = fontNormal;
+                cell.border = borderAll;
+                cell.alignment = { vertical: 'middle', horizontal: i === 2 ? 'left' : 'center', wrapText: true };
+            }
+            phaseDataRows.push(dataRowNum);
+            r++;
+        };
+
+        addPhaseWithData('AUDIT PLANNING');
+        addPhaseWithData('AUDIT EXECUTION');
+        addPhaseWithData('AUDIT REPORTING');
+        addPhaseWithData('AUDIT FOLLOW-UP');
+
+        // TOTAL row with SUM formula for Days Required column
+        sheet.mergeCells(`A${r}:B${r}`);
+        const totalCell = sheet.getCell(`A${r}`);
+        totalCell.value = 'TOTAL DAYS';
+        totalCell.font = { name: 'Times New Roman', size: 10, bold: true };
+        totalCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+        totalCell.border = borderAll;
+        totalCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+        const sumRefs = phaseDataRows.map(rowNum => `C${rowNum}`).join('+');
+        const sumCell = sheet.getCell(`C${r}`);
+        sumCell.value = { formula: `${sumRefs}`, result: undefined };
+        sumCell.font = { name: 'Times New Roman', size: 10, bold: true };
+        sumCell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+        sumCell.border = borderAll;
+        sumCell.alignment = { vertical: 'middle', horizontal: 'center' };
+
+        // Empty merged cells for the rest of the total row
+        ['D','E','F','G','H','I','J'].forEach(col => {
+            const c = sheet.getCell(`${col}${r}`);
+            c.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFE2E8F0' } };
+            c.border = borderAll;
+        });
+        r++;
 
         r += 3;
         sheet.getCell(`B${r}`).value = 'Prepared by:';
@@ -456,6 +551,9 @@ export default function GenerateDocument() {
                     {doc === 'awp' && (
                         <button onClick={exportToExcel} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors shadow-sm"><Download className="w-4 h-4" /> Export Excel</button>
                     )}
+                    <button onClick={handleSubmitForReview} disabled={submitting || submitted} className={`px-5 py-2 rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors shadow-sm ${submitted ? 'bg-emerald-700 text-white cursor-default' : 'bg-indigo-600 hover:bg-indigo-500 text-white'}`}>
+                        <Save className="w-4 h-4" /> {submitting ? 'Submitting...' : submitted ? 'Submitted ✓' : 'Submit for Review'}
+                    </button>
                 </div>
             </header>
 

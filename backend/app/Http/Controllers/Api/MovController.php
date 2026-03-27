@@ -33,23 +33,29 @@ class MovController extends Controller
     public function updateStatus(Request $request, Mov $mov)
     {
         $validated = $request->validate([
-            'status' => 'required|in:pending,submitted,approved,returned'
+            'status' => 'required|in:pending,submitted,approved,returned',
+            'management_comment' => 'nullable|string|max:2000',
         ]);
 
         $user = Auth::user();
 
-        // Auditees can only mark as submitted, Auditors can mark anything
+        // Auditees can only mark as submitted and add management comments
         if ($user->role === 'auditee') {
             if ($mov->auditee_id !== $user->id)
                 return response()->json(['message' => 'Unauthorized'], 403);
             if ($validated['status'] !== 'submitted')
                 return response()->json(['message' => 'Auditees can only submit.'], 403);
         }
-        elseif ($user->role !== 'auditor') {
+        elseif (!in_array($user->role, ['auditor', 'division_chief', 'director'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
-        $mov->update(['status' => $validated['status']]);
+        $updateData = ['status' => $validated['status']];
+        if (isset($validated['management_comment'])) {
+            $updateData['management_comment'] = $validated['management_comment'];
+        }
+
+        $mov->update($updateData);
 
         // Auto-update engagement status based on MOV states
         $engagement = $mov->engagement;

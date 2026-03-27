@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { X } from 'lucide-react';
+import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle } from 'lucide-react';
 import iamsLogo from '../assets/IAMS logo.png';
 
 export default function AuditeeDashboard() {
@@ -13,6 +13,8 @@ export default function AuditeeDashboard() {
     const [uploadEngId, setUploadEngId] = useState(null);
     const [uploadMovName, setUploadMovName] = useState('');
     const [selectedFile, setSelectedFile] = useState(null);
+    const [managementComment, setManagementComment] = useState('');
+    const [uploading, setUploading] = useState(false);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -53,12 +55,16 @@ export default function AuditeeDashboard() {
             await api.post('/documents/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            await api.patch(`/movs/${uploadMovId}/status`, { status: 'submitted' });
+            await api.patch(`/movs/${uploadMovId}/status`, {
+                status: 'submitted',
+                management_comment: managementComment || undefined
+            });
 
             setUploadMovId(null);
             setUploadEngId(null);
             setUploadMovName('');
             setSelectedFile(null);
+            setManagementComment('');
             fetchData();
         } catch (err) {
             alert('Upload failed: ' + (err.response?.data?.message || err.message));
@@ -67,22 +73,38 @@ export default function AuditeeDashboard() {
         }
     };
 
-    const [uploading, setUploading] = useState(false);
-
     // Calculate dynamic data
     let totalMovs = 0;
     let submittedMovsCount = 0;
     const pendingTasks = [];
     const recentSubmissions = [];
     let currentEngagement = 'No Active Engagement';
-
     let currentEngagementStatus = 'planning';
+
+    // Ongoing audit: all engagements with my MOVs grouped
+    const ongoingAudits = [];
+    // Follow-up: completed/follow_up engagements with compliance rate
+    const followUpAudits = [];
 
     engagements.forEach(eng => {
         const myMovs = eng.movs?.filter(m => m.auditee_id === user.id) || [];
         if (myMovs.length > 0) {
             currentEngagement = `${eng.title} (${eng.start_date || 'TBD'})`;
             currentEngagementStatus = eng.status || 'planning';
+
+            // Build per-engagement MOV status list
+            const total = myMovs.length;
+            const approved = myMovs.filter(m => m.status === 'approved').length;
+            const submitted = myMovs.filter(m => m.status === 'submitted').length;
+            const returned = myMovs.filter(m => m.status === 'returned').length;
+            const pending = myMovs.filter(m => m.status === 'pending').length;
+            const compRate = total === 0 ? 0 : Math.round((approved / total) * 100);
+
+            if (['completed', 'follow_up'].includes(eng.status)) {
+                followUpAudits.push({ eng, myMovs, total, approved, compRate });
+            } else {
+                ongoingAudits.push({ eng, myMovs, total, approved, submitted, returned, pending });
+            }
         }
 
         myMovs.forEach(mov => {
@@ -127,9 +149,17 @@ export default function AuditeeDashboard() {
         },
     };
 
-    // Normalize from specific edge cases and grab the config
     const normalizedStatus = currentEngagementStatus === 'in_review' ? 'execution' : currentEngagementStatus;
     const currentPhaseConfig = PHASES[normalizedStatus] || PHASES.planning;
+
+    const getMovStatusConfig = (status) => {
+        switch (status) {
+            case 'approved': return { bg: 'bg-emerald-50', text: 'text-emerald-700', border: 'border-emerald-200', icon: <CheckCircle className="w-3 h-3" />, label: 'Approved' };
+            case 'submitted': return { bg: 'bg-amber-50', text: 'text-amber-700', border: 'border-amber-200', icon: <Clock className="w-3 h-3" />, label: 'Pending Review' };
+            case 'returned': return { bg: 'bg-rose-50', text: 'text-rose-700', border: 'border-rose-200', icon: <RotateCcw className="w-3 h-3" />, label: 'Returned' };
+            default: return { bg: 'bg-slate-100', text: 'text-slate-600', border: 'border-slate-200', icon: <AlertCircle className="w-3 h-3" />, label: 'Pending' };
+        }
+    };
 
     return (
         <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
@@ -180,6 +210,7 @@ export default function AuditeeDashboard() {
                         <div className="flex justify-center items-center h-full text-slate-400 font-bold">Loading dashboard...</div>
                     ) : (
                         <div className="max-w-7xl mx-auto space-y-8 pb-10">
+                            {/* KPI Cards */}
                             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center gap-6 relative overflow-hidden">
                                     <div className="relative z-10">
@@ -223,6 +254,8 @@ export default function AuditeeDashboard() {
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                                 <div className="lg:col-span-2 space-y-8">
+
+                                    {/* Action Required */}
                                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                                             <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
@@ -256,6 +289,84 @@ export default function AuditeeDashboard() {
                                         </div>
                                     </div>
 
+                                    {/* Ongoing Audit – MOV Submission Status */}
+                                    {ongoingAudits.length > 0 && (
+                                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div className="px-6 py-5 border-b border-slate-100 bg-indigo-50">
+                                                <h2 className="text-sm font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
+                                                    <FileText className="h-5 w-5 text-indigo-500" />
+                                                    Ongoing Audit – Submission Status
+                                                </h2>
+                                                <p className="text-xs text-indigo-500 font-bold mt-1">Live status of your MOV submissions per engagement.</p>
+                                            </div>
+                                            {ongoingAudits.map(({ eng, myMovs, total, approved, submitted, returned, pending }) => (
+                                                <div key={eng.id} className="px-6 py-5 border-b border-slate-100 last:border-b-0">
+                                                    <div className="flex items-start justify-between mb-4">
+                                                        <div>
+                                                            <h3 className="text-sm font-black text-slate-800">{eng.title}</h3>
+                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{eng.start_date || 'TBD'}</p>
+                                                        </div>
+                                                        <div className="flex gap-3 text-center shrink-0">
+                                                            <div className="flex flex-col items-center"><span className="text-lg font-black text-emerald-600">{approved}</span><span className="text-[9px] text-slate-400 font-black uppercase">Approved</span></div>
+                                                            <div className="flex flex-col items-center"><span className="text-lg font-black text-amber-500">{submitted}</span><span className="text-[9px] text-slate-400 font-black uppercase">Pending</span></div>
+                                                            <div className="flex flex-col items-center"><span className="text-lg font-black text-rose-500">{returned}</span><span className="text-[9px] text-slate-400 font-black uppercase">Returned</span></div>
+                                                            <div className="flex flex-col items-center"><span className="text-lg font-black text-slate-400">{pending}</span><span className="text-[9px] text-slate-400 font-black uppercase">Pending Sub.</span></div>
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        {myMovs.map(mov => {
+                                                            const cfg = getMovStatusConfig(mov.status);
+                                                            return (
+                                                                <div key={mov.id} className="flex items-center justify-between py-2 px-3 rounded-xl bg-slate-50 border border-slate-100">
+                                                                    <span className="text-xs font-bold text-slate-700 truncate max-w-xs">{mov.requirement_name}</span>
+                                                                    <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
+                                                                        {cfg.icon}{cfg.label}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+
+                                    {/* Audit Follow-up – Compliance Rating */}
+                                    {followUpAudits.length > 0 && (
+                                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div className="px-6 py-5 border-b border-slate-100 bg-rose-50">
+                                                <h2 className="text-sm font-black text-rose-700 uppercase tracking-widest flex items-center gap-2">
+                                                    <CheckCircle className="h-5 w-5 text-rose-500" />
+                                                    Audit Follow-up – Compliance Rating
+                                                </h2>
+                                                <p className="text-xs text-rose-500 font-bold mt-1">Compliance summary for completed and follow-up phase audits.</p>
+                                            </div>
+                                            <div className="divide-y divide-slate-100">
+                                                {followUpAudits.map(({ eng, total, approved, compRate }) => (
+                                                    <div key={eng.id} className="px-6 py-5">
+                                                        <div className="flex items-center justify-between mb-3">
+                                                            <div>
+                                                                <h3 className="text-sm font-black text-slate-800">{eng.title}</h3>
+                                                                <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{approved} / {total} MOVs Approved</p>
+                                                            </div>
+                                                            <span className={`text-2xl font-black ${compRate === 100 ? 'text-emerald-600' : compRate >= 75 ? 'text-amber-500' : 'text-rose-600'}`}>{compRate}%</span>
+                                                        </div>
+                                                        <div className="w-full bg-slate-100 rounded-full h-2">
+                                                            <div
+                                                                className={`h-2 rounded-full transition-all duration-700 ${compRate === 100 ? 'bg-emerald-500' : compRate >= 75 ? 'bg-amber-400' : 'bg-rose-400'}`}
+                                                                style={{ width: `${compRate}%` }}
+                                                            />
+                                                        </div>
+                                                        <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">
+                                                            Status: <span className={`${eng.status === 'completed' ? 'text-emerald-600' : 'text-rose-600'}`}>{eng.status === 'completed' ? 'Completed' : 'Follow-up Phase'}</span>
+                                                        </p>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Recent Submissions */}
                                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
                                         <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
                                             <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Recent Submissions Status</h2>
@@ -290,6 +401,7 @@ export default function AuditeeDashboard() {
                                     </div>
                                 </div>
 
+                                {/* Right column – Audit Lifecycle */}
                                 <div className="space-y-8">
                                     <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8">
                                         <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest mb-6">Audit Lifecycle</h2>
@@ -298,7 +410,7 @@ export default function AuditeeDashboard() {
                                                 const isActive = normalizedStatus === key;
                                                 const isPast = config.index < currentPhaseConfig.index;
                                                 const isFuture = config.index > currentPhaseConfig.index;
-                                                
+
                                                 let dotClass = 'bg-slate-200 border-white';
                                                 let titleClass = 'text-slate-400';
                                                 if (isActive) {
@@ -338,22 +450,33 @@ export default function AuditeeDashboard() {
                     )}
                 </div>
 
+                {/* Upload / Take Action Modal */}
                 {uploadMovId && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm">
                         <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
                             <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
                                 <h3 className="text-lg font-bold text-slate-800">Upload Requirement (MOV)</h3>
-                                <button onClick={() => { setUploadMovId(null); setSelectedFile(null); setUploadMovName(''); }} className="text-slate-400 hover:text-slate-600 transition-colors">
+                                <button onClick={() => { setUploadMovId(null); setSelectedFile(null); setUploadMovName(''); setManagementComment(''); }} className="text-slate-400 hover:text-slate-600 transition-colors">
                                     <X className="w-5 h-5" />
                                 </button>
                             </div>
-                            <form onSubmit={handleUpload} className="p-6 space-y-6">
+                            <form onSubmit={handleUpload} className="p-6 space-y-5">
                                 <div>
                                     <label className="block text-sm font-black text-slate-700 uppercase tracking-widest mb-3">Select Document</label>
                                     <input type="file" required onChange={e => setSelectedFile(e.target.files[0])} className="block w-full text-sm text-slate-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-black file:uppercase file:tracking-widest file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100 cursor-pointer border border-slate-200 rounded-xl focus:outline-none" />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-black text-slate-700 uppercase tracking-widest mb-2">Management Comment <span className="text-slate-400 font-bold text-xs normal-case tracking-normal">(optional)</span></label>
+                                    <textarea
+                                        value={managementComment}
+                                        onChange={e => setManagementComment(e.target.value)}
+                                        placeholder="Enter your office's management response or comment regarding this requirement..."
+                                        rows={3}
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-700 outline-none focus:ring-2 focus:ring-indigo-300 resize-none"
+                                    />
+                                </div>
                                 <div className="pt-2 flex justify-end gap-3">
-                                    <button type="button" onClick={() => { setUploadMovId(null); setSelectedFile(null); setUploadMovName(''); }} className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
+                                    <button type="button" onClick={() => { setUploadMovId(null); setSelectedFile(null); setUploadMovName(''); setManagementComment(''); }} className="px-6 py-3 text-xs font-black uppercase tracking-widest text-slate-500 hover:bg-slate-100 rounded-xl transition-colors">Cancel</button>
                                     <button type="submit" disabled={uploading} className="px-6 py-3 text-xs font-black uppercase tracking-widest text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-lg shadow-indigo-200 transition-colors">
                                         {uploading ? 'Uploading...' : 'Submit Requirement'}
                                     </button>

@@ -497,7 +497,7 @@ export default function DivisionChiefDashboard() {
                                             </div>
                                         </div>
 
-                                        <div>
+                                        <div className="col-span-2">
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Lead Auditor <span className="text-red-500">*</span></label>
                                             <div className="flex gap-2 mb-3">
                                                 <select 
@@ -516,7 +516,7 @@ export default function DivisionChiefDashboard() {
                                                         setLeadAuditors([...leadAuditors, { id: user.id, name: user.name }]); 
                                                         setNewLeadAuditor(''); 
                                                     } 
-                                                }} className="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700 transition-all">+</button>
+                                                }} className="bg-blue-600 text-white px-6 rounded-xl font-bold hover:bg-blue-700 transition-all">+ Add</button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {leadAuditors.map((lead, index) => (
@@ -528,7 +528,7 @@ export default function DivisionChiefDashboard() {
                                             </div>
                                         </div>
 
-                                        <div>
+                                        <div className="col-span-2">
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Audit Team Members</label>
                                             <div className="flex gap-2 mb-3">
                                                 <select 
@@ -547,7 +547,7 @@ export default function DivisionChiefDashboard() {
                                                         setMembers([...members, { id: user.id, name: user.name }]); 
                                                         setNewMember(''); 
                                                     } 
-                                                }} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
+                                                }} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-slate-900 transition-all">+ Add</button>
                                             </div>
                                             <div className="flex flex-wrap gap-2">
                                                 {members.map((member, index) => (

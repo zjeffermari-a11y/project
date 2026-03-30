@@ -12,6 +12,7 @@ export default function AuditorDashboard() {
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
     const [selectedEngagement, setSelectedEngagement] = useState(null);
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -131,6 +132,30 @@ export default function AuditorDashboard() {
     const totalOngoing = engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length;
     const totalFollowUp = engagements.filter(e => e.status === 'follow_up').length;
     const totalCompleted = engagements.filter(e => e.status === 'completed').length;
+
+    const allActivities = [];
+    engagements.forEach(eng => {
+        if (eng.created_at) {
+            allActivities.push({ id: `eng-${eng.id}`, type: 'engagement', title: eng.title, action: 'Created', user: 'System', date: new Date(eng.created_at) });
+        }
+        if (eng.movs) {
+            eng.movs.forEach(mov => {
+                if (mov.updated_at && mov.status !== 'pending') {
+                    allActivities.push({ id: `mov-${mov.id}`, type: 'mov', title: `MOV: ${mov.requirement_name}`, action: mov.status === 'approved' ? 'Approved' : mov.status === 'returned' ? 'Returned' : 'Updated', user: mov.auditee?.name || 'User', date: new Date(mov.updated_at) });
+                }
+            });
+        }
+        if (eng.documents) {
+            eng.documents.forEach(doc => {
+                if (doc.created_at) {
+                    allActivities.push({ id: `doc-${doc.id}`, type: 'document', title: doc.name, action: 'Uploaded', user: doc.uploader?.name || 'Unknown', date: new Date(doc.created_at) });
+                }
+            });
+        }
+    });
+
+    allActivities.sort((a, b) => b.date - a.date);
+    const recentActivities = allActivities.slice(0, 5);
 
     const overallCompliance = totalMovs === 0 ? 0 : Math.round((auditeeSubmissions / totalMovs) * 100);
 
@@ -390,27 +415,30 @@ export default function AuditorDashboard() {
                                 </div>
                             </div>
                             
-                            {/* Quick Overview Card */}
+                            {/* Recent Activity Card */}
                             <div className="w-full xl:w-80 shrink-0">
                                  <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2 opacity-0 select-none">
                                      Spacer
                                  </h2>
-                                 <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl">
-                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-6">Quick Overview</h3>
+                                 <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl flex flex-col h-[calc(100%-3rem)] min-h-[400px]">
+                                     <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-6 flex items-center gap-2 shrink-0">
+                                         <Clock className="w-4 h-4" /> Recent Activity
+                                     </h3>
                                      
-                                     <div className="space-y-4">
-                                         <div className="flex justify-between items-center border-b border-indigo-800/50 pb-4">
-                                             <span className="text-sm font-medium text-indigo-200">Last Audit:</span>
-                                             <span className="text-sm font-bold text-white">{engagements.length > 0 ? engagements[0].start_date : 'N/A'}</span>
-                                         </div>
-                                         
-                                         <div className="flex justify-between items-center border-b border-indigo-800/50 pb-4">
-                                             <span className="text-sm font-medium text-indigo-200">Compliance Rate:</span>
-                                             <span className="text-sm font-black text-emerald-400">{overallCompliance}%</span>
-                                         </div>
+                                     <div className="flex-1 overflow-y-auto pr-2 space-y-4 custom-scrollbar">
+                                         {recentActivities.map(act => (
+                                             <div key={act.id} className="border-b border-indigo-800/50 pb-3 last:border-0 last:pb-0">
+                                                 <p className="text-[10px] text-indigo-200 mb-1"><span className="font-bold text-white">{act.user}</span> {act.action.toLowerCase()}</p>
+                                                 <p className="text-sm font-bold text-white truncate" title={act.title}>{act.title}</p>
+                                                 <p className="text-[9px] text-indigo-400 font-medium mt-1 uppercase tracking-widest">{act.date.toLocaleString()}</p>
+                                             </div>
+                                         ))}
+                                         {recentActivities.length === 0 && (
+                                             <div className="text-center text-indigo-300 text-xs py-4">No recent activity</div>
+                                         )}
                                      </div>
 
-                                     <button onClick={() => engagements.length > 0 ? navigate(`/auditor/workspace/${engagements[0].id}`) : alert('Register an audit engagement first.')} className="w-full mt-6 py-3 px-4 border border-indigo-500 hover:bg-indigo-800 text-indigo-100 text-[10px] uppercase tracking-widest font-bold rounded-xl transition-colors">
+                                     <button onClick={() => setIsHistoryModalOpen(true)} className="w-full mt-6 py-3 px-4 border border-indigo-500 hover:bg-indigo-800 text-indigo-100 text-[10px] uppercase tracking-widest font-bold rounded-xl transition-colors shrink-0">
                                          View Full History
                                      </button>
                                  </div>
@@ -418,6 +446,45 @@ export default function AuditorDashboard() {
                         </div>
                     </div>
                 </div>
+
+                {/* Full History Modal */}
+                {isHistoryModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-8 border border-slate-200">
+                            <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                                <div>
+                                    <nav className="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
+                                        <span>Auditor Portal</span> <span>/</span>
+                                        <span className="text-indigo-600">System Logs</span>
+                                    </nav>
+                                    <h1 className="text-2xl font-black text-slate-800">System Audit Trail</h1>
+                                </div>
+                                <button onClick={() => setIsHistoryModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-10 max-h-[60vh] overflow-y-auto w-full">
+                                <div className="space-y-6">
+                                    {allActivities.map(act => (
+                                        <div key={act.id} className="flex gap-4 items-start border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${act.type === 'document' ? 'bg-indigo-100 text-indigo-600' : act.type === 'mov' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                {act.type === 'document' ? <FileText className="w-5 h-5" /> : act.type === 'mov' ? <CheckCircle className="w-5 h-5"/> : <Database className="w-5 h-5" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm text-slate-500"><span className="font-bold text-slate-800">{act.user}</span> {act.action.toLowerCase()} {act.type === 'document' ? 'file' : act.type === 'mov' ? 'MOV' : 'engagement'}</p>
+                                                <p className="text-base font-black text-slate-800 mt-1">{act.title}</p>
+                                                <p className="text-xs font-bold text-slate-400 mt-2">{act.date.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {allActivities.length === 0 && (
+                                        <div className="text-center text-slate-400 p-8 font-bold">No activity recorded yet in the system.</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Content Area Ends Here */}
             </main>

@@ -90,7 +90,7 @@ export default function DirectorDashboard() {
     const handleSubmitAudit = async (e) => {
         e.preventDefault();
         try {
-            const combinedDescription = doNumber ? `DO Number: ${doNumber}\n${formData.description}` : formData.description;
+            const combinedDescription = doNumber ? `DO Number: DO-${doNumber}\n${formData.description}` : formData.description;
             await api.post('/engagements', {
                 title: formData.title,
                 description: combinedDescription,
@@ -294,51 +294,6 @@ export default function DirectorDashboard() {
                             </div>
                         </div>
 
-                        {/* Ongoing Audits */}
-                        <div className="mb-8 mt-12">
-                            <h2 className="text-lg font-black text-slate-800 flex items-center gap-3 mb-6">
-                                <div className="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
-                                Edit Audit Engagements
-                            </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div onClick={() => setFilter(filter === 'ongoing' ? 'all' : 'ongoing')} className={`bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group ${filter === 'ongoing' ? 'ring-2 ring-indigo-500 bg-indigo-50 border-transparent' : 'border border-slate-200'}`}>
-                                    <div className="absolute top-6 right-6 p-3 bg-indigo-50 rounded-full group-hover:bg-indigo-100 transition-colors">
-                                        <Clock className="h-8 w-8 text-indigo-200" strokeWidth="2" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Master File</p>
-                                    <div className="flex items-baseline gap-2 mb-6">
-                                        <span className="text-5xl font-black text-indigo-600 tracking-tight">{totalOngoing}</span>
-                                        <span className="text-sm font-bold text-slate-400 ml-2">Audits</span>
-                                    </div>
-                                    <p className="text-xs font-bold text-indigo-600 flex items-center gap-1">View Active <ChevronRight className="w-4 h-4" /></p>
-                                </div>
-
-                                <div onClick={() => setFilter(filter === 'follow_up' ? 'all' : 'follow_up')} className={`bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group ${filter === 'follow_up' ? 'ring-2 ring-amber-500 bg-amber-50 border-transparent' : 'border border-slate-200'}`}>
-                                    <div className="absolute top-6 right-6 p-3 bg-amber-50 rounded-full group-hover:bg-amber-100 transition-colors">
-                                        <ArrowRightLeft className="h-8 w-8 text-amber-200" strokeWidth="2" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Ongoing Follow-up</p>
-                                    <div className="flex items-baseline gap-2 mb-6">
-                                        <span className="text-5xl font-black text-amber-500 tracking-tight">{totalFollowUp < 10 && totalFollowUp > 0 ? `0${totalFollowUp}` : totalFollowUp}</span>
-                                        <span className="text-sm font-bold text-slate-400 ml-2">Audits</span>
-                                    </div>
-                                    <p className="text-xs font-bold text-amber-500 flex items-center gap-1">Check Deadlines <ChevronRight className="w-4 h-4" /></p>
-                                </div>
-
-                                <div onClick={() => setFilter(filter === 'completed' ? 'all' : 'completed')} className={`bg-white p-8 rounded-3xl shadow-sm hover:shadow-md transition-all cursor-pointer relative overflow-hidden group ${filter === 'completed' ? 'ring-2 ring-emerald-500 bg-emerald-50 border-transparent' : 'border border-slate-200'}`}>
-                                    <div className="absolute top-6 right-6 p-3 bg-emerald-50 rounded-full group-hover:bg-emerald-100 transition-colors">
-                                        <CheckCircle className="h-8 w-8 text-emerald-200" strokeWidth="2" />
-                                    </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Total Completed</p>
-                                    <div className="flex items-baseline gap-2 mb-6">
-                                        <span className="text-5xl font-black text-emerald-600 tracking-tight">{totalCompleted}</span>
-                                        <span className="text-sm font-bold text-slate-400 ml-2">Archived</span>
-                                    </div>
-                                    <p className="text-xs font-bold text-emerald-600 flex items-center gap-1">View Archives <ChevronRight className="w-4 h-4" /></p>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Master File Directory */}
                         <div className="flex flex-col xl:flex-row gap-6 items-start">
                             <div className="flex-1 w-full min-w-0">
@@ -478,12 +433,18 @@ export default function DirectorDashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span className="text-red-500">*</span></label>
-                                             <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="e.g. DO-2026-001" pattern="[A-Za-z]+-[0-9]{4}-[0-9]+" title="Format: DO-YYYY-NNN (e.g. DO-2026-001). Only letters, numbers, and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            <div className="relative flex items-center">
+                                                <span className="absolute left-4 font-bold text-slate-500">DO-</span>
+                                                <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="2026-001" pattern="[0-9]{4}-[0-9]+" title="Format: YYYY-NNN (e.g. 2026-001). Only numbers and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            </div>
                                         </div>
 
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">AE Number</label>
-                                            <input type="text" value={doNumber ? doNumber.replace('DO', 'AE') : ''} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl px-4 py-3 cursor-not-allowed" />
+                                            <div className="relative flex items-center">
+                                                <span className="absolute left-4 font-bold text-slate-500">AE-</span>
+                                                <input type="text" value={doNumber} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl pl-12 pr-4 py-3 cursor-not-allowed" />
+                                            </div>
                                         </div>
 
                                         <div className="col-span-2">

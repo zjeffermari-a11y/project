@@ -93,7 +93,7 @@ export default function AuditorDashboard() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const combinedDescription = doNumber ? `DO Number: ${doNumber}\n${formData.description}` : formData.description;
+            const combinedDescription = doNumber ? `DO Number: DO-${doNumber}\n${formData.description}` : formData.description;
             await api.post('/engagements', {
                 title: formData.title,
                 description: combinedDescription,
@@ -491,12 +491,18 @@ export default function AuditorDashboard() {
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span className="text-red-500">*</span></label>
-                                            <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="e.g. DO-2026-001" pattern="[A-Za-z]+-[0-9]{4}-[0-9]+" title="Format: DO-YYYY-NNN (e.g. DO-2026-001). Only letters, numbers, and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            <div className="relative flex items-center">
+                                                <span className="absolute left-4 font-bold text-slate-500">DO-</span>
+                                                <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="2026-001" pattern="[0-9]{4}-[0-9]+" title="Format: YYYY-NNN (e.g. 2026-001). Only numbers and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                            </div>
                                         </div>
 
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">AE Number</label>
-                                            <input type="text" value={doNumber ? doNumber.replace('DO', 'AE') : ''} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl px-4 py-3 cursor-not-allowed" />
+                                            <div className="relative flex items-center">
+                                                <span className="absolute left-4 font-bold text-slate-500">AE-</span>
+                                                <input type="text" value={doNumber} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl pl-12 pr-4 py-3 cursor-not-allowed" />
+                                            </div>
                                         </div>
 
                                         <div className="col-span-2">

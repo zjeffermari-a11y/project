@@ -10,9 +10,39 @@ function Signup() {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [designation, setDesignation] = useState('auditee');
+    const [agencyName, setAgencyName] = useState('');
     const [error, setError] = useState(null);
     const [success, setSuccess] = useState(false);
     const navigate = useNavigate();
+
+    const AUDITEE_OFFICES = [
+        "Bureau of Local Government Development (BLGD)",
+        "Bureau of Local Government Supervision (BLGS)",
+        "National Barangay Operations Office (NBOO)",
+        "Office of Project Development Services (OPDS)",
+        "Information Systems and Technology Management Service (ISTMS)",
+        "Planning Service (PS)",
+        "Financial Management Service (FMS)",
+        "Administrative Service (AS)",
+        "Legal and Legislative Liaison Service (LLLS)",
+        "Public Affairs and Communication Service (PACS)",
+        "NCR - National Capital Region",
+        "Region I - Ilocos Region",
+        "Region II - Cagayan Valley",
+        "Region III - Central Luzon",
+        "Region IV-A - CALABARZON",
+        "Region IV-B - MIMAROPA",
+        "Region V - Bicol Region",
+        "Region VI - Western Visayas",
+        "Region VII - Central Visayas",
+        "Region VIII - Eastern Visayas",
+        "Region IX - Zamboanga Peninsula",
+        "Region X - Northern Mindanao",
+        "Region XI - Davao Region",
+        "Region XII - SOCCSKSARGEN",
+        "Region XIII - CARAGA",
+        "CAR - Cordillera Administrative Region"
+    ];
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -22,7 +52,8 @@ function Signup() {
                 name,
                 email,
                 password,
-                designation
+                designation,
+                agency_name: designation === 'auditee' ? agencyName : 'DILG Compliance Office'
             });
             setSuccess(true);
         } catch (err) {
@@ -141,6 +172,28 @@ function Signup() {
                             </div>
                         </div>
                     </div>
+
+                    {designation === 'auditee' && (
+                        <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
+                            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest pl-1">Agency / Office</label>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <Building2 className="h-5 w-5 text-slate-300" />
+                                </div>
+                                <select value={agencyName} onChange={e => setAgencyName(e.target.value)} required 
+                                    className="block w-full pl-11 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-700 outline-none focus:bg-white focus:border-indigo-400 focus:ring-4 focus:ring-indigo-50 transition-all appearance-none cursor-pointer"
+                                >
+                                    <option value="" disabled>Select your office...</option>
+                                    {AUDITEE_OFFICES.map((office, idx) => (
+                                        <option key={idx} value={office}>{office}</option>
+                                    ))}
+                                </select>
+                                <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                                    <svg className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" /></svg>
+                                </div>
+                            </div>
+                        </div>
+                    )}
 
                     <div className="pt-4">
                         <button type="submit" className="w-full bg-slate-900 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-lg shadow-slate-300 hover:bg-indigo-600 hover:shadow-indigo-200 hover:-translate-y-0.5 transition-all">

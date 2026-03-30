@@ -30,6 +30,7 @@ export default function DirectorDashboard() {
     const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
+        document.title = 'Internal Audit Management | Director Portal';
         fetchData();
     }, []);
 

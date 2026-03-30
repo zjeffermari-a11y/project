@@ -20,6 +20,7 @@ export default function AuditeeDashboard() {
     const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
+        document.title = 'Internal Audit Management | Auditee Portal';
         fetchData();
     }, []);
 

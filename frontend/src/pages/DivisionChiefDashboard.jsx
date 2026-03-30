@@ -29,6 +29,7 @@ export default function DivisionChiefDashboard() {
     const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
+        document.title = user?.designation === 'assistant_division_chief' ? 'Internal Audit Management | Assistant Division Chief Portal' : 'Internal Audit Management | Division Chief Portal';
         fetchData();
     }, []);
 
@@ -440,7 +441,7 @@ export default function DivisionChiefDashboard() {
                                  <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2 opacity-0 select-none">
                                      Spacer
                                  </h2>
-                                 <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl flex flex-col h-[calc(100%-3rem)] min-h-[400px]">
+                                 <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl flex flex-col h-full">
                                      <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-6 flex items-center gap-2 shrink-0">
                                          <Clock className="w-4 h-4" /> Recent Activity
                                      </h3>
@@ -467,6 +468,46 @@ export default function DivisionChiefDashboard() {
 
                     </div>
                 </div>
+
+                {/* Full History Modal */}
+                {isHistoryModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
+                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-8 border border-slate-200">
+                            <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                                <div>
+                                    <nav className="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
+                                        <span>{user?.designation === 'assistant_division_chief' ? 'Assistant Division Chief Portal' : 'Division Chief Portal'}</span> <span>/</span>
+                                        <span className="text-indigo-600">System Logs</span>
+                                    </nav>
+                                    <h1 className="text-2xl font-black text-slate-800">System Audit Trail</h1>
+                                </div>
+                                <button onClick={() => setIsHistoryModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200">
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-10 max-h-[60vh] overflow-y-auto w-full">
+                                <div className="space-y-6">
+                                    {allActivities.map(act => (
+                                        <div key={act.id} className="flex gap-4 items-start border-b border-slate-100 pb-6 last:border-0 last:pb-0">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${act.type === 'document' ? 'bg-indigo-100 text-indigo-600' : act.type === 'mov' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                                {act.type === 'document' ? <FileText className="w-5 h-5" /> : act.type === 'mov' ? <CheckCircle className="w-5 h-5"/> : <Database className="w-5 h-5" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm text-slate-500"><span className="font-bold text-slate-800">{act.user}</span> {act.action.toLowerCase()} {act.type === 'document' ? 'file' : act.type === 'mov' ? 'MOV' : 'engagement'}</p>
+                                                <p className="text-base font-black text-slate-800 mt-1">{act.title}</p>
+                                                <p className="text-xs font-bold text-slate-400 mt-2">{act.date.toLocaleString()}</p>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {allActivities.length === 0 && (
+                                        <div className="text-center text-slate-400 p-8 font-bold">No activity recorded yet in the system.</div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
 
                 {/* Registration Modal */}
                 {isModalOpen && (

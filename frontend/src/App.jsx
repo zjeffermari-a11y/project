@@ -22,7 +22,8 @@ function App() {
   const DefaultRoute = () => {
     if (!user) return <Navigate to="/login" replace />;
     if (user.designation === 'director') return <Navigate to="/director" replace />;
-    if (user.designation === 'division_chief' || user.designation === 'assistant_division_chief') return <Navigate to="/chief" replace />;
+    if (user.designation === 'division_chief') return <Navigate to="/division-chief" replace />;
+    if (user.designation === 'assistant_division_chief') return <Navigate to="/assistant-division-chief" replace />;
     if (user.designation === 'lead_auditor' || user.designation === 'auditor') return <Navigate to="/auditor" replace />;
     return <Navigate to="/auditee" replace />;
   };
@@ -39,8 +40,14 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/chief/*" element={
-          <ProtectedRoute designations={['division_chief', 'assistant_division_chief']}>
+        <Route path="/division-chief/*" element={
+          <ProtectedRoute designation="division_chief">
+            <DivisionChiefDashboard />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/assistant-division-chief/*" element={
+          <ProtectedRoute designation="assistant_division_chief">
             <DivisionChiefDashboard />
           </ProtectedRoute>
         } />

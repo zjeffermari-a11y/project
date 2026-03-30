@@ -18,6 +18,7 @@ export default function AuditorDashboard() {
     const user = JSON.parse(localStorage.getItem('user'));
 
     useEffect(() => {
+        document.title = 'Internal Audit Management | Auditor Portal';
         fetchEngagements();
         fetchAuditees();
         fetchAuditors();
@@ -420,7 +421,7 @@ export default function AuditorDashboard() {
                                  <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2 opacity-0 select-none">
                                      Spacer
                                  </h2>
-                                 <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl flex flex-col h-[calc(100%-3rem)] min-h-[400px]">
+                                 <div className="bg-indigo-900 rounded-3xl p-6 text-white shadow-xl flex flex-col h-full">
                                      <h3 className="text-[10px] font-black uppercase tracking-widest text-indigo-300 mb-6 flex items-center gap-2 shrink-0">
                                          <Clock className="w-4 h-4" /> Recent Activity
                                      </h3>

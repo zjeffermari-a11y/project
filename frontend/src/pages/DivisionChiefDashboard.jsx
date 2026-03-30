@@ -110,6 +110,23 @@ export default function DivisionChiefDashboard() {
         }
     };
 
+    const handleOpenModal = () => {
+        const currentYear = new Date().getFullYear();
+        let maxSequence = 0;
+        engagements.forEach(eng => {
+            if (eng.description) {
+                const match = eng.description.match(new RegExp(`DO-${currentYear}-(\\d+)`));
+                if (match) {
+                    const seq = parseInt(match[1], 10);
+                    if (seq > maxSequence) maxSequence = seq;
+                }
+            }
+        });
+        const nextSequence = String(maxSequence + 1).padStart(3, '0');
+        setDoNumber(`${currentYear}-${nextSequence}`);
+        setIsModalOpen(true);
+    };
+
     // Computations
     const totalEngagements = engagements.length;
     let auditeeSubmissions = 0;
@@ -160,7 +177,9 @@ export default function DivisionChiefDashboard() {
                     <div className="flex justify-between items-end">
                         <div>
                             <div className="flex items-center gap-3 mb-2">
-                                <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border border-blue-200">Division Chief Operations</span>
+                                <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border border-blue-200">
+                                    {user.designation === 'assistant_division_chief' ? 'Assistant ' : ''}Division Chief Operations
+                                </span>
                             </div>
                             <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
                             <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">System Administration & Audits</h2>
@@ -190,7 +209,7 @@ export default function DivisionChiefDashboard() {
                                     </div>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-md">
+                            <button onClick={handleOpenModal} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-md">
                                 + Audit Engagement
                             </button>
                         </div>
@@ -450,7 +469,7 @@ export default function DivisionChiefDashboard() {
                                             <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span className="text-red-500">*</span></label>
                                             <div className="relative flex items-center">
                                                 <span className="absolute left-4 font-bold text-slate-500">DO-</span>
-                                                <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="2026-001" pattern="[0-9]{4}-[0-9]+" title="Format: YYYY-NNN (e.g. 2026-001). Only numbers and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-blue-500 outline-none" />
+                                                <input required type="text" value={doNumber} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 font-bold rounded-xl pl-12 pr-4 py-3 cursor-not-allowed outline-none" />
                                             </div>
                                         </div>
 

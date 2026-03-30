@@ -10,24 +10,8 @@ export default function AuditorDashboard() {
     const [auditees, setAuditees] = useState([]);
     const [availableAuditors, setAvailableAuditors] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     const [selectedEngagement, setSelectedEngagement] = useState(null);
-
-    // Form State
-    const [formData, setFormData] = useState({
-        title: '', description: '', start_date: '', end_date: '',
-        requirement_name: '', auditee_id: ''
-    });
-
-    // Specific UI states matching the Registration.html design
-    const [doNumber, setDoNumber] = useState('');
-    const [newOffice, setNewOffice] = useState('');
-    const [offices, setOffices] = useState([]);
-    const [newLeadAuditor, setNewLeadAuditor] = useState('');
-    const [leadAuditors, setLeadAuditors] = useState([]);
-    const [newMember, setNewMember] = useState('');
-    const [members, setMembers] = useState([]);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -89,32 +73,6 @@ export default function AuditorDashboard() {
         localStorage.clear();
         navigate('/login');
     };
-
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-            const combinedDescription = doNumber ? `DO Number: DO-${doNumber}\n${formData.description}` : formData.description;
-            await api.post('/engagements', {
-                title: formData.title,
-                description: combinedDescription,
-                start_date: formData.start_date,
-                end_date: formData.end_date,
-                offices: offices.map(o => o.id),
-                leadAuditors: leadAuditors.map(l => l.id),
-                members: members.map(m => m.id)
-            });
-            // Initial MOV creation is skipped to match visual design purely for now.
-
-            setIsModalOpen(false);
-            setFormData({ title: '', description: '', start_date: '', end_date: '', requirement_name: '', auditee_id: '' });
-            setDoNumber(''); setOffices([]); setLeadAuditors([]); setMembers([]);
-            setLoading(true);
-            fetchEngagements();
-        } catch (err) {
-            alert('Failed to register audit: ' + (err.response?.data?.message || err.message));
-        }
-    };
-
     const handleMovAction = async (movId, status) => {
         try {
             await api.patch(`/movs/${movId}/status`, { status });
@@ -250,9 +208,6 @@ export default function AuditorDashboard() {
                                     </div>
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <button onClick={() => { fetchAuditees(); setIsModalOpen(true); }} className="bg-indigo-500 hover:bg-indigo-400 text-white px-5 py-3 rounded-2xl backdrop-blur-sm transition-colors flex items-center gap-2 font-black uppercase tracking-widest text-xs shadow-lg">
-                                + Audit Engagement
-                            </button>
                         </div>
                     </div>
                 </header>
@@ -464,176 +419,7 @@ export default function AuditorDashboard() {
                     </div>
                 </div>
 
-                {/* Registration Modal */}
-                {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-8 border border-slate-200">
-                            <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                                <div>
-                                    <nav className="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
-                                        <span>Auditor Dashboard</span> <span>/</span>
-                                        <span className="text-indigo-600">New Registration</span>
-                                    </nav>
-                                    <h1 className="text-2xl font-black text-slate-800">+ Audit Engagement</h1>
-                                </div>
-                                <button onClick={() => setIsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                                    <X className="w-5 h-5" />
-                                </button>
-                            </div>
-
-                            <form onSubmit={handleSubmit} className="bg-white rounded-3xl overflow-hidden border border-slate-200">
-                                <div className="p-8 border-b border-slate-100 space-y-6">
-                                    <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                                        <span className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">1</span>
-                                        General Information
-                                    </h2>
-                                    
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span className="text-red-500">*</span></label>
-                                            <div className="relative flex items-center">
-                                                <span className="absolute left-4 font-bold text-slate-500">DO-</span>
-                                                <input required type="text" value={doNumber} onChange={e => setDoNumber(e.target.value)} placeholder="2026-001" pattern="[0-9]{4}-[0-9]+" title="Format: YYYY-NNN (e.g. 2026-001). Only numbers and hyphens." className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-12 pr-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                            </div>
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">AE Number</label>
-                                            <div className="relative flex items-center">
-                                                <span className="absolute left-4 font-bold text-slate-500">AE-</span>
-                                                <input type="text" value={doNumber} readOnly className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl pl-12 pr-4 py-3 cursor-not-allowed" />
-                                            </div>
-                                        </div>
-
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Title <span className="text-red-500">*</span></label>
-                                            <input required type="text" value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} placeholder="Enter Directive Order Title..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                        </div>
-
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Engagement Title <span className="text-red-500">*</span></label>
-                                            <input required type="text" value={formData.title} onChange={e => setFormData({ ...formData, title: e.target.value })} placeholder="Enter Engagement Title..." className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                        </div>
-
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Auditee Offices <span className="text-red-500">*</span></label>
-                                            <div className="flex gap-2 mb-3">
-                                                <select 
-                                                    value={newOffice} 
-                                                    onChange={e => setNewOffice(e.target.value)} 
-                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                >
-                                                    <option value="">Select office...</option>
-                                                    {auditees.map(a => (
-                                                        <option key={a.id} value={a.id}>{a.agency_name} ({a.name})</option>
-                                                    ))}
-                                                </select>
-                                                <button type="button" onClick={() => { 
-                                                    if (newOffice && !offices.some(o => o.id === parseInt(newOffice))) { 
-                                                        const auditee = auditees.find(a => a.id === parseInt(newOffice));
-                                                        setOffices([...offices, { id: auditee.id, name: auditee.agency_name }]); 
-                                                        setNewOffice(''); 
-                                                    } 
-                                                }} className="bg-indigo-600 text-white px-6 rounded-xl font-bold hover:bg-indigo-700 transition-all">+</button>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {offices.map((office, index) => (
-                                                    <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-sm font-bold">
-                                                        <span>{office.name}</span>
-                                                        <button type="button" onClick={() => setOffices(offices.filter((_, i) => i !== index))} className="text-indigo-400 hover:text-indigo-600 font-bold">&times;</button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Lead Auditor <span className="text-red-500">*</span></label>
-                                            <div className="flex gap-2 mb-3">
-                                                <select 
-                                                    value={newLeadAuditor} 
-                                                    onChange={e => setNewLeadAuditor(e.target.value)} 
-                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                >
-                                                    <option value="">Select Lead Auditor...</option>
-                                                    {availableAuditors.map(a => (
-                                                        <option key={a.id} value={a.id}>{a.name} ({a.agency_name})</option>
-                                                    ))}
-                                                </select>
-                                                <button type="button" onClick={() => { 
-                                                    if (newLeadAuditor && !leadAuditors.some(l => l.id === parseInt(newLeadAuditor))) { 
-                                                        const user = availableAuditors.find(a => a.id === parseInt(newLeadAuditor));
-                                                        setLeadAuditors([...leadAuditors, { id: user.id, name: user.name }]); 
-                                                        setNewLeadAuditor(''); 
-                                                    } 
-                                                }} className="bg-indigo-600 text-white px-6 rounded-xl font-bold hover:bg-indigo-700 transition-all">+ Add</button>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {leadAuditors.map((lead, index) => (
-                                                    <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-sm font-bold">
-                                                        <span>{lead.name}</span>
-                                                        <button type="button" onClick={() => setLeadAuditors(leadAuditors.filter((_, i) => i !== index))} className="text-indigo-400 hover:text-indigo-600 font-bold">&times;</button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="col-span-2">
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Audit Team Members</label>
-                                            <div className="flex gap-2 mb-3">
-                                                <select 
-                                                    value={newMember} 
-                                                    onChange={e => setNewMember(e.target.value)} 
-                                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none"
-                                                >
-                                                    <option value="">Select Audit Team Member...</option>
-                                                    {availableAuditors.map(a => (
-                                                        <option key={a.id} value={a.id}>{a.name} ({a.agency_name})</option>
-                                                    ))}
-                                                </select>
-                                                <button type="button" onClick={() => { 
-                                                    if (newMember && !members.some(m => m.id === parseInt(newMember))) { 
-                                                        const user = availableAuditors.find(a => a.id === parseInt(newMember));
-                                                        setMembers([...members, { id: user.id, name: user.name }]); 
-                                                        setNewMember(''); 
-                                                    } 
-                                                }} className="bg-slate-800 text-white px-6 rounded-xl font-bold hover:bg-slate-900 transition-all">+ Add</button>
-                                            </div>
-                                            <div className="flex flex-wrap gap-2">
-                                                {members.map((member, index) => (
-                                                    <span key={index} className="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-sm font-bold">
-                                                        <span>{member.name}</span>
-                                                        <button type="button" onClick={() => setMembers(members.filter((_, i) => i !== index))} className="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-8 border-b border-slate-100 space-y-6">
-                                    <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-                                        <span className="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">2</span>
-                                        Dates &amp; Timeline
-                                    </h2>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date <span className="text-red-500">*</span></label>
-                                            <input required type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
-                                        </div>
-                                        <div className="flex items-end">
-                                            <p className="text-xs text-slate-400 font-medium leading-relaxed">This date corresponds to the Directive Order issuance date. The engagement will become active immediately upon registration.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="p-8 bg-white flex items-center justify-end gap-4">
-                                    <button type="button" onClick={() => setIsModalOpen(false)} className="px-6 py-3 font-bold text-sm text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
-                                    <button type="submit" className="px-10 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">Register Audit</button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-                )}
+                {/* Content Area Ends Here */}
             </main>
         </div>
     );

@@ -1,4 +1,5 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AnimatePresence } from 'framer-motion';
 import Login from './pages/Login';
 import Signup from './pages/Signup';
 import AuditorDashboard from './pages/AuditorDashboard';
@@ -11,28 +12,12 @@ import DirectorDashboard from './pages/DirectorDashboard';
 import DivisionChiefDashboard from './pages/DivisionChiefDashboard';
 
 
-function App() {
-  const user = JSON.parse(localStorage.getItem('user') || 'null');
-
-  // Clear stale legacy caches
-  if (user && !user.designation) {
-    localStorage.clear();
-    window.location.href = import.meta.env.BASE_URL + 'login';
-    return null;
-  }
-
-  const DefaultRoute = () => {
-    if (!user) return <Navigate to="/login" replace />;
-    if (user.designation === 'director') return <Navigate to="/director" replace />;
-    if (user.designation === 'division_chief') return <Navigate to="/division-chief" replace />;
-    if (user.designation === 'assistant_division_chief') return <Navigate to="/assistant-division-chief" replace />;
-    if (user.designation === 'lead_auditor' || user.designation === 'auditor') return <Navigate to="/auditor" replace />;
-    return <Navigate to="/auditee" replace />;
-  };
+function AnimatedRoutes({ user, DefaultRouteComponent }) {
+  const location = useLocation();
 
   return (
-    <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <Routes>
+    <AnimatePresence mode="wait">
+      <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
 
@@ -84,8 +69,34 @@ function App() {
           </ProtectedRoute>
         } />
 
-        <Route path="/" element={<DefaultRoute />} />
+        <Route path="/" element={<DefaultRouteComponent />} />
       </Routes>
+    </AnimatePresence>
+  );
+}
+
+function App() {
+  const user = JSON.parse(localStorage.getItem('user') || 'null');
+
+  // Clear stale legacy caches
+  if (user && !user.designation) {
+    localStorage.clear();
+    window.location.href = import.meta.env.BASE_URL + 'login';
+    return null;
+  }
+
+  const DefaultRouteComponent = () => {
+    if (!user) return <Navigate to="/login" replace />;
+    if (user.designation === 'director') return <Navigate to="/director" replace />;
+    if (user.designation === 'division_chief') return <Navigate to="/division-chief" replace />;
+    if (user.designation === 'assistant_division_chief') return <Navigate to="/assistant-division-chief" replace />;
+    if (user.designation === 'lead_auditor' || user.designation === 'auditor') return <Navigate to="/auditor" replace />;
+    return <Navigate to="/auditee" replace />;
+  };
+
+  return (
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
+      <AnimatedRoutes user={user} DefaultRouteComponent={DefaultRouteComponent} />
     </BrowserRouter>
   )
 }

@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import api from '../api';
 import { Lock, Mail, ArrowRight, Eye, EyeOff } from 'lucide-react';
 import iamsLogo from '../assets/IAMS logo.png';
+import PageTransition from '../components/ui/PageTransition';
+import LogoLoader from '../components/ui/LogoLoader';
 
 export default function Login() {
     const [credentials, setCredentials] = useState({ email: '', password: '' });
@@ -34,7 +36,7 @@ export default function Login() {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+        <PageTransition className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
             <main className="flex-1 flex flex-col overflow-hidden bg-slate-50 relative">
                 <header className="bg-white border-b border-slate-200 px-12 py-12 shrink-0 z-10 relative overflow-hidden">
                     <div className="relative z-10 max-w-7xl mx-auto flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
@@ -120,10 +122,19 @@ export default function Login() {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="w-full mt-4 flex justify-between items-center py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-slate-400"
+                                className="w-full mt-4 flex justify-between items-center py-4 px-6 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-black text-xs uppercase tracking-widest shadow-lg shadow-blue-500/30 transition-all focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:bg-blue-800 disabled:cursor-not-allowed"
                             >
-                                <span>{loading ? 'Authenticating...' : 'Secure Login'}</span>
-                                <ArrowRight className="w-5 h-5" />
+                                {loading ? (
+                                    <div className="flex items-center justify-center w-full gap-3">
+                                        <LogoLoader size="sm" text="" />
+                                        <span>Authenticating Securely...</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span>Secure Login</span>
+                                        <ArrowRight className="w-5 h-5" />
+                                    </>
+                                )}
                             </button>
                         </form>
 
@@ -134,6 +145,6 @@ export default function Login() {
                     </div>
                 </div>
             </main>
-        </div>
+        </PageTransition>
     );
 }

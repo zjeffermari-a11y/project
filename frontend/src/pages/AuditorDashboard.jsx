@@ -4,6 +4,9 @@ import api from '../api';
 import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, ChevronRight, LayoutGrid, Folder, Database, BarChart3, Trash2, Bell, Clock, ArrowRightLeft } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
+import PageTransition from '../components/ui/PageTransition';
+import LogoLoader from '../components/ui/LogoLoader';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function AuditorDashboard() {
     const [engagements, setEngagements] = useState([]);
@@ -13,6 +16,7 @@ export default function AuditorDashboard() {
     const [filter, setFilter] = useState('all');
     const [selectedEngagement, setSelectedEngagement] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user'));
@@ -71,9 +75,14 @@ export default function AuditorDashboard() {
     };
 
     const handleLogout = async () => {
+        setIsLoggingOut(true);
         try { await api.post('/logout'); } catch (e) { }
-        localStorage.clear();
-        navigate('/login');
+        
+        // Premium artificial delay for animation
+        setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+        }, 1200);
     };
     const handleMovAction = async (movId, status) => {
         try {
@@ -178,7 +187,21 @@ export default function AuditorDashboard() {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+        <PageTransition className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+            <AnimatePresence>
+                {isLoggingOut && (
+                    <motion.div 
+                        initial={{ opacity: 0 }} 
+                        animate={{ opacity: 1 }} 
+                        exit={{ opacity: 0 }}
+                        className="absolute inset-0 z-[999] bg-slate-900/40 backdrop-blur-md flex items-center justify-center"
+                    >
+                        <div className="bg-white p-12 rounded-3xl shadow-2xl flex flex-col items-center">
+                            <LogoLoader size="lg" text="Terminating Secure Session..." />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
             <aside className="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
                 <div className="mb-8">
                     <img src={iamsLogo} className="w-12 h-12 object-contain drop-shadow-sm" alt="IAMS Logo" />
@@ -489,6 +512,6 @@ export default function AuditorDashboard() {
 
                 {/* Content Area Ends Here */}
             </main>
-        </div>
+        </PageTransition>
     );
 }

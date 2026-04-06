@@ -1,18 +1,16 @@
 import { motion } from 'framer-motion';
 
 const pageVariants = {
-  initial: { opacity: 0, scale: 0.95, y: 15 },
+  initial: { opacity: 0, filter: 'blur(4px)' },
   animate: { 
     opacity: 1, 
-    scale: 1, 
-    y: 0,
-    transition: { type: "spring", stiffness: 350, damping: 20, bounce: 0.5, mass: 0.8 }
+    filter: 'blur(0px)',
+    transition: { duration: 0.4, ease: "easeOut" }
   },
   exit: { 
     opacity: 0, 
-    scale: 1.02, 
-    y: -10,
-    transition: { ease: "easeInOut", duration: 0.2 }
+    filter: 'blur(4px)',
+    transition: { duration: 0.3, ease: "easeIn" }
   }
 };
 

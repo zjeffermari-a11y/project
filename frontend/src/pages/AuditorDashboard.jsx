@@ -19,7 +19,7 @@ export default function AuditorDashboard() {
     const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
         document.title = 'Internal Audit Management | Auditor Portal';

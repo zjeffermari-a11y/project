@@ -17,7 +17,7 @@ export default function AuditeeDashboard() {
     const [uploading, setUploading] = useState(false);
 
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
         document.title = 'Internal Audit Management | Auditee Portal';

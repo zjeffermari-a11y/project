@@ -26,7 +26,7 @@ export default function DivisionChiefDashboard() {
     const [members, setMembers] = useState([]);
 
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
         document.title = user?.designation === 'assistant_division_chief' ? 'Internal Audit Management | Assistant Division Chief Portal' : 'Internal Audit Management | Division Chief Portal';

@@ -27,7 +27,7 @@ export default function DirectorDashboard() {
     const [members, setMembers] = useState([]);
 
     const navigate = useNavigate();
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
         document.title = 'Internal Audit Management | Director Portal';

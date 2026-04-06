@@ -4,6 +4,8 @@ import api from '../api';
 import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft, Bell } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
+import PageTransition from '../components/ui/PageTransition';
+import LogoutOverlay from '../components/ui/LogoutOverlay';
 
 export default function DirectorDashboard() {
     const [pendingUsers, setPendingUsers] = useState([]);
@@ -15,6 +17,7 @@ export default function DirectorDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
     
     // Form State for new audit
     const [formData, setFormData] = useState({ title: '', description: '', start_date: '', end_date: '', requirement_name: '', auditee_id: '' });
@@ -84,9 +87,12 @@ export default function DirectorDashboard() {
     };
 
     const handleLogout = async () => {
+        setIsLoggingOut(true);
         try { await api.post('/logout'); } catch (e) { }
-        localStorage.clear();
-        navigate('/login');
+        setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+        }, 1200);
     };
 
     const handleSubmitAudit = async (e) => {
@@ -197,7 +203,8 @@ export default function DirectorDashboard() {
     });
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+        <PageTransition className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans relative">
+            <LogoutOverlay isOpen={isLoggingOut} userName={user?.name} />
             <aside className="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
                 <div className="mb-8">
                     <img src={iamsLogo} className="w-12 h-12 object-contain drop-shadow-sm" alt="IAMS Logo" />
@@ -660,6 +667,6 @@ export default function DirectorDashboard() {
                     </div>
                 )}
             </main>
-        </div>
+        </PageTransition>
     );
 }

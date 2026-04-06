@@ -15,6 +15,7 @@ export default function AuditeeDashboard() {
     const [selectedFile, setSelectedFile] = useState(null);
     const [managementComment, setManagementComment] = useState('');
     const [uploading, setUploading] = useState(false);
+    const [isLoggingOut, setIsLoggingOut] = useState(false);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user')) || {};
@@ -36,9 +37,12 @@ export default function AuditeeDashboard() {
     };
 
     const handleLogout = async () => {
+        setIsLoggingOut(true);
         try { await api.post('/logout'); } catch (e) { }
-        localStorage.clear();
-        navigate('/login');
+        setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+        }, 1200);
     };
 
     const handleUpload = async (e) => {
@@ -163,7 +167,8 @@ export default function AuditeeDashboard() {
     };
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans">
+        <PageTransition className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans relative">
+            <LogoutOverlay isOpen={isLoggingOut} userName={user?.name} />
             <aside className="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
                 <div className="mb-8">
                     <img src={iamsLogo} className="w-12 h-12 object-contain drop-shadow-sm" alt="IAMS Logo" />
@@ -487,6 +492,6 @@ export default function AuditeeDashboard() {
                     </div>
                 )}
             </main>
-        </div>
+        </PageTransition>
     );
 }

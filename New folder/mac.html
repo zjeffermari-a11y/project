@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Audit Checklist | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Document specific styling to look like paper/forms */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px solid #000;
+            width: 100%;
+            outline: none;
+            font-family: serif;
+            font-size: 13px;
+            padding: 2px 4px;
+        }
+        .doc-input:focus, .doc-input:hover {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #6366f1;
+        }
+        .tbl-input {
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-family: serif;
+            font-size: 11px;
+            padding: 4px;
+            resize: vertical;
+            min-height: 25px;
+        }
+        .tbl-input:focus {
+            background-color: #eef2ff;
+        }
+        
+        /* Checkbox styling */
+        .doc-checkbox {
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border: 1px solid #000;
+            display: inline-block;
+            position: relative;
+            vertical-align: middle;
+            cursor: pointer;
+        }
+        .doc-checkbox:checked::after {
+            content: '✔';
+            position: absolute;
+            top: -4px;
+            left: 1px;
+            font-size: 14px;
+            color: #000;
+            font-weight: bold;
+        }
+
+        /* Table Borders */
+        .mac-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: serif;
+        }
+        .mac-table th, .mac-table td {
+            border: 1px solid #000;
+            padding: 4px;
+            vertical-align: middle;
+        }
+        .mac-table th {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+        }
+        .mac-table td {
+            font-size: 11px;
+        }
+        .cat-header {
+            font-weight: bold;
+            font-style: italic;
+            background-color: #f8fafc;
+        }
+
+        /* Print formatting */
+        @media print {
+            aside, header { display: none !important; }
+            main { background: white !important; overflow: visible !important; }
+            .print-area { box-shadow: none !important; width: 100% !important; padding: 0 !important; max-width: none !important; }
+            .hide-on-print { display: none !important; }
+            @page { size: landscape; margin: 10mm; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden" x-data="{}">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0 hide-on-print">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm hide-on-print">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Execution</a> <span>/</span>
+                    <span class="text-indigo-600">Management Audit Checklist (MAC)</span>
+                </nav>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        Print Document
+                    </button>
+                    <button onclick="exportToWord('macDocument', 'Management_Audit_Checklist')" class="px-4 py-2 bg-white border border-slate-200 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Word
+                    </button>
+                    <button onclick="exportToExcel('macDocument', 'Management_Audit_Checklist')" class="px-4 py-2 bg-white border border-slate-200 text-emerald-600 font-bold text-xs rounded-lg hover:bg-emerald-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        Excel
+                    </button>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all ml-2">
+                        Save Checklist
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-10 flex justify-center items-start">
+                
+                <div class="bg-white shadow-2xl w-[1300px] min-w-max px-12 py-12 relative flex flex-col font-serif print-area" id="macDocument">
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" class="h-16 w-16">
+                        <div>
+                            <p class="text-[11px] font-serif text-gray-800 leading-tight">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                            <h1 class="text-xl font-black font-serif tracking-wide leading-tight">MANAGEMENT AUDIT CHECKLIST</h1>
+                            <p class="text-[9px] font-serif text-gray-500 italic">FM-QP-DILG-IAS-33-07A | Rev01 | 09.16.22</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-[180px_10px_400px] gap-y-1 mb-8 text-xs font-bold items-center font-serif">
+                        <div>MAC Reference No.</div><div>:</div>
+                        <div><input type="text" value="MAC-2026-001" readonly class="doc-input font-bold text-black" title="System Generated"></div>
+
+                        <div>Audit Engagement No.</div><div>:</div>
+                        <div><input type="text" value="AE-2026-04" readonly class="doc-input font-bold text-black" title="System Generated"></div>
+
+                        <div>Audit Engagement Title</div><div>:</div>
+                        <div><input type="text" value="Annual Audit 2026" readonly class="doc-input font-bold text-black" title="System Generated"></div>
+
+                        <div class="mt-4">Audit Objective/s</div><div class="mt-4">:</div>
+                        <div class="col-span-3 -mt-4 pl-[200px]">
+                            <div class="flex items-center w-[800px]">
+                                <span class="italic underline text-[11px]">To evaluate the effectiveness of internal controls adopted to determine whether the control objectives are achieved in the</span>
+                                <input type="text" class="border-b border-black outline-none w-48 text-center mx-2 font-bold bg-transparent" placeholder="_____________">
+                                <span class="italic underline text-[11px]">System.</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="relative group">
+                        <table class="mac-table">
+                            <thead class="bg-slate-50/50">
+                                <tr>
+                                    <th rowspan="3" class="w-8 text-center">Item<br>No.</th>
+                                    <th colspan="4">AUDIT PLANNING STAGE*</th>
+                                    <th colspan="4">AUDIT EXECUTION STAGE</th>
+                                </tr>
+                                <tr>
+                                    <th colspan="2">Criteria</th>
+                                    <th rowspan="2" class="w-32">Work Instruction to<br>Auditor</th>
+                                    <th rowspan="2" class="w-32">MOVs</th>
+                                    <th rowspan="2" class="w-8">Yes</th>
+                                    <th rowspan="2" class="w-8">No</th>
+                                    <th rowspan="2" class="w-10">N/A</th>
+                                    <th rowspan="2" class="w-64">Audit Notes<br><span class="font-normal text-[8px] italic">(Provide details for 'Yes', 'No', 'N/A' answers. If 'No' but with compensating<br>control, indicate compensating control and subject to TOC together with all 'Yes'<br>answers)</span></th>
+                                </tr>
+                                <tr>
+                                    <th class="w-56">Specific Laws/Policy/ Guidelines/Standards<br><span class="font-normal text-[8px] italic">(indicate relevant LPGS following the hierarchy of laws)</span></th>
+                                    <th class="w-48">Requirements</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Control Environment</td></tr>
+                                <tr><td class="text-center font-bold">1</td><td class="italic pl-4">Integrity and Ethical Values</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Plan of Organization</td></tr>
+                                <tr><td class="text-center font-bold">2</td><td class="italic pl-4">Structure and Function</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">3</td><td class="italic pl-4">Staffing</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">4</td><td class="italic pl-4">Commitment to Competence</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Coordinated Methods and Measures</td></tr>
+                                <tr><td class="text-center font-bold">5</td><td class="italic pl-4">Planning</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">6</td><td class="italic pl-4">Budgeting</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">7</td><td class="italic pl-4">Accounting and Financial System</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">8</td><td class="italic pl-4">Recruitment, Selection, Promotion</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">9</td><td class="italic pl-4">Learning and Development</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">10</td><td class="italic pl-4">Performance Management and Rewards and Recognition</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">11</td><td class="italic pl-4">Personnel Administration</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">12</td><td class="italic pl-4">Physical Asset Management</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">13</td><td class="italic pl-4">General Services and Motorpool</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">14</td><td class="italic pl-4">Procurement</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">15</td><td class="italic pl-4">Records Management</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">16</td><td class="italic pl-4">Quality Management System</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Control Policies and Measures</td></tr>
+                                <tr><td class="text-center font-bold">17</td><td class="italic pl-4">Delegation of authority and supervision</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">18</td><td class="italic pl-4">Segregation of functions for processing, reviewing, recording, custody and approval</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">19</td><td class="italic pl-4">Access over resources, assets and facilities</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">20</td><td class="italic pl-4">Completeness and/or veracity of transaction documents and reports</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">21</td><td class="italic pl-4">Verification of transactions to avoid errors and frauds</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">22</td><td class="italic pl-4">Reconciliation of records and data</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Risk Assessment</td></tr>
+                                <tr><td class="text-center font-bold">23</td><td class="italic pl-4">Risk Identification</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">24</td><td class="italic pl-4">Risk Analysis</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">25</td><td class="italic pl-4">Risk Evaluation</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Control Activities</td></tr>
+                                <tr><td class="text-center font-bold">26</td><td class="italic pl-4">Risk Response</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">27</td><td class="italic pl-4">Performance Review</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">28</td><td class="italic pl-4">Compliance Review</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Information and Communication</td></tr>
+                                <tr><td class="text-center font-bold">29</td><td class="italic pl-4">Accountabilities for Transparency</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">30</td><td class="italic pl-4">Communication</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                                <tr class="cat-header"><td class="text-center"></td><td colspan="8">Monitoring</td></tr>
+                                <tr><td class="text-center font-bold">31</td><td class="italic pl-4">Ongoing Monitoring of Internal Control</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+                                <tr><td class="text-center font-bold">32</td><td class="italic pl-4">Separate Evaluation of Internal Control</td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td><textarea class="tbl-input"></textarea></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td class="text-center align-middle"><input type="checkbox" class="doc-checkbox"></td><td><textarea class="tbl-input"></textarea></td></tr>
+
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-x-16 mt-12 text-[11px] font-serif">
+                        
+                        <div>
+                            <p class="font-bold italic mb-6">For preparation</p>
+                            
+                            <div class="mb-6">
+                                <p class="mb-8 font-bold">Prepared by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black font-bold">
+                                <p class="mt-1">Auditor's Name over Signature/Date</p>
+                                <input type="text" placeholder="Position" class="w-full bg-transparent outline-none italic text-[10px]">
+                            </div>
+                            
+                            <div class="mb-6">
+                                <p class="mb-8 font-bold">Reviewed by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black font-bold">
+                                <p class="mt-1">Team Leader's Name over Signature/Date</p>
+                                <input type="text" placeholder="Position" class="w-full bg-transparent outline-none italic text-[10px]">
+                            </div>
+
+                            <div>
+                                <p class="mb-8 font-bold">Approved by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black font-bold">
+                                <p class="mt-1">Head of Internal Audit Service/Date</p>
+                            </div>
+                        </div>
+
+                        <div>
+                            <p class="font-bold italic mb-6">For Evaluation</p>
+                            
+                            <div class="mb-6">
+                                <p class="mb-8 font-bold">Evaluated by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black font-bold">
+                                <p class="mt-1">Auditor's Name over Signature/Date</p>
+                                <input type="text" placeholder="Position" class="w-full bg-transparent outline-none italic text-[10px]">
+                            </div>
+                            
+                            <div>
+                                <p class="mb-8 font-bold">Reviewed by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black font-bold">
+                                <p class="mt-1">Team Leader Name over Signature/Date</p>
+                                <input type="text" placeholder="Position" class="w-full bg-transparent outline-none italic text-[10px]">
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // TRUE EXCEL EXPORT USING SHEETJS
+        function exportToExcel(elementID, filename = 'Management_Audit_Checklist') {
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // 1. Convert Textareas to plain text
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var val = document.createTextNode(ta.value);
+                ta.parentNode.replaceChild(val, ta);
+            });
+
+            // 2. Convert Checkboxes to checkmarks
+            var checkboxes = clone.querySelectorAll('input[type="checkbox"]');
+            checkboxes.forEach(function(cb) {
+                var valStr = cb.checked ? "✔" : "";
+                var val = document.createTextNode(valStr);
+                cb.parentNode.replaceChild(val, cb);
+            });
+
+            // 3. Convert regular inputs to plain text
+            var inputs = clone.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+                var val = document.createTextNode(input.value);
+                input.parentNode.replaceChild(val, input);
+            });
+
+            // Find the table and export via SheetJS
+            var tableToExport = clone.querySelector('table');
+            var wb = XLSX.utils.table_to_book(tableToExport, {sheet: "MAC"});
+            XLSX.writeFile(wb, filename + '.xlsx');
+        }
+
+        // Export whole document to Word
+        function exportToWord(elementID, filename = ''){
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+            var postHtml = "</body></html>";
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Convert inputs/textareas to plain text elements for Word structure
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var p = document.createElement('p');
+                p.innerText = ta.value;
+                ta.parentNode.replaceChild(p, ta);
+            });
+
+            var html = preHtml + clone.innerHTML + postHtml;
+
+            var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

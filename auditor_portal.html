@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - Control Center | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8 shadow-lg shadow-indigo-500/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            
+            <img src="https://ui-avatars.com/api/?name=Lyra+Bedayo&background=6366f1&color=fff" class="w-10 h-10 rounded-xl mb-4 border border-slate-700 hover:scale-105 transition-transform cursor-pointer" title="Lyra Bedayo">
+            
+            <nav class="flex-1 flex flex-col gap-4 mt-4 w-full px-4">
+                <a href="#" class="p-3 text-white bg-slate-800 rounded-xl flex justify-center relative group" title="Home">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                    <span class="absolute left-14 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Home</span>
+                </a>
+                <a href="#" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all flex justify-center relative group" title="Settings">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    <span class="absolute left-14 bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">Settings</span>
+                </a>
+            </nav>
+            
+            <button class="p-3 text-slate-500 hover:text-rose-400 hover:bg-slate-800 rounded-xl transition-all" title="Logout">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>
+            </button>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-50">
+            
+            <header class="bg-indigo-900 px-10 pt-10 pb-20 shrink-0 z-10 relative overflow-hidden text-white">
+                <div class="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-64 w-64 transform translate-x-16 -translate-y-16" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                </div>
+                
+                <div class="relative z-10 flex justify-between items-end">
+                    <div>
+                        <h2 class="text-indigo-300 font-black uppercase tracking-widest text-xs mb-2">Welcome Back, Lead Auditor</h2>
+                        <h1 class="text-4xl font-black uppercase tracking-tight mb-2">Lyra Zel Bedayo</h1>
+                        <p class="text-indigo-200 font-medium text-sm">You have <span class="text-white font-bold bg-indigo-500 px-2 py-0.5 rounded ml-1">3 pending tasks</span> to review today.</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="bg-indigo-800/50 border border-indigo-700 px-5 py-3 rounded-2xl backdrop-blur-sm">
+                            <p class="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1">Active Engagement</p>
+                            <p class="font-bold text-sm">AE-2026-04 : Annual Audit</p>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar px-10 pb-10">
+                
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 max-w-7xl mx-auto -mt-10 relative z-20 mb-10">
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Engagements</p>
+                        <p class="text-3xl font-black text-slate-800">4</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Auditee Submissions</p>
+                        <p class="text-3xl font-black text-indigo-600">28</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pending Signatures</p>
+                        <p class="text-3xl font-black text-amber-500">7</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-md">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Overall Compliance</p>
+                        <p class="text-3xl font-black text-emerald-500">82%</p>
+                    </div>
+                </div>
+
+                <div class="max-w-7xl mx-auto space-y-12">
+
+                    <div>
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                            Core Operations
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            
+                            <a href="inventory-repository.html" class="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-400 hover:-translate-y-1 transition-all duration-300 block">
+                                <div class="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-colors shadow-inner">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" /></svg>
+                                </div>
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight mb-1">Tools</h3>
+                                <p class="text-xs text-slate-500 font-medium line-clamp-2">View and manage documents strictly organized by phases.</p>
+                            </a>
+
+                            <a href="master-file-repository.html" class="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-blue-400 hover:-translate-y-1 transition-all duration-300 block">
+                                <div class="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-blue-600 group-hover:text-white transition-colors shadow-inner">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" /></svg>
+                                </div>
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight mb-1">Master File View</h3>
+                                <p class="text-xs text-slate-500 font-medium line-clamp-2">A global, searchable database of all documents uploaded across the entire system, indicating who uploaded them.</p>
+                            </a>
+
+                            <a href="compliance-tracking.html" class="group bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-emerald-400 hover:-translate-y-1 transition-all duration-300 block">
+                                <div class="w-14 h-14 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-600 group-hover:text-white transition-colors shadow-inner">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+                                </div>
+                                <h3 class="font-black text-slate-800 uppercase tracking-tight mb-1">MOV Compliance Tracker</h3>
+                                <p class="text-xs text-slate-500 font-medium line-clamp-2">Track the specific compliance progress and uploaded initial documents per auditee office.</p>
+                            </a>
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" /></svg>
+                            Document Creators
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between group">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-amber-50 text-amber-600 rounded-xl flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black text-slate-800 uppercase tracking-tight text-sm">Audit Notification Memo (ANM)</h3>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Planning Phase Template</p>
+                                    </div>
+                                </div>
+                                <a href="audit-notification-memo.html" class="px-5 py-2.5 bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-amber-500 hover:text-white transition-colors">Generate</a>
+                            </div>
+
+                            <div class="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm flex items-center justify-between group">
+                                <div class="flex items-center gap-4">
+                                    <div class="w-12 h-12 bg-rose-50 text-rose-600 rounded-xl flex items-center justify-center">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    </div>
+                                    <div>
+                                        <h3 class="font-black text-slate-800 uppercase tracking-tight text-sm">Audit Work Program (AWP)</h3>
+                                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Planning Phase Template</p>
+                                    </div>
+                                </div>
+                                <a href="audit-work-program.html" class="px-5 py-2.5 bg-slate-100 text-slate-600 font-black text-[10px] uppercase tracking-widest rounded-xl hover:bg-rose-500 hover:text-white transition-colors">Generate</a>
+                            </div>
+
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" /></svg>
+                            User Portals
+                        </h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="bg-gradient-to-br from-emerald-800 to-slate-900 p-8 rounded-3xl shadow-lg flex items-center justify-between text-white relative overflow-hidden">
+                                <div class="absolute top-0 right-0 p-4 opacity-10">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" /></svg>
+                                </div>
+                                <div class="relative z-10">
+                                    <h3 class="font-black uppercase tracking-tight text-lg mb-1">Auditee Office Portal</h3>
+                                    <p class="text-xs text-emerald-200 font-medium">View the system from the perspective of an auditee (e.g. Registrar's Office) checking tasks and uploading files.</p>
+                                </div>
+                                <a href="auditee-dashboard.html" class="relative z-10 bg-white/20 hover:bg-white text-white hover:text-emerald-900 px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest transition-colors backdrop-blur-sm whitespace-nowrap ml-4">
+                                    Switch View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

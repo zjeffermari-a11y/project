@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Notification Memorandum | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        
+        /* Document specific styling to look like paper */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px solid transparent;
+            width: 100%;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .doc-input:focus, .doc-input:hover {
+            border-bottom: 1px solid #94a3b8;
+        }
+        .doc-textarea {
+            width: 100%;
+            background: transparent;
+            border: 1px dashed transparent;
+            outline: none;
+            resize: vertical;
+            min-height: 80px;
+            padding: 4px;
+            transition: all 0.2s;
+        }
+        .doc-textarea:focus, .doc-textarea:hover {
+            border: 1px dashed #cbd5e1;
+            background: #f8fafc;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor font-bold"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Lyra+Zel+Bedayo&background=6366f1&color=fff" class="w-10 h-10 rounded-xl mb-4 border border-slate-700">
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Planning</a> <span>/</span>
+                    <span class="text-indigo-600">Audit Notification Memorandum (ANM)</span>
+                </nav>
+                <div class="flex gap-3">
+                    <button class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Export to PDF
+                    </button>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all">
+                        Save Document
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-10 flex justify-center">
+                
+                <div class="bg-white shadow-2xl w-[794px] min-h-[1123px] px-20 py-16 relative flex flex-col">
+                    
+                    <div class="flex justify-center items-center gap-4 mb-1">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" class="h-16 w-16">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Bagong_Pilipinas_logo.svg" class="h-16 w-16 object-contain">
+                    </div>
+                    
+                    <div class="text-center mb-6">
+                        <p class="text-[9px] font-serif leading-none mb-0.5">Republic of the Philippines</p>
+                        <p class="text-xs font-bold font-serif leading-none tracking-wide mb-1">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                        <p class="text-[9px] font-serif leading-none text-gray-800 mb-0.5">DILG-NAPOLCOM Center, EDSA cor. Quezon Avenue, West Triangle, Quezon City</p>
+                        <p class="text-[9px] text-blue-600 hover:underline cursor-pointer font-serif leading-none">www.dilg.gov.ph</p>
+                    </div>
+
+                    <div class="mb-5">
+                        <h1 class="text-sm font-bold font-serif leading-tight">AUDIT NOTIFICATION MEMORANDUM</h1>
+                        <p class="text-[11px] font-serif text-gray-800">(ANM Reference No. <input type="text" value="ANM-2026-001" readonly tabindex="-1" class="bg-transparent border-none outline-none inline w-32 text-gray-800 font-serif cursor-default" title="System Generated Reference No.">)</p>
+                    </div>
+
+                    <div class="grid grid-cols-[85px_15px_1fr] gap-y-2 mb-5 text-[13px] font-serif items-center leading-tight">
+                        
+                        <div class="font-bold">TO/FOR</div>
+                        <div class="text-center font-bold">:</div>
+                        <div><input type="text" value="Example Office" class="doc-input font-bold py-0.5" title="Auto-filled Auditee"></div>
+
+                        <div class="font-bold">THRU</div>
+                        <div class="text-center font-bold">:</div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="" class="doc-input py-0.5">
+                            <span class="text-[11px] italic text-gray-500 whitespace-nowrap">(if applicable)</span>
+                        </div>
+
+                        <div class="font-bold">ATTENTION</div>
+                        <div class="text-center font-bold">:</div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" placeholder="" class="doc-input py-0.5">
+                            <span class="text-[11px] italic text-gray-500 whitespace-nowrap">(if applicable)</span>
+                        </div>
+
+                        <div class="font-bold">SUBJECT</div>
+                        <div class="text-center font-bold">:</div>
+                        <div><input type="text" value="Annual Audit 2026 (AE-2026-04)" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold py-0.5 cursor-default text-black" title="System Generated Engagement Title"></div>
+
+                        <div class="font-bold">DATE</div>
+                        <div class="text-center font-bold">:</div>
+                        <div><input type="date" value="2026-03-04" class="doc-input font-bold w-auto py-0.5"></div>
+                        
+                    </div>
+
+                    <hr class="border-black border-[1.5px] mb-6">
+
+                    <div class="space-y-4 text-[13px] font-serif text-justify leading-relaxed flex-1">
+                        
+                        <div>
+                            <textarea class="doc-textarea" placeholder="(Context and Authority: i.e. Audit Engagement Title, Department Order)"></textarea>
+                        </div>
+
+                        <div>
+                            <textarea class="doc-textarea" placeholder="(Audit Objectives)"></textarea>
+                        </div>
+
+                        <div>
+                            <textarea class="doc-textarea" placeholder="(Schedule of Initial Meeting)"></textarea>
+                        </div>
+
+                        <div>
+                            <textarea class="doc-textarea" placeholder="(Deadline of submission of Initial Documents requested)"></textarea>
+                        </div>
+
+                        <div class="pt-10">
+                            <input type="text" value="MARY ROSE VILCHEZ-MARIANO" title="Edit Signatory" class="doc-input w-72 font-bold font-serif text-[13px] uppercase mb-0.5 text-black">
+                            <p class="text-[13px] font-bold font-serif leading-none mt-1">Director, Internal Audit Service</p>
+                        </div>
+
+                    </div>
+
+                    
+                    <div class="absolute bottom-12 left-0 w-full text-center flex flex-col items-center">
+                        <p class="text-red-600 font-bold text-[11px] tracking-wide font-serif">"Matino, Mahusay at Maaasahan"</p>
+                        <p class="text-red-600 text-[9px] font-serif">Trunkline No. (02) 8876 3454</p>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

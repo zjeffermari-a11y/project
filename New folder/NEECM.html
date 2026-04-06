@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notice of Entry/Exit Conference | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Document specific styling */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px dashed #000;
+            width: 100%;
+            outline: none;
+            font-family: serif;
+            font-size: 13px;
+            padding: 2px 4px;
+        }
+        .doc-input:focus, .doc-input:hover {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #6366f1;
+        }
+
+        .inline-input {
+            background: transparent;
+            border-bottom: 1px solid #000;
+            outline: none;
+            font-family: serif;
+            font-weight: bold;
+            font-size: 12px;
+            text-align: center;
+            padding: 0 4px;
+        }
+        .inline-input:focus {
+            background-color: #eef2ff;
+        }
+        
+        .sig-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-family: serif;
+            font-size: 10px;
+        }
+        .sig-table th {
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #000;
+            padding: 4px;
+            font-weight: bold;
+        }
+        .sig-table td {
+            border: 1px solid #000;
+            padding: 4px;
+        }
+
+        /* Print formatting */
+        @media print {
+            aside, header { display: none !important; }
+            main { background: white !important; overflow: visible !important; }
+            .print-area { box-shadow: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important;}
+            .hide-on-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden" x-data="{}">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0 hide-on-print">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm hide-on-print">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Execution</a> <span>/</span>
+                    <span class="text-indigo-600">Notice of Entry/Exit Conference</span>
+                </nav>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        Print Document
+                    </button>
+                    <button onclick="exportToWord('noticeDocument', 'Notice_of_Entry_Exit_Conference')" class="px-4 py-2 bg-white border border-slate-200 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Export to Word
+                    </button>
+                    <button onclick="exportToExcel('noticeDocument', 'Notice_of_Entry_Exit_Conference')" class="px-4 py-2 bg-white border border-slate-200 text-emerald-600 font-bold text-xs rounded-lg hover:bg-emerald-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        Export to Excel
+                    </button>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all ml-2">
+                        Save Notice
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-10 flex justify-center items-start">
+                
+                <div id="noticeDocument" class="bg-white shadow-2xl w-[794px] min-h-[1123px] px-16 py-12 relative flex flex-col font-serif my-auto print-area text-[12px] leading-relaxed">
+                    
+                    <div class="text-center mb-8">
+                        <p class="text-[9px] leading-tight">Republic of the Philippines</p>
+                        <p class="text-sm font-bold tracking-wide leading-tight uppercase">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                        <p class="text-[9px] leading-tight text-gray-600">DILG-NAPOLCOM Center, EDSA corner Quezon Avenue, West Triangle, Quezon City</p>
+                        <a href="http://www.dilg.gov.ph" class="text-[10px] text-blue-600 hover:underline leading-tight">http://www.dilg.gov.ph</a>
+                    </div>
+
+                    <h2 class="text-center font-bold text-[14px] tracking-widest mb-6">INTERNAL AUDIT SERVICE</h2>
+                    
+                    <h3 class="font-bold text-[13px] tracking-widest mb-4">MEMORANDUM</h3>
+
+                    <div class="grid grid-cols-[100px_10px_1fr] gap-y-4 mb-8 font-bold items-center text-[13px]">
+                        <div>TO/FOR</div><div>:</div>
+                        <div><input type="text" class="doc-input font-bold" placeholder="[Enter Auditee/Recipient]"></div>
+
+                        <div>SUBJECT</div><div>:</div>
+                        <div><input type="text" value="NOTICE OF ENTRY/EXIT CONFERENCE" readonly tabindex="-1" class="bg-transparent border-none outline-none w-full font-bold cursor-default text-black"></div>
+
+                        <div>DATE</div><div>:</div>
+                        <div><input type="text" class="doc-input font-bold" placeholder="[Enter Date]"></div>
+                    </div>
+
+                    <hr class="border-t-[1.5px] border-black mb-6">
+
+                    <div class="flex-1 space-y-5 text-justify">
+                        
+                        <div>
+                            <p class="italic text-gray-600 text-[11px] mb-1">(for entry conference)</p>
+                            <p class="indent-8">
+                                Pursuant to Department Order No. <input type="text" class="inline-input w-20"> dated <input type="text" class="inline-input w-24"> and the Audit Notification Memorandum dated <input type="text" class="inline-input w-24">, IAS is set to conduct <input type="text" class="inline-input w-48 text-center" placeholder="(audit engagement title)"> on <input type="text" class="inline-input w-24"> to <input type="text" class="inline-input w-24">.
+                            </p>
+                        </div>
+
+                        <div>
+                            <p class="italic text-gray-600 text-[11px] mb-1">(for exit conference)</p>
+                            <p class="indent-8">
+                                Pursuant to Department Order No. <input type="text" class="inline-input w-20">, the DILG Internal Audit Service conducted the <input type="text" class="inline-input w-48 text-center" placeholder="(audit engagement title)">. The DILG IAS Team has conducted the audit from <input type="text" class="inline-input w-24"> to <input type="text" class="inline-input w-24">. We have already completed the verification and validation activities from <input type="text" class="inline-input w-20"> to <input type="text" class="inline-input w-20"> and are now preparing the Highlights of Audit Findings for presentation.
+                            </p>
+                        </div>
+
+                        <p class="indent-8">
+                            Accordingly, may we invite you to an entry/exit conference with the following agenda: <span class="italic">(for entry conference)</span> to confirm the agreement of all participants to the audit plan, to introduce the audit team and their roles, to ensure that all planned activities included in the audit plan can be performed, and to discuss previous audit recommendations, if any. <span class="italic">(for exit conference)</span> to discuss the highlights of the audit findings with the auditee and/or the responsible official who has sufficient knowledge about the audit area; and to get the auditee's comments (management comments) and insights about the significant audit issues as a way of validating the audit findings. The following are the details:
+                        </p>
+
+                        <ul class="list-disc pl-16 space-y-1">
+                            <li><strong>Date:</strong> <input type="text" class="inline-input w-32"></li>
+                            <li><strong>Time:</strong> <input type="text" class="inline-input w-32"></li>
+                            <li><strong>Venue:</strong> <span class="italic">(Physical and Virtual Meeting)</span> <input type="text" class="inline-input w-48"></li>
+                            <li><strong>Expected Participants:</strong> <input type="text" class="inline-input w-64"></li>
+                            <li><strong>Needed Logistic Support from the Auditee</strong> <span class="italic text-[11px]">(for 2nd level entry conference only)</span>: <input type="text" class="inline-input w-32"></li>
+                        </ul>
+
+                        <p class="indent-8">
+                            We have attached an Entry Conference Briefer for further details <span class="italic">(only for entry conference)</span>. Kindly accomplish the Attendance Confirmation Sheet (list down the expected participants) which can be accessed at this link: <input type="text" class="inline-input w-48">. Mr./Ms. <input type="text" class="inline-input w-32"> will be coordinating with your office. He/she can be reached at <input type="text" class="inline-input w-48" placeholder="(email add and telephone)"> for other queries/concerns.
+                        </p>
+
+                        <p class="mt-6">Thank you for your usual support and cooperation.</p>
+
+                        <div class="mt-8">
+                            <input type="text" class="bg-transparent border-none outline-none font-bold text-[13px] w-64" placeholder="[Enter Name]">
+                            <p class="text-[12px]">IAS Head/Team Leader</p>
+                        </div>
+                    </div>
+
+                    <div class="text-center text-[9px] text-gray-600 mt-12 mb-6 leading-tight">
+                        <p>DILG Internal Audit Service</p>
+                        <p>DILG NAPOLCOM Center, EDSA Corner Quezon Avenue, QC</p>
+                        <p class="text-blue-600 font-bold underline">ias.dilg@gmail.com</p>
+                        <p>02-82865952 / 02-876-3454 Local 5302/5305</p>
+                    </div>
+
+                    <hr class="border-t border-black mb-6">
+
+                    <table class="sig-table">
+                        <thead>
+                            <tr>
+                                <th>Prepared by</th>
+                                <th>Reviewed by</th>
+                                <th>Approved by</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="pt-10 pb-2">
+                                    <input type="text" value="JESSICA M. BAYLON" class="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]">
+                                </td>
+                                <td class="pt-10 pb-2">
+                                    <input type="text" value="MA. SUSAN B. RABASA/ATTY. BENJAMIN J. ZABALA, JR." class="w-full text-center font-bold bg-transparent outline-none uppercase text-[9px]">
+                                </td>
+                                <td class="pt-10 pb-2">
+                                    <input type="text" value="MARY ROSE L. VILCHEZ" class="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]">
+                                </td>
+                            </tr>
+                            <tr class="font-bold">
+                                <td>Process Owner</td>
+                                <td>Division Chiefs</td>
+                                <td>IAS Deputy QMR</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // TRUE EXCEL EXPORT USING SHEETJS
+        function exportToExcel(elementID, filename = 'Notice_of_Entry_Exit_Conference') {
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Convert inline inputs to plain text
+            var inputs = clone.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+                var valStr = input.value || "__________";
+                var val = document.createTextNode(valStr);
+                input.parentNode.replaceChild(val, input);
+            });
+
+            // Convert paragraphs into a table structure so Excel can read it cleanly
+            var htmlData = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
+            
+            // Add the text content
+            var content = clone.innerText || clone.textContent;
+            
+            // For a Memo, Excel export is tricky, so we build a simple 1-column table out of the paragraphs
+            var paragraphs = clone.querySelectorAll('p, div, li, h2, h3');
+            var tableHTML = "<table border='0'>";
+            paragraphs.forEach(function(p) {
+                // Ignore empty or structural divs
+                if(p.innerText.trim().length > 0 && p.tagName !== 'DIV') {
+                    tableHTML += "<tr><td>" + p.innerText + "</td></tr>";
+                }
+            });
+            
+            // Add the Signatures table
+            var sigTable = clone.querySelector('table.sig-table');
+            if(sigTable) {
+                tableHTML += "<tr><td>&nbsp;</td></tr>";
+                tableHTML += sigTable.outerHTML;
+            }
+            
+            tableHTML += "</table>";
+            htmlData += tableHTML + "</body></html>";
+
+            // Create download link
+            var dataType = 'application/vnd.ms-excel';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob){
+                var blob = new Blob(['\ufeff', htmlData], { type: dataType });
+                navigator.msSaveOrOpenBlob(blob, filename + '.xls');
+            } else {
+                downloadLink.href = 'data:' + dataType + ', ' + encodeURIComponent(htmlData);
+                downloadLink.download = filename + '.xls';
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+
+        // Export whole document to Word
+        function exportToWord(elementID, filename = ''){
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+            var postHtml = "</body></html>";
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Convert inline inputs to plain text elements for Word structure
+            var inputs = clone.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+                var span = document.createElement('span');
+                span.innerText = input.value ? " " + input.value + " " : " ____________ ";
+                span.style.fontWeight = "bold";
+                span.style.textDecoration = "underline";
+                input.parentNode.replaceChild(span, input);
+            });
+
+            var html = preHtml + clone.innerHTML + postHtml;
+
+            var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

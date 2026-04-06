@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audit Registration | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        [x-cloak] { display: none !important; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+
+    <div class="flex h-screen overflow-hidden" x-data="{ doNumber: '', offices: [], newOffice: '', leadAuditors: [], newLeadAuditor: '', members: [], newMember: '' }">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Lyra+Zel+Bedayo&background=6366f1&color=fff" class="w-10 h-10 rounded-xl mb-4 border border-slate-700">
+            
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white border-b border-slate-200 px-10 py-6 shrink-0 z-10">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
+                    <a href="/dashboard" class="hover:text-indigo-600">Home</a> <span>/</span>
+                    <span class="text-indigo-600">New Registration</span>
+                </nav>
+                <h1 class="text-3xl font-black text-slate-800">Register New Audit</h1>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-8 bg-slate-50">
+                <div class="max-w-4xl mx-auto">
+                    <form action="#" method="POST" class="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                        
+                        <div class="p-8 border-b border-slate-100 space-y-6">
+                            <h2 class="text-lg font-black text-slate-800 flex items-center gap-2">
+                                <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-600 flex items-center justify-center text-sm">1</span>
+                                General Information
+                            </h2>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Number <span class="text-red-500">*</span></label>
+                                    <input type="text" x-model="doNumber" placeholder="e.g. DO-2026-001" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">AE Number</label>
+                                    <input type="text" :value="doNumber ? doNumber.replace('DO', 'AE') : ''" readonly class="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-xl px-4 py-3 cursor-not-allowed">
+                                </div>
+
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Title <span class="text-red-500">*</span></label>
+                                    <input type="text" placeholder="Enter Directive Order Title..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                </div>
+
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Engagement Title <span class="text-red-500">*</span></label>
+                                    <input type="text" placeholder="Enter Engagement Title..." class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                </div>
+
+                                <div class="col-span-2">
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Auditee Offices <span class="text-red-500">*</span></label>
+                                    <div class="flex gap-2 mb-3">
+                                        <input type="text" x-model="newOffice" @keydown.enter.prevent="if(newOffice) { offices.push(newOffice); newOffice = '' }" placeholder="Add office..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                        <button type="button" @click="if(newOffice) { offices.push(newOffice); newOffice = '' }" class="bg-indigo-600 text-white px-6 rounded-xl font-bold hover:bg-indigo-700 transition-all">+</button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="(office, index) in offices" :key="index">
+                                            <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-sm font-bold">
+                                                <span x-text="office"></span>
+                                                <button type="button" @click="offices.splice(index, 1)" class="text-indigo-400 hover:text-indigo-600 font-bold">&times;</button>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Lead Auditor <span class="text-red-500">*</span></label>
+                                    <div class="flex gap-2 mb-3">
+                                        <input type="text" x-model="newLeadAuditor" @keydown.enter.prevent="if(newLeadAuditor) { leadAuditors.push(newLeadAuditor); newLeadAuditor = '' }" placeholder="Add Lead Auditor..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                        <button type="button" @click="if(newLeadAuditor) { leadAuditors.push(newLeadAuditor); newLeadAuditor = '' }" class="bg-indigo-600 text-white px-4 rounded-xl font-bold hover:bg-indigo-700 transition-all">+</button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="(lead, index) in leadAuditors" :key="index">
+                                            <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-sm font-bold">
+                                                <span x-text="lead"></span>
+                                                <button type="button" @click="leadAuditors.splice(index, 1)" class="text-indigo-400 hover:text-indigo-600 font-bold">&times;</button>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Audit Team Members</label>
+                                    <div class="flex gap-2 mb-3">
+                                        <input type="text" x-model="newMember" @keydown.enter.prevent="if(newMember) { members.push(newMember); newMember = '' }" placeholder="Add member..." class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                        <button type="button" @click="if(newMember) { members.push(newMember); newMember = '' }" class="bg-slate-800 text-white px-4 rounded-xl font-bold hover:bg-slate-900 transition-all">+</button>
+                                    </div>
+                                    <div class="flex flex-wrap gap-2">
+                                        <template x-for="(member, index) in members" :key="index">
+                                            <span class="inline-flex items-center gap-2 px-3 py-1.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-sm font-bold">
+                                                <span x-text="member"></span>
+                                                <button type="button" @click="members.splice(index, 1)" class="text-slate-400 hover:text-slate-600 font-bold">&times;</button>
+                                            </span>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-8 border-b border-slate-100">
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date <span class="text-red-500">*</span></label>
+                                    <input type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Planned Start Date</label>
+                                    <input type="date" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-8 bg-white flex items-center justify-end gap-4">
+                            <button type="button" class="px-6 py-3 font-bold text-sm text-slate-400 hover:text-slate-600 transition-all">Cancel</button>
+                            <button type="submit" class="px-10 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold text-sm shadow-lg shadow-indigo-200 transition-all active:scale-95">Register Audit</button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </main>
+    </div>
+
+</body>
+</html>

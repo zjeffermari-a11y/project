@@ -18,6 +18,9 @@ export default function AuditToolWrapper({
     isSaving,
     lastSaved,
     readOnly = false,
+    versions = [],
+    selectedVersionId = null,
+    onVersionSelect = null,
 }) {
     const navigate = useNavigate();
 
@@ -99,7 +102,25 @@ export default function AuditToolWrapper({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
+                    {/* Version Switcher */}
+                    {versions.length > 0 && onVersionSelect && (
+                        <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800 border border-slate-700 rounded-xl">
+                            <Clock className="w-3.5 h-3.5 text-slate-400" />
+                            <select 
+                                value={selectedVersionId || (versions[0]?.id || '')}
+                                onChange={(e) => onVersionSelect(e.target.value)}
+                                className="bg-transparent text-[10px] font-black uppercase tracking-widest text-indigo-300 outline-none cursor-pointer"
+                            >
+                                {versions.map((v, i) => (
+                                    <option key={v.id} value={v.id} className="bg-slate-800 text-white">
+                                        {i === 0 ? 'LATEST VERSION' : `DRAFT: ${new Date(v.created_at).toLocaleString()}`}
+                                    </option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
+
                     {readOnly && (
                         <span className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/50 border border-amber-700 text-amber-300 text-[10px] font-black uppercase tracking-widest rounded-lg">
                             <Eye className="w-3.5 h-3.5" />
@@ -108,7 +129,7 @@ export default function AuditToolWrapper({
                     )}
                     {lastSaved && (
                         <span className="text-slate-500 text-[10px] font-bold italic pr-2">
-                            Saved {lastSaved}
+                            Last Save: {lastSaved}
                         </span>
                     )}
                     <button
@@ -140,11 +161,12 @@ export default function AuditToolWrapper({
                             className="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white rounded-lg text-[11px] font-black uppercase tracking-widest flex items-center gap-2 transition-colors shadow-lg shadow-indigo-900/50"
                         >
                             <Save className="w-3.5 h-3.5" />
-                            {isSaving ? 'Saving...' : 'Save'}
+                            {isSaving ? 'Saving...' : 'Save Draft'}
                         </button>
                     )}
                 </div>
             </header>
+
 
             {/* Document Area */}
             <main className="flex-1 overflow-auto p-8 custom-scrollbar" style={{ '--scrollbar-thumb': '#475569', '--scrollbar-track': '#1e293b' }}>

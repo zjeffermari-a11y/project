@@ -7,6 +7,8 @@ const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_t
 export default function AuditAreaProfile({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [formData, setFormData] = useState({
         aapRef: `AAP-${new Date().getFullYear()}-001`,
         auditArea: '',
@@ -33,24 +35,52 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagement.id}/tools/aap`);
-                if (res.data?.form_data) setFormData(fd => ({ ...fd, ...res.data.form_data }));
-            } catch (_) { /* no saved data yet */ }
-        };
-        load();
+        fetchVersions();
+        loadLatest();
     }, [engagement.id]);
+
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/aap/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/aap`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSelectedVersionId(res.data.id);
+            }
+        } catch (_) { /* no saved data yet */ }
+    };
+
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const res = await api.get(`/documents/${versionId}/download`); // Re-using download logic if it returns JSON or similar
+            // Wait, the regular getToolData returns latest. We need a way to get a specific document ID's data.
+            // For now, let's assume we might need a specific endpoint or use existing.
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/engagements/${engagement.id}/tools/aap`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/aap`, {
                 form_data: formData,
                 document_type: 'Audit Area Profile (AAP)',
                 phase: 'planning',
             });
             setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions(); // Refresh history
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
     };
@@ -135,6 +165,9 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
         >
             <div id="aap-document" className="audit-tool-paper bg-white shadow-2xl w-[1000px] mx-auto my-6 px-16 py-12 font-serif">
 

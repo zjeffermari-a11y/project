@@ -7,6 +7,8 @@ const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_t
 export default function InventoryMOVs({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [formData, setFormData] = useState({
         iomRef: `IOM-${new Date().getFullYear()}-001`,
         auditArea: '',
@@ -18,14 +20,37 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagement.id}/tools/iom`);
-                if (res.data?.form_data) setFormData(fd => ({ ...fd, ...res.data.form_data }));
-            } catch (_) {}
-        };
-        load();
+        fetchVersions();
+        loadLatest();
     }, [engagement.id]);
+
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/iom/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/iom`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSelectedVersionId(res.data.id);
+            }
+        } catch (_) { /* no saved data yet */ }
+    };
+
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
     const setRow = (key, ri, ci, val) => setFormData(fd => ({
@@ -37,12 +62,14 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/engagements/${engagement.id}/tools/iom`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/iom`, {
                 form_data: formData,
                 document_type: 'Inventory of MOVs (IM)',
                 phase: 'planning',
             });
             setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions();
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
     };
@@ -98,6 +125,9 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
         >
             <div id="iom-document" className="audit-tool-paper bg-white shadow-2xl w-[900px] mx-auto my-6 px-12 py-12 font-serif min-h-[1123px]">
                 <div className="flex items-center gap-4 mb-10">

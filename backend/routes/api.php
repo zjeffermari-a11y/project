@@ -36,6 +36,7 @@ Route::middleware('auth:sanctum')->group(function () {
         // Audit Tool Data (JSON form data)
         Route::post('/engagements/{engagement}/tools/{toolKey}', [App\Http\Controllers\Api\DocumentController::class , 'saveToolData']);
         Route::get('/engagements/{engagement}/tools/{toolKey}', [App\Http\Controllers\Api\DocumentController::class , 'getToolData']);
+        Route::get('/engagements/{engagement}/tools/{toolKey}/versions', [App\Http\Controllers\Api\DocumentController::class , 'getToolVersions']);
         
         // Audit Trail
         Route::get('/engagements/{engagement}/activity-logs', [App\Http\Controllers\Api\EngagementController::class , 'activityLogs']);

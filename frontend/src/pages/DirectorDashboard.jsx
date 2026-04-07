@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft, Bell } from 'lucide-react';
@@ -30,6 +30,7 @@ export default function DirectorDashboard() {
     const [members, setMembers] = useState([]);
 
     const navigate = useNavigate();
+    const masterfileRef = useRef(null);
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
@@ -170,19 +171,19 @@ export default function DirectorDashboard() {
     const allActivities = [];
     engagements.forEach(eng => {
         if (eng.created_at) {
-            allActivities.push({ id: `eng-${eng.id}`, type: 'engagement', title: eng.title, action: 'Created', user: 'System', date: new Date(eng.created_at) });
+            allActivities.push({ id: `eng-${eng.id}`, engagementId: eng.id, type: 'engagement', title: eng.title, action: 'Created', user: 'System', date: new Date(eng.created_at) });
         }
         if (eng.movs) {
             eng.movs.forEach(mov => {
                 if (mov.updated_at && mov.status !== 'pending') {
-                    allActivities.push({ id: `mov-${mov.id}`, type: 'mov', title: `MOV: ${mov.requirement_name}`, action: mov.status === 'approved' ? 'Approved' : mov.status === 'returned' ? 'Returned' : 'Updated', user: mov.auditee?.name || 'User', date: new Date(mov.updated_at) });
+                    allActivities.push({ id: `mov-${mov.id}`, engagementId: eng.id, type: 'mov', title: `MOV: ${mov.requirement_name}`, action: mov.status === 'approved' ? 'Approved' : mov.status === 'returned' ? 'Returned' : 'Updated', user: mov.auditee?.name || 'User', date: new Date(mov.updated_at) });
                 }
             });
         }
         if (eng.documents) {
             eng.documents.forEach(doc => {
                 if (doc.created_at) {
-                    allActivities.push({ id: `doc-${doc.id}`, type: 'document', title: doc.name, action: 'Uploaded', user: doc.uploader?.name || 'Unknown', date: new Date(doc.created_at) });
+                    allActivities.push({ id: `doc-${doc.id}`, engagementId: eng.id, type: 'document', title: doc.name, action: 'Uploaded', user: doc.uploader?.name || 'Unknown', date: new Date(doc.created_at) });
                 }
             });
         }
@@ -268,10 +269,16 @@ export default function DirectorDashboard() {
                         
                         {/* KPI Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-50 rounded-full opacity-50 pointer-events-none"></div>
+                            <div 
+                                onClick={() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' })}
+                                className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-indigo-300 transition-all group"
+                            >
+                                <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Total Active Audits</p>
                                 <p className="text-5xl font-black text-slate-800 tracking-tight relative z-10">{stats.totalEngagements}</p>
+                                <div className="mt-4 flex items-center gap-1 text-indigo-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Masterfile <ChevronRight className="w-3 h-3" />
+                                </div>
                             </div>
                             <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
                                 <div className="absolute -right-6 -top-6 w-32 h-32 bg-emerald-50 rounded-full opacity-50 pointer-events-none"></div>
@@ -347,7 +354,7 @@ export default function DirectorDashboard() {
                         {/* Masterfile Directory */}
                         <div className="flex flex-col xl:flex-row gap-6 items-start">
                             <div className="flex-1 w-full min-w-0">
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
+                                <h2 ref={masterfileRef} className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2 scroll-mt-8">
                                     <Database className="w-5 h-5 text-indigo-500" />
                                     Masterfile Directory
                                     {filter !== 'all' && (
@@ -427,8 +434,8 @@ export default function DirectorDashboard() {
                                      
                                      <div className="space-y-4 flex-1">
                                          {recentActivities.map(act => (
-                                             <div key={act.id} className="border-b border-indigo-800/50 pb-3 last:border-0 last:pb-0">
-                                                 <p className="text-[10px] text-indigo-200 mb-1"><span className="font-bold text-white">{act.user}</span> {act.action.toLowerCase()}</p>
+                                             <div key={act.id} onClick={() => navigate('/auditor/workspace/' + act.engagementId)} className="border-b border-indigo-800/50 pb-3 last:border-0 last:pb-0 cursor-pointer hover:bg-white/5 transition-colors group">
+                                                 <p className="text-[10px] text-indigo-200 mb-1 group-hover:text-white transition-colors"><span className="font-bold text-white">{act.user}</span> {act.action.toLowerCase()}</p>
                                                  <p className="text-sm font-bold text-white truncate" title={act.title}>{act.title}</p>
                                                  <p className="text-[9px] text-indigo-400 font-medium mt-1 uppercase tracking-widest">{act.date.toLocaleString()}</p>
                                              </div>
@@ -467,14 +474,17 @@ export default function DirectorDashboard() {
                             <div className="p-10 max-h-[60vh] overflow-y-auto w-full">
                                 <div className="space-y-6">
                                     {allActivities.map(act => (
-                                        <div key={act.id} className="flex gap-4 items-start border-b border-slate-100 pb-6 last:border-0 last:pb-0">
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${act.type === 'document' ? 'bg-indigo-100 text-indigo-600' : act.type === 'mov' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
+                                        <div key={act.id} onClick={() => navigate('/auditor/workspace/' + act.engagementId)} className="flex gap-4 items-start border-b border-slate-100 pb-6 last:border-0 last:pb-0 cursor-pointer hover:bg-slate-50 transition-colors p-4 rounded-2xl group">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 transition-transform group-hover:scale-110 ${act.type === 'document' ? 'bg-indigo-100 text-indigo-600' : act.type === 'mov' ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}`}>
                                                 {act.type === 'document' ? <FileText className="w-5 h-5" /> : act.type === 'mov' ? <CheckCircle className="w-5 h-5"/> : <Database className="w-5 h-5" />}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm text-slate-500"><span className="font-bold text-slate-800">{act.user}</span> {act.action.toLowerCase()} {act.type === 'document' ? 'file' : act.type === 'mov' ? 'MOV' : 'engagement'}</p>
                                                 <p className="text-base font-black text-slate-800 mt-1">{act.title}</p>
-                                                <p className="text-xs font-bold text-slate-400 mt-2">{act.date.toLocaleString()}</p>
+                                                <div className="flex items-center justify-between">
+                                                    <p className="text-xs font-bold text-slate-400 mt-2">{act.date.toLocaleString()}</p>
+                                                    <span className="text-indigo-600 text-[10px] font-black uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">Go to Workspace &rarr;</span>
+                                                </div>
                                             </div>
                                         </div>
                                     ))}

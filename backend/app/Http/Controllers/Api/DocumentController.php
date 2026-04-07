@@ -101,7 +101,7 @@ class DocumentController extends Controller
 
     /**
      * Save the JSON form data for an interactive audit tool.
-     * Creates a new document record or updates the existing one.
+     * Creates a new document record every time (versioning/multi-draft).
      */
     public function saveToolData(Request $request, $engagementId, $toolKey)
     {
@@ -111,30 +111,43 @@ class DocumentController extends Controller
             'phase' => 'required|string',
         ]);
 
-        $document = Document::updateOrCreate(
-            [
-                'engagement_id' => $engagementId,
-                'tool_key' => $toolKey,
-                'uploaded_by' => Auth::id(),
-            ],
-            [
-                'file_name' => strtoupper($toolKey) . '_' . $engagementId . '.json',
-                'file_path' => '',
-                'status' => 'draft',
-                'document_type' => $request->document_type,
-                'phase' => $request->phase,
-                'form_data' => $request->form_data,
-            ]
-        );
-
-        $document->history()->create([
-            'performed_by' => Auth::id(),
-            'action' => 'tool_saved',
-            'notes' => 'Interactive tool form data saved.'
+        // We use create() instead of updateOrCreate() to support multiple drafts
+        $document = Document::create([
+            'engagement_id' => $engagementId,
+            'tool_key' => $toolKey,
+            'uploaded_by' => Auth::id(),
+            'file_name' => strtoupper($toolKey) . '_' . $engagementId . '_' . time() . '.json',
+            'file_path' => '',
+            'status' => 'draft',
+            'document_type' => $request->document_type,
+            'phase' => $request->phase,
+            'form_data' => $request->form_data,
         ]);
 
-        return response()->json($document->load(['uploader', 'history.performer']), 200);
+        // Log history
+        $document->history()->create([
+            'performed_by' => Auth::id(),
+            'action' => 'saved_draft',
+            'notes' => 'Saved ' . $toolKey . ' draft version'
+        ]);
+
+        return response()->json($document->load(['uploader', 'history.performer']), 201);
     }
+
+    /**
+     * Get all saved versions for a specific tool in an engagement.
+     */
+    public function getToolVersions($engagementId, $toolKey)
+    {
+        $versions = Document::where('engagement_id', $engagementId)
+            ->where('tool_key', $toolKey)
+            ->whereNotNull('form_data')
+            ->orderBy('created_at', 'desc')
+            ->get(['id', 'file_name', 'created_at', 'status']);
+
+        return response()->json($versions);
+    }
+
 
     /**
      * Get the latest saved JSON form data for an interactive audit tool.

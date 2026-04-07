@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 
@@ -131,14 +131,26 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
                 </div>
 
                 <div className="grid grid-cols-[180px_10px_400px] gap-y-1 mb-6 text-[11px] font-bold items-center">
-                    {[['WT Reference No.','wtRef',false],['Audit Engagement No.','ae_number',true],['Agency/Office','agency',false],['Title of Process/System','titleProcess',false],['Walkthrough Participant(s)','participant',false],['Walkthrough Date/s','dates',false]].map(([lbl,field,system]) => (
-                        <>
-                            <div key={`l-${field}`}>{lbl}</div>
-                            <div key={`c-${field}`}>:</div>
-                            <div key={`v-${field}`}>
-                                <input type="text" className="doc-input font-bold" value={system ? (engagement[field]||'') : formData[field]} onChange={e=>!system&&set(field,e.target.value)} disabled={system||readOnly} />
+                    {[
+                        ['WT Reference No.', 'wtRef', false],
+                        ['Audit Engagement No.', 'ae_number', true],
+                        ['Audit Engagement Title', 'title', true],
+                        ['Auditee Office/s', 'auditee_offices', true],
+                        ['Title of Process/System', 'titleProcess', false],
+                        ['Walkthrough Participant(s)', 'participant', false],
+                        ['Walkthrough Date/s', 'dates', false]
+                    ].map(([lbl, field, system]) => (
+                        <Fragment key={field}>
+                            <div>{lbl}</div>
+                            <div>:</div>
+                            <div>
+                                {field === 'auditee_offices' ? (
+                                    <input type="text" className="doc-input font-bold text-indigo-700 uppercase" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled />
+                                ) : (
+                                    <input type="text" className="doc-input font-bold uppercase" value={system ? (engagement[field] || '') : formData[field]} onChange={e => !system && set(field, e.target.value)} disabled={system || readOnly} />
+                                )}
                             </div>
-                        </>
+                        </Fragment>
                     ))}
                 </div>
 
@@ -157,7 +169,7 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
                             </tr>
                             {formData.iccRows.map((row, ri) => (
                                 <tr key={ri}>
-                                    <td className="text-center font-bold border border-black">{ri+1}</td>
+                                    <td className="text-center font-bold border border-black small">{ri}</td>
                                     {[['ccRef','text','text-center'],['activity','textarea',null],['attributes','textarea',null],['movs','textarea',null],['procedure','textarea',null],['docs','textarea',null],['notes','textarea',null]].map(([f,type,cls])=>(
                                         <td key={f} className="border border-black">
                                             {type==='textarea'
@@ -187,7 +199,7 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
                             </tr>
                             {formData.processRows.map((row, ri) => (
                                 <tr key={ri}>
-                                    <td className="text-center font-bold border border-black">{ri+1}</td>
+                                    <td className="text-center font-bold border border-black small">{ri}</td>
                                     {[['actNo','text','text-center'],['activity','textarea',null],['attributes','textarea',null],['movs','textarea',null],['procedure','textarea',null],['docs','textarea',null],['notes','textarea',null]].map(([f,type,cls])=>(
                                         <td key={f} className="border border-black">
                                             {type==='textarea'

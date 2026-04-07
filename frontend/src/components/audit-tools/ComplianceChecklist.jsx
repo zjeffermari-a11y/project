@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 
@@ -119,14 +119,25 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                 </div>
 
                 <div className="grid grid-cols-[180px_10px_1fr] gap-y-2 mb-8 text-xs font-bold items-center max-w-3xl">
-                    {[['CC Reference No.','ccRef',false],['Audit Engagement No.','ae_number',true],['Audit Engagement Title','title',true],['Audit Duration','auditDuration',false],['Audit Objective/s','auditObjectives',false]].map(([lbl,field,system]) => (
-                        <>
-                            <div key={`l-${field}`}>{lbl}</div>
-                            <div key={`c-${field}`}>:</div>
-                            <div key={`v-${field}`}>
-                                <input type="text" className="doc-input font-bold" value={system ? (engagement[field]||'') : formData[field]} onChange={e=>!system&&set(field,e.target.value)} disabled={system||readOnly} />
+                    {[
+                        ['CC Reference No.', 'ccRef', false],
+                        ['Audit Engagement No.', 'ae_number', true],
+                        ['Audit Engagement Title', 'title', true],
+                        ['Auditee Office/s', 'auditee_offices', true],
+                        ['Audit Duration', 'auditDuration', false],
+                        ['Audit Objective/s', 'auditObjectives', false]
+                    ].map(([lbl, field, system]) => (
+                        <Fragment key={field}>
+                            <div>{lbl}</div>
+                            <div>:</div>
+                            <div>
+                                {field === 'auditee_offices' ? (
+                                    <input type="text" className="doc-input font-bold text-indigo-700 uppercase" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled />
+                                ) : (
+                                    <input type="text" className="doc-input font-bold uppercase" value={system ? (engagement[field] || '') : formData[field]} onChange={e => !system && set(field, e.target.value)} disabled={system || readOnly} />
+                                )}
                             </div>
-                        </>
+                        </Fragment>
                     ))}
                 </div>
 

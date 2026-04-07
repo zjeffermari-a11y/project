@@ -186,9 +186,11 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
                     <div>AAP Reference No.</div><div>:</div>
                     <div><I val={formData.aapRef} onChange={v=>set('aapRef',v)} cls="font-bold" /></div>
                     <div>Audit Engagement No.</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'System Generated'} disabled /></div>
+                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'AE-202X-XXX'} disabled /></div>
                     <div>Audit Engagement Title</div><div>:</div>
                     <div><input type="text" className="doc-input font-bold" value={engagement.title || ''} disabled /></div>
+                    <div>Auditee Office/s</div><div>:</div>
+                    <div><input type="text" className="doc-input font-bold text-indigo-700" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled /></div>
                     <div>Audit Area</div><div>:</div>
                     <div><I val={formData.auditArea} onChange={v=>set('auditArea',v)} cls="font-bold" /></div>
                 </div>

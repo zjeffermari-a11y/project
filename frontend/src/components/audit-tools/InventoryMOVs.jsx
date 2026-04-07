@@ -143,13 +143,13 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                     <div>IoM Reference No.</div><div>:</div>
                     <div><input type="text" className="doc-input font-bold" value={formData.iomRef} onChange={e=>set('iomRef',e.target.value)} disabled={readOnly} /></div>
                     <div>Audit Engagement No.</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'System Generated'} disabled /></div>
-                    <div>Audit Engagement Title/Date</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.title || ''} disabled /></div>
-                    <div>Audit Area</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={formData.auditArea} onChange={e=>set('auditArea',e.target.value)} disabled={readOnly} /></div>
+                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'AE-202X-XXX'} disabled /></div>
+                    <div>Audit Engagement Title</div><div>:</div>
+                    <div><input type="text" className="doc-input font-bold uppercase" value={engagement.title || ''} disabled /></div>
+                    <div>Auditee Office/s</div><div>:</div>
+                    <div><input type="text" className="doc-input font-bold text-indigo-700" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled /></div>
                     <div>Audit Team</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={formData.auditTeam} onChange={e=>set('auditTeam',e.target.value)} disabled={readOnly} /></div>
+                    <div><input type="text" className="doc-input font-bold" value={engagement.users?.map(u => u.name).join(', ') || 'IAS TEAM'} disabled /></div>
                 </div>
 
                 <table className="iom-table mb-6">

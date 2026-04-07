@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 
@@ -140,12 +140,24 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
                 </div>
 
                 <div className="grid grid-cols-[180px_10px_400px] gap-y-1 mb-8 text-xs font-bold items-center">
-                    <div>OAC Reference No.</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={formData.oacRef} onChange={e=>set('oacRef',e.target.value)} disabled={readOnly} /></div>
-                    <div>Audit Engagement No.</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'System Generated'} disabled /></div>
-                    <div>Audit Engagement Title</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.title || ''} disabled /></div>
+                    {[
+                        ['OAC Reference No.', 'oacRef', false],
+                        ['Audit Engagement No.', 'ae_number', true],
+                        ['Audit Engagement Title', 'title', true],
+                        ['Auditee Office/s', 'auditee_offices', true],
+                    ].map(([lbl, field, system]) => (
+                        <Fragment key={field}>
+                            <div>{lbl}</div>
+                            <div>:</div>
+                            <div>
+                                {field === 'auditee_offices' ? (
+                                    <input type="text" className="doc-input font-bold text-indigo-700 uppercase" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled />
+                                ) : (
+                                    <input type="text" className="doc-input font-bold uppercase" value={system ? (engagement[field] || '') : formData[field]} onChange={e => !system && set(field, e.target.value)} disabled={system || readOnly} />
+                                )}
+                            </div>
+                        </Fragment>
+                    ))}
                     <div className="italic">Audit Objective/s</div><div>:</div>
                     <div className="flex items-center w-[600px]">
                         <span className="italic underline text-[11px] whitespace-nowrap">To evaluate input, process, output and outcome as to economy, efficiency, ethicality and effectiveness of the</span>
@@ -181,12 +193,9 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
                                         <td></td>
                                         <td colSpan="7">{cat.label}</td>
                                     </tr>
-                                    {formData.rows[cat.label]?.map((row, ri) => {
-                                        itemNo++;
-                                        return (
-                                            <CheckRow key={ri} num={itemNo} row={row} onChange={(f,v)=>setRow(cat.label,ri,f,v)} readOnly={readOnly} />
-                                        );
-                                    })}
+                                    {formData.rows[cat.label]?.map((row, ri) => (
+                                        <CheckRow key={ri} num={itemNo++} row={row} onChange={(f,v)=>setRow(cat.label,ri,f,v)} readOnly={readOnly} />
+                                    ))}
                                     {!readOnly && (
                                         <tr className="hide-on-print">
                                             <td colSpan="8" className="p-1">

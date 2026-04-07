@@ -96,7 +96,12 @@ export default function NoticeConference({ engagement, readOnly = false }) {
 
                 <div className="grid grid-cols-[100px_10px_1fr] gap-y-4 mb-8 font-bold items-center">
                     <div>TO/FOR</div><div>:</div>
-                    <div><Field field="recipient" placeholder="[Enter Auditee/Recipient]" /></div>
+                    <div className="flex flex-col">
+                        <input type="text" className="doc-input font-bold text-indigo-700 uppercase" value={formData.recipient || [...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ')} onChange={e=>set('recipient', e.target.value)} disabled={readOnly} />
+                        <span className="text-[9px] text-gray-500 font-normal italic">(Auditee Office/s)</span>
+                    </div>
+                    <div>AE NUMBER</div><div>:</div>
+                    <div><input type="text" className="bg-transparent border-none outline-none w-full font-bold uppercase" value={engagement.ae_number || 'AE-202X-XXX'} disabled /></div>
                     <div>SUBJECT</div><div>:</div>
                     <div><input type="text" className="bg-transparent border-none outline-none w-full font-bold cursor-default" value="NOTICE OF ENTRY/EXIT CONFERENCE" disabled /></div>
                     <div>DATE</div><div>:</div>

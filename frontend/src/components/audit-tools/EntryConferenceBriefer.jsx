@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 
@@ -99,15 +99,27 @@ export default function EntryConferenceBriefer({ engagement, readOnly = false })
 
                 <hr className="border-black border-[1.5px] mb-4" />
 
-                <div className="grid grid-cols-[100px_10px_1fr] gap-y-2 mb-6 text-[13px] font-serif">
-                    {[['Engagement','title',true],['Date','date'],['Time','time'],['Venue','venue'],['Audit Team','auditTeam'],['Auditees','auditees']].map(([lbl,field,system=false]) => (
-                        <>
-                            <div className="font-bold" key={`lbl-${field}`}>{lbl}</div>
-                            <div className="text-center font-bold" key={`colon-${field}`}>:</div>
-                            <div key={`val-${field}`}>
-                                <input type="text" className="doc-input font-bold py-0.5" value={system ? (engagement.title||'') : formData[field]} onChange={e=>!system&&set(field,e.target.value)} disabled={system||readOnly} />
+                <div className="grid grid-cols-[110px_10px_1fr] gap-y-2 mb-6 text-[13px] font-serif items-center">
+                    {[
+                        ['Engagement', 'title', true],
+                        ['AE Number', 'ae_number', true],
+                        ['Auditee Office/s', 'auditee_offices', true],
+                        ['Date', 'date', false],
+                        ['Time', 'time', false],
+                        ['Venue', 'venue', false],
+                        ['Audit Team', 'auditTeam', false]
+                    ].map(([lbl, field, system]) => (
+                        <Fragment key={field}>
+                            <div className="font-bold">{lbl}</div>
+                            <div className="text-center font-bold">:</div>
+                            <div>
+                                {field === 'auditee_offices' ? (
+                                    <input type="text" className="doc-input font-bold text-indigo-700 uppercase" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled />
+                                ) : (
+                                    <input type="text" className="doc-input font-bold uppercase" value={system ? (engagement[field] || '') : formData[field]} onChange={e => !system && set(field, e.target.value)} disabled={system || readOnly} />
+                                )}
                             </div>
-                        </>
+                        </Fragment>
                     ))}
                 </div>
 

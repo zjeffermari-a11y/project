@@ -46,6 +46,12 @@ class EngagementController extends Controller
             'members.*' => 'exists:users,id'
         ]);
 
+        // Generate AE Number: AE-YYYY-XXX
+        $year = date('Y');
+        $count = Engagement::whereYear('created_at', $year)->count() + 1;
+        $aeNumber = "AE-{$year}-" . str_pad($count, 3, '0', STR_PAD_LEFT);
+        $validated['ae_number'] = $aeNumber;
+
         $engagement = Engagement::create($validated);
 
         if (!empty($validated['leadAuditors'])) {

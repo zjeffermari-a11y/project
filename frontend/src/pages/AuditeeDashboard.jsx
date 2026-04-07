@@ -3,8 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle, Folder } from 'lucide-react';
 import iamsLogo from '../assets/IAMS logo.png';
-import LogoutOverlay from '../components/LogoutOverlay';
-import PageTransition from '../components/PageTransition';
+import LogoutOverlay from '../components/ui/LogoutOverlay';
+import PageTransition from '../components/ui/PageTransition';
 export default function AuditeeDashboard() {
     const [engagements, setEngagements] = useState([]);
     const [loading, setLoading] = useState(true);

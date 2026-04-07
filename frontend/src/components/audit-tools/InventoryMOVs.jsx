@@ -10,7 +10,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
     const [versions, setVersions] = useState([]);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [formData, setFormData] = useState({
-        iomRef: `IOM-${new Date().getFullYear()}-001`,
+        iomRef: engagement.ae_number ? `IOM-${engagement.ae_number}` : `IOM-${new Date().getFullYear()}-001`,
         auditArea: '',
         auditTeam: '',
         initialDate: '',
@@ -20,9 +20,12 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
+        if (engagement.ae_number && !formData.iomRef.includes(engagement.ae_number)) {
+            set('iomRef', `IOM-${engagement.ae_number}`);
+        }
         fetchVersions();
         loadLatest();
-    }, [engagement.id]);
+    }, [engagement.id, engagement.ae_number]);
 
     const fetchVersions = async () => {
         try {

@@ -10,7 +10,7 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
     const [versions, setVersions] = useState([]);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [formData, setFormData] = useState({
-        aapRef: `AAP-${new Date().getFullYear()}-001`,
+        aapRef: engagement.ae_number ? `AAP-${engagement.ae_number}` : `AAP-${new Date().getFullYear()}-001`,
         auditArea: '',
         preparedBy: '', reviewedBy: '', notedBy: '',
         // Section tables - stored as arrays of [col1, col2, col3] strings
@@ -35,9 +35,12 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
+        if (engagement.ae_number && !formData.aapRef.includes(engagement.ae_number)) {
+            set('aapRef', `AAP-${engagement.ae_number}`);
+        }
         fetchVersions();
         loadLatest();
-    }, [engagement.id]);
+    }, [engagement.id, engagement.ae_number]);
 
     const fetchVersions = async () => {
         try {
@@ -58,9 +61,6 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
 
     const handleVersionSelect = async (versionId) => {
         try {
-            const res = await api.get(`/documents/${versionId}/download`); // Re-using download logic if it returns JSON or similar
-            // Wait, the regular getToolData returns latest. We need a way to get a specific document ID's data.
-            // For now, let's assume we might need a specific endpoint or use existing.
             const docRes = await api.get(`/engagements/${engagement.id}/documents`);
             const target = docRes.data.find(d => d.id === parseInt(versionId));
             if (target && target.form_data) {
@@ -188,9 +188,9 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
                     <div>Audit Engagement No.</div><div>:</div>
                     <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'AE-202X-XXX'} disabled /></div>
                     <div>Audit Engagement Title</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.title || ''} disabled /></div>
+                    <div><input type="text" className="doc-input font-bold uppercase" value={engagement.title || ''} disabled /></div>
                     <div>Auditee Office/s</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold text-indigo-700" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled /></div>
+                    <div><input type="text" className="doc-input font-bold text-indigo-700 uppercase" value={[...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ') || 'N/A'} disabled /></div>
                     <div>Audit Area</div><div>:</div>
                     <div><I val={formData.auditArea} onChange={v=>set('auditArea',v)} cls="font-bold" /></div>
                 </div>

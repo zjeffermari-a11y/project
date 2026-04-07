@@ -11,7 +11,7 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [formData, setFormData] = useState({
-        wtRef: `WT-${new Date().getFullYear()}-001`,
+        wtRef: engagement.ae_number ? `WT-${engagement.ae_number}` : `WT-${new Date().getFullYear()}-001`,
         agency: '',
         titleProcess: '',
         participant: '',
@@ -29,6 +29,9 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
+        if (engagement.ae_number && !formData.wtRef.includes(engagement.ae_number)) {
+            set('wtRef', `WT-${engagement.ae_number}`);
+        }
         const load = async () => {
             try {
                 const res = await api.get(`/engagements/${engagement.id}/tools/wt`);
@@ -36,7 +39,7 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
             } catch (_) {}
         };
         load();
-    }, [engagement.id]);
+    }, [engagement.id, engagement.ae_number]);
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
     const setQuality = (field, val) => setFormData(fd => ({ ...fd, quality: { ...fd.quality, [field]: val } }));

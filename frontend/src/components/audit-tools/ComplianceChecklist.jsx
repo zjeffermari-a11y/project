@@ -14,7 +14,7 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [formData, setFormData] = useState({
-        ccRef: `CC-${new Date().getFullYear()}-001`,
+        ccRef: engagement.ae_number ? `CC-${engagement.ae_number}` : `CC-${new Date().getFullYear()}-001`,
         auditDuration: '',
         auditObjectives: '',
         rows: Array(5).fill(null).map(emptyRow),
@@ -29,6 +29,9 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
+        if (engagement.ae_number && !formData.ccRef.includes(engagement.ae_number)) {
+            set('ccRef', `CC-${engagement.ae_number}`);
+        }
         const load = async () => {
             try {
                 const res = await api.get(`/engagements/${engagement.id}/tools/ccl`);
@@ -172,7 +175,7 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                         <tbody>
                             {formData.rows.map((row, ri) => (
                                 <tr key={ri}>
-                                    <td className="font-bold align-middle border border-black">{ri+1}</td>
+                                    <td className="font-bold align-middle border border-black">{ri}</td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.policy} onChange={e=>setRow(ri,'policy',e.target.value)} disabled={readOnly} /></td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.requirement} onChange={e=>setRow(ri,'requirement',e.target.value)} disabled={readOnly} /></td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.movs} onChange={e=>setRow(ri,'movs',e.target.value)} disabled={readOnly} /></td>

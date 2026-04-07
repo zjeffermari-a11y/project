@@ -42,13 +42,16 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
     };
 
     const [formData, setFormData] = useState({
-        oacRef: `OAC-${new Date().getFullYear()}-001`,
+        oacRef: engagement.ae_number ? `OAC-${engagement.ae_number}` : `OAC-${new Date().getFullYear()}-001`,
         program: '',
         preparedBy: '', reviewedBy: '', approvedBy: '',
         rows: initRows(),
     });
 
     useEffect(() => {
+        if (engagement.ae_number && !formData.oacRef.includes(engagement.ae_number)) {
+            set('oacRef', `OAC-${engagement.ae_number}`);
+        }
         const load = async () => {
             try {
                 const res = await api.get(`/engagements/${engagement.id}/tools/oac`);
@@ -56,7 +59,7 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
             } catch (_) {}
         };
         load();
-    }, [engagement.id]);
+    }, [engagement.id, engagement.ae_number]);
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
     const setRow = (cat, ri, field, val) => setFormData(fd => ({

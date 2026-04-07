@@ -38,12 +38,15 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
     };
 
     const [formData, setFormData] = useState({
-        macRef: `MAC-${new Date().getFullYear()}-001`,
+        macRef: engagement.ae_number ? `MAC-${engagement.ae_number}` : `MAC-${new Date().getFullYear()}-001`,
         preparedBy: '', reviewedBy: '', approvedBy: '',
         rows: initRows(),
     });
 
     useEffect(() => {
+        if (engagement.ae_number && !formData.macRef.includes(engagement.ae_number)) {
+            set('macRef', `MAC-${engagement.ae_number}`);
+        }
         const load = async () => {
             try {
                 const res = await api.get(`/engagements/${engagement.id}/tools/mac`);
@@ -51,7 +54,7 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
             } catch (_) {}
         };
         load();
-    }, [engagement.id]);
+    }, [engagement.id, engagement.ae_number]);
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
     const setRow = (cat, ri, field, val) => setFormData(fd => ({

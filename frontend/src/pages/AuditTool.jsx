@@ -60,7 +60,7 @@ export default function AuditTool() {
 
     if (loading) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+            <div className="h-screen bg-slate-900 flex items-center justify-center">
                 <div className="text-center">
                     <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                     <p className="text-slate-400 font-bold text-sm uppercase tracking-widest">Loading Audit Tool...</p>
@@ -71,7 +71,7 @@ export default function AuditTool() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+            <div className="h-screen bg-slate-900 flex items-center justify-center">
                 <div className="text-center bg-slate-800 border border-red-800 p-8 rounded-2xl max-w-sm">
                     <p className="text-red-400 font-bold text-sm mb-2">⚠ Error Loading Tool</p>
                     <p className="text-slate-400 text-sm">{error}</p>
@@ -84,7 +84,7 @@ export default function AuditTool() {
 
     if (!ToolComponent) {
         return (
-            <div className="min-h-screen bg-slate-900 flex items-center justify-center">
+            <div className="h-screen bg-slate-900 flex items-center justify-center">
                 <div className="text-center bg-slate-800 border border-slate-700 p-8 rounded-2xl max-w-sm">
                     <p className="text-slate-300 font-bold text-sm mb-2">Unknown Tool</p>
                     <p className="text-slate-500 text-sm">No tool found for key: <code className="bg-slate-900 px-1.5 py-0.5 rounded text-indigo-400">{toolKey}</code></p>

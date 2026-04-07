@@ -527,7 +527,7 @@ export default function GenerateDocument() {
     );
 
     return (
-        <div className="min-h-screen bg-slate-900 flex flex-col">
+        <div className="h-screen bg-slate-900 flex flex-col">
             <style>{`
                 @media print { 
                     @page { margin: 0; size: A4 portrait; }

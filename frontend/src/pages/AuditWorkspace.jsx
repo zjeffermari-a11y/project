@@ -235,7 +235,7 @@ export default function AuditWorkspace() {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
+        <div className="h-screen bg-slate-50 font-sans flex flex-col">
             {/* Header */}
             <header className="bg-slate-900 text-white px-8 py-6 shrink-0 z-10 sticky top-0 shadow-lg">
                 <div className="max-w-7xl mx-auto">

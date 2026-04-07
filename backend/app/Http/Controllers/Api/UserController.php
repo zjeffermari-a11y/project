@@ -17,8 +17,9 @@ class UserController extends Controller
 
     public function auditors()
     {
-        // Return only approved auditors (including directors and division chiefs)
-        $auditors = User::where('role', 'auditor')
+        // Return all approved internal users (Auditors, Chiefs, Directors) 
+        // who can be part of an audit team, excluding Auditees.
+        $auditors = User::where('role', '!=', 'auditee')
             ->where('approval_status', 'approved')
             ->get(['id', 'name', 'email', 'agency_name', 'designation']);
         return response()->json($auditors);

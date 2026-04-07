@@ -1,7 +1,10 @@
 @import "tailwindcss";
 
 @layer base {
-  html, body, #root {
+
+  html,
+  body,
+  #root {
     @apply h-full w-full overflow-hidden;
   }
 
@@ -10,26 +13,67 @@
     width: 6px;
     height: 6px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     background: #e2e8f0;
     border-radius: 10px;
   }
+
   ::-webkit-scrollbar-thumb:hover {
     background: #cbd5e1;
   }
 }
 
 .custom-scrollbar {
-    scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
 }
+
 .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+  width: 4px;
 }
+
 .custom-scrollbar::-webkit-scrollbar-thumb {
-    background-color: #cbd5e1;
-    border-radius: 20px;
+  background-color: #cbd5e1;
+  border-radius: 20px;
+}
+
+@media print {
+
+  /* 1. Unlock the body and root so the page can be infinitely long */
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* 2. Force your scrolling containers to expand fully to their actual height */
+  .overflow-y-auto,
+  .overflow-hidden,
+  .custom-scrollbar {
+    height: auto !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+
+  /* 3. Ensure tables don't break awkwardly across pages */
+  table {
+    page-break-inside: auto;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  /* 4. Optional: Remove background colors to save ink, or force them to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
 }

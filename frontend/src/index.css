@@ -3,8 +3,6 @@
 @layer base {
   html, body, #root {
     @apply h-full w-full overflow-hidden;
-    /* Prevent layout shifting from scrollbar appearing/disappearing */
-    scrollbar-gutter: stable;
   }
 
   /* Custom scrollbar for better aesthetics */

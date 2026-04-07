@@ -489,9 +489,9 @@ export default function DirectorDashboard() {
 
                 {/* Registration Modal */}
                 {isModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden my-8 border border-slate-200">
-                            <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
+                    <div className="fixed inset-0 z-50 flex items-start justify-center p-4 sm:pt-12 bg-slate-900/50 backdrop-blur-sm overflow-y-auto custom-scrollbar">
+                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-4xl overflow-hidden mb-16 border border-slate-200">
+                            <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center sticky top-0 z-10">
                                 <div>
                                     <nav className="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
                                         <span>Director Portal</span> <span>/</span>
@@ -640,11 +640,15 @@ export default function DirectorDashboard() {
                                     </h2>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div>
-                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date <span className="text-red-500">*</span></label>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">DO Date (Start Date) <span className="text-red-500">*</span></label>
                                             <input required type="date" value={formData.start_date} onChange={e => setFormData({ ...formData, start_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
                                         </div>
-                                        <div className="flex items-end">
-                                            <p className="text-xs text-slate-400 font-medium leading-relaxed">This date corresponds to the Directive Order issuance date. The engagement will become active immediately upon registration.</p>
+                                        <div>
+                                            <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 ml-1">Target Due Date (End Date)</label>
+                                            <input type="date" value={formData.end_date} onChange={e => setFormData({ ...formData, end_date: e.target.value })} className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500 outline-none" />
+                                        </div>
+                                        <div className="col-span-2">
+                                            <p className="text-xs text-slate-400 font-medium leading-relaxed">The DO Date corresponds to the Directive Order issuance date. The Target Due Date marks the expected completion of the audit.</p>
                                         </div>
                                     </div>
                                 </div>

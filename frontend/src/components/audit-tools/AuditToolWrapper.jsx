@@ -29,7 +29,7 @@ export default function AuditToolWrapper({
     };
 
     return (
-        <div className="min-h-screen bg-slate-800 flex flex-col">
+        <div className="h-screen bg-slate-800 flex flex-col">
             <style>{`
                 @media print {
                     @page { margin: 10mm; size: A4; }

@@ -236,7 +236,7 @@ export default function AuditorDashboard() {
                                     <div className="max-h-64 overflow-y-auto">
                                         {pendingReview > 0 ? (
                                             <div className="p-4 text-sm text-slate-600 font-medium tracking-tight">
-                                                You have <span className="font-bold text-rose-500">{pendingReview} document(s)</span> awaiting your review across your engagements. Please check the Master File.
+                                                You have <span className="font-bold text-rose-500">{pendingReview} document(s)</span> awaiting your review across your engagements. Please check the Masterfile.
                                             </div>
                                         ) : (
                                             <div className="p-8 text-center text-slate-400 font-bold text-xs tracking-tight">No pending tasks. You are all caught up!</div>
@@ -264,7 +264,7 @@ export default function AuditorDashboard() {
                                         <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                             <Database className="w-6 h-6 text-blue-600" />
                                         </div>
-                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Master File View</h3>
+                                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Masterfile View</h3>
                                         <p className="text-xs font-bold text-slate-400 leading-relaxed">A global, searchable database of all documents uploaded across the entire system, indicating who uploaded them.</p>
                                     </button>
 
@@ -289,7 +289,7 @@ export default function AuditorDashboard() {
                                     <div className="absolute top-6 right-6 p-3 bg-blue-50 rounded-full group-hover:bg-blue-100 transition-colors">
                                         <Clock className="h-8 w-8 text-blue-200" strokeWidth="2" />
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Master File</p>
+                                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4">Active Audits</p>
                                     <div className="flex items-baseline gap-2 mb-6">
                                         <span className="text-5xl font-black text-blue-600 tracking-tight">{totalOngoing}</span>
                                         <span className="text-sm font-bold text-slate-400 ml-2">Audits</span>
@@ -331,7 +331,7 @@ export default function AuditorDashboard() {
                             <div className="flex-1 w-full min-w-0">
                                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
                                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
-                                    Master File Directory
+                                    Masterfile Directory
                                     {filter !== 'all' && (
                                         <span className="ml-3 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">Filtered</span>
                                     )}
@@ -375,24 +375,15 @@ export default function AuditorDashboard() {
                                                                 {eng.start_date || 'TBD'} → {eng.end_date || 'TBD'}
                                                             </td>
                                                             <td className="p-5">
-                                                                <select
-                                                                    onClick={(e) => e.stopPropagation()}
-                                                                    onChange={(e) => handleEngagementStatusUpdate(eng.id, e.target.value)}
-                                                                    value={eng.status || 'planning'}
-                                                                    className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${
+                                                                <div className={`inline-flex px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
                                                                         eng.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                                                         eng.status === 'follow_up' ? 'bg-rose-50 text-rose-600 border-rose-200' :
                                                                         eng.status === 'reporting' ? 'bg-slate-100 text-slate-600 border-slate-300' :
                                                                         eng.status === 'execution' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                                                         'bg-indigo-50 text-indigo-600 border-indigo-200'
-                                                                    }`}
-                                                                >
-                                                                    <option value="planning">Planning</option>
-                                                                    <option value="execution">Execution</option>
-                                                                    <option value="reporting">Reporting</option>
-                                                                    <option value="follow_up">Follow Up</option>
-                                                                    <option value="completed">Completed</option>
-                                                                </select>
+                                                                    }`}>
+                                                                    {(eng.status || 'planning').replace('_', ' ')}
+                                                                </div>
                                                             </td>
                                                             <td className="p-5">
                                                                 {engMovs.filter(m => m.status === 'submitted').length > 0 ? (

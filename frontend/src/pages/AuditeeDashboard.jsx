@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle } from 'lucide-react';
+import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle, Folder } from 'lucide-react';
 import iamsLogo from '../assets/IAMS logo.png';
-
+import LogoutOverlay from '../components/LogoutOverlay';
+import PageTransition from '../components/PageTransition';
 export default function AuditeeDashboard() {
     const [engagements, setEngagements] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -311,6 +312,9 @@ export default function AuditeeDashboard() {
                                                         <div>
                                                             <h3 className="text-sm font-black text-slate-800">{eng.title}</h3>
                                                             <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{eng.start_date || 'TBD'}</p>
+                                                            <button onClick={() => navigate(`/auditor/workspace/${eng.id}`)} className="mt-3 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 w-fit">
+                                                                <Folder className="w-3.5 h-3.5" /> Open Masterfile Workspace
+                                                            </button>
                                                         </div>
                                                         <div className="flex gap-3 text-center shrink-0">
                                                             <div className="flex flex-col items-center"><span className="text-lg font-black text-emerald-600">{approved}</span><span className="text-[9px] text-slate-400 font-black uppercase">Approved</span></div>

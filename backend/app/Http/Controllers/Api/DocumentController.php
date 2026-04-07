@@ -83,6 +83,22 @@ class DocumentController extends Controller
         return response()->json($document);
     }
 
+    public function assignReviewer(Request $request, Document $document)
+    {
+        if (Auth::user()->role !== 'auditor') {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $request->validate([
+            'reviewed_by' => 'nullable|exists:users,id',
+            'approved_by' => 'nullable|exists:users,id'
+        ]);
+
+        $document->update($request->only(['reviewed_by', 'approved_by']));
+
+        return response()->json($document->load(['uploader', 'signer', 'reviewer', 'approver']));
+    }
+
     /**
      * Save the JSON form data for an interactive audit tool.
      * Creates a new document record or updates the existing one.

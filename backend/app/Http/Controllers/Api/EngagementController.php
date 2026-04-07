@@ -102,4 +102,23 @@ class EngagementController extends Controller
 
         return response()->json(['message' => 'Engagement deleted successfully']);
     }
+
+    public function activityLogs($id)
+    {
+        $engagement = Engagement::findOrFail($id);
+        
+        // Allowed users: Auditors + Auditees involved
+        $user = Auth::user();
+        if ($user->role !== 'auditor') {
+            $isInvolved = $engagement->movs()->where('auditee_id', $user->id)->exists();
+            if (!$isInvolved) return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $logs = \App\Models\ActivityLog::with('user')
+            ->where('engagement_id', $id)
+            ->latest()
+            ->get();
+            
+        return response()->json($logs);
+    }
 }

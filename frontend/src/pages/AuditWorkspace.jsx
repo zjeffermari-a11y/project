@@ -161,7 +161,8 @@ export default function AuditWorkspace() {
     const navigate = useNavigate();
     const [engagement, setEngagement] = useState(null);
     const [documents, setDocuments] = useState([]);
-    const [activeTab, setActiveTab] = useState('tools'); // 'tools' or 'movs'
+    const [logs, setLogs] = useState([]);
+    const [activeTab, setActiveTab] = useState('tools'); // 'tools', 'movs', 'trail'
     const [selectedPhase, setSelectedPhase] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -172,14 +173,16 @@ export default function AuditWorkspace() {
     const fetchWorkspaceData = async () => {
         setLoading(true);
         try {
-            const [engRes, docRes] = await Promise.all([
+            const [engRes, docRes, logRes] = await Promise.all([
                 api.get(`/engagements`),
-                api.get(`/engagements/${id}/documents`)
+                api.get(`/engagements/${id}/documents`),
+                api.get(`/engagements/${id}/activity-logs`).catch(() => ({ data: [] }))
             ]);
             // Find specific engagement from list
             const current = engRes.data.find(e => e.id.toString() === id.toString());
             setEngagement(current || null);
             setDocuments(docRes.data);
+            setLogs(logRes.data);
         } catch (err) {
             console.error('Failed to load workspace', err);
         } finally {
@@ -193,6 +196,15 @@ export default function AuditWorkspace() {
             fetchWorkspaceData();
         } catch (err) {
             alert('Action failed: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleAssign = async (docId, roleField, userId) => {
+        try {
+            await api.patch(`/documents/${docId}/assign`, { [roleField]: userId || null });
+            fetchWorkspaceData();
+        } catch (err) {
+            alert('Assignment failed: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -255,6 +267,9 @@ export default function AuditWorkspace() {
                     <button onClick={() => setActiveTab('movs')} className={`py-4 font-black uppercase tracking-widest text-xs border-b-2 transition-colors ${activeTab === 'movs' ? 'border-emerald-600 text-emerald-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
                         <span className="flex items-center gap-2"><FileCheck2 className="w-4 h-4" /> Auditee Submissions (MOVs)</span>
                     </button>
+                    <button onClick={() => setActiveTab('trail')} className={`py-4 font-black uppercase tracking-widest text-xs border-b-2 transition-colors ${activeTab === 'trail' ? 'border-amber-600 text-amber-600' : 'border-transparent text-slate-400 hover:text-slate-600'}`}>
+                        <span className="flex items-center gap-2"><FileText className="w-4 h-4" /> Audit Trail</span>
+                    </button>
                 </div>
             </div>
 
@@ -275,16 +290,131 @@ export default function AuditWorkspace() {
 
                             {selectedPhase && DOCUMENTS[selectedPhase] && (
                                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
-                                    <div className="p-6 border-b border-slate-100 bg-slate-50 flex items-center gap-3">
-                                        <Folder className="h-5 w-5 text-slate-400" />
-                                        <h2 className="text-sm font-black text-slate-600 uppercase tracking-widest">{DOCUMENTS[selectedPhase].title}</h2>
-                                    </div>
-                                    <div className="p-6">
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 items-start">
-                                            {DOCUMENTS[selectedPhase].items.map((doc, idx) => (
-                                                <DocumentItem key={idx} doc={doc} engagementId={engagement.id} documents={documents} onRefresh={fetchWorkspaceData} phaseKey={selectedPhase} themeColor={DOCUMENTS[selectedPhase].theme} />
-                                            ))}
+                                    <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <Folder className="h-5 w-5 text-slate-400" />
+                                            <h2 className="text-sm font-black text-slate-600 uppercase tracking-widest">{DOCUMENTS[selectedPhase].title}</h2>
                                         </div>
+                                    </div>
+                                    <div className="overflow-x-auto">
+                                        <table className="min-w-full text-left border-collapse">
+                                            <thead>
+                                                <tr className="text-[10px] uppercase tracking-widest text-slate-400 border-b border-slate-200 bg-slate-50/50">
+                                                    <th className="py-4 pl-6 font-black">Document / Tools</th>
+                                                    <th className="py-4 px-4 font-black">Prepared By</th>
+                                                    <th className="py-4 px-4 font-black">Reviewed By</th>
+                                                    <th className="py-4 px-4 font-black">Approved By</th>
+                                                    <th className="py-4 pr-6 text-right font-black">Final</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-100">
+                                                {DOCUMENTS[selectedPhase].items.map((doc, idx) => {
+                                                    const relatedDocs = documents.filter(d => d.phase === selectedPhase && d.document_type === doc.label);
+                                                    const latestDoc = relatedDocs.length > 0 ? relatedDocs[relatedDocs.length - 1] : null;
+
+                                                    // Mock authors/reviewers for now if backend is not fully updated with these columns
+                                                    const preparedBy = latestDoc?.uploader?.name || null;
+                                                    const preparedInitials = preparedBy ? preparedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '';
+
+                                                    // For the frontend demo of the screenshot
+                                                    const reviewedBy = latestDoc?.reviewed_by?.name || null;
+                                                    const reviewStatus = reviewedBy ? 'reviewed' : (preparedBy ? 'Awaiting Receipt' : 'Awaiting');
+                                                    
+                                                    const approvedBy = latestDoc?.approved_by?.name || null;
+                                                    const aprvStatus = approvedBy ? 'approved' : 'Awaiting';
+
+                                                    return (
+                                                        <tr key={idx} className="hover:bg-slate-50 transition-colors group">
+                                                            <td className="py-4 pl-6">
+                                                                <div className="flex items-start gap-4">
+                                                                    <div className={`p-2 rounded-xl bg-${DOCUMENTS[selectedPhase].theme}-50 border border-${DOCUMENTS[selectedPhase].theme}-100 shrink-0 mt-0.5`}>
+                                                                        <FileText className={`w-5 h-5 text-${DOCUMENTS[selectedPhase].theme}-600`} />
+                                                                    </div>
+                                                                    <div>
+                                                                        <div className="text-sm font-black text-slate-800">{doc.label}</div>
+                                                                        {latestDoc && <div className="text-[10px] font-bold text-slate-400 mt-1">Updated: {new Date(latestDoc.updated_at).toLocaleDateString()}</div>}
+                                                                        <div className="flex flex-wrap gap-2 mt-2">
+                                                                            {doc.toolKey && (
+                                                                                <Link to={`/auditor/workspace/${engagement.id}/tool/${doc.toolKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors">
+                                                                                    <FileCode2 className="w-3 h-3" /> Interactive Tool
+                                                                                </Link>
+                                                                            )}
+                                                                            {doc.generateKey && (
+                                                                                <Link to={`/auditor/workspace/${engagement.id}/generate/${doc.generateKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 hover:bg-blue-600 hover:text-white transition-colors">
+                                                                                    <PenTool className="w-3 h-3" /> Generate Draft
+                                                                                </Link>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </td>
+                                                            
+                                                            {/* Prepared By cell */}
+                                                            <td className="py-4 px-4 font-bold text-sm text-slate-800 whitespace-nowrap">
+                                                                {preparedBy ? (
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-indigo-100">{preparedInitials}</div>
+                                                                        <div>
+                                                                            <div className="text-xs">{preparedBy}</div>
+                                                                            {latestDoc && <div className="text-[10px] text-slate-400 font-bold">{new Date(latestDoc.created_at).toLocaleDateString()}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className="px-3 py-1.5 bg-slate-100 text-slate-400 text-[9px] font-black uppercase tracking-widest rounded-lg border border-dashed border-slate-200">Awaiting Upload</span>
+                                                                )}
+                                                            </td>
+
+                                                            {/* Reviewed By cell */}
+                                                            <td className="py-4 px-4 whitespace-nowrap">
+                                                                {reviewedBy ? (
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-emerald-100">{reviewedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+                                                                        <div>
+                                                                            <div className="text-xs font-bold text-slate-800">{reviewedBy}</div>
+                                                                            {latestDoc && <div className="text-[10px] text-slate-400 font-bold">Reviewed {new Date(latestDoc.updated_at).toLocaleDateString()}</div>}
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className={`px-3 py-1.5 flex items-center w-fit gap-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border border-dashed ${preparedBy ? 'bg-amber-50 text-amber-500 border-amber-200' : 'bg-slate-50 text-slate-300 border-slate-200'}`}>
+                                                                        <span className={`w-1.5 h-1.5 rounded-full ${preparedBy ? 'bg-amber-400 animate-pulse shrink-0' : 'bg-slate-300 shrink-0'}`}></span>
+                                                                        {reviewStatus}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+
+                                                            {/* Approved By cell */}
+                                                            <td className="py-4 px-4 whitespace-nowrap">
+                                                                {approvedBy ? (
+                                                                    <div className="flex items-center gap-3">
+                                                                        <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-amber-100">{approvedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+                                                                        <div>
+                                                                            <div className="text-xs font-bold text-slate-800">{approvedBy}</div>
+                                                                            <div className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 mt-0.5"><CheckCircle className="w-3 h-3" /> Approved</div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <span className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border border-dashed bg-slate-50 text-slate-300 border-slate-200`}>
+                                                                        {aprvStatus}
+                                                                    </span>
+                                                                )}
+                                                            </td>
+
+                                                            <td className="py-4 pr-6 text-right">
+                                                                {latestDoc ? (
+                                                                    <button onClick={() => {}} className="p-2 border border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all shadow-sm" title="Download Final PDF">
+                                                                        <Download className="w-4 h-4" />
+                                                                    </button>
+                                                                ) : (
+                                                                    <button disabled className="p-2 border border-slate-200 bg-slate-100 rounded-xl text-slate-300 cursor-not-allowed">
+                                                                        <Download className="w-4 h-4" />
+                                                                    </button>
+                                                                )}
+                                                            </td>
+                                                        </tr>
+                                                    );
+                                                })}
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                             )}
@@ -329,6 +459,41 @@ export default function AuditWorkspace() {
                                             </div>
                                         </div>
                                     ))}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* AUDIT TRAIL TAB */}
+                    {activeTab === 'trail' && (
+                        <div className="animate-in fade-in slide-in-from-bottom-2">
+                            <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                <div className="px-6 py-5 border-b border-slate-100 bg-amber-50 text-amber-900">
+                                    <h3 className="text-lg font-black uppercase tracking-tight flex items-center gap-2"><FileText className="w-5 h-5 text-amber-600" /> Audit Trail</h3>
+                                    <p className="text-xs text-amber-600/70 mt-1 font-bold">Chronological ledger of all state-mutating activities for this engagement.</p>
+                                </div>
+                                <div className="p-8">
+                                    {(!logs || logs.length === 0) ? (
+                                        <div className="text-center text-slate-400 italic text-sm font-bold py-10">No activities recorded yet.</div>
+                                    ) : (
+                                        <div className="relative border-l-2 border-slate-200 ml-4 space-y-8 pl-8 pb-4">
+                                            {logs.map((log, idx) => (
+                                                <div key={log.id} className="relative">
+                                                    <div className="absolute -left-[41px] bg-white border-4 border-amber-100 w-5 h-5 rounded-full flex items-center justify-center">
+                                                        <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+                                                    </div>
+                                                    <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl shadow-sm">
+                                                        <div className="flex items-center justify-between mb-2">
+                                                            <span className="text-xs font-black uppercase tracking-widest text-amber-600 bg-amber-100 px-2 py-1 rounded-md">{log.action_type.replace('_', ' ')}</span>
+                                                            <span className="text-[10px] font-bold text-slate-400">{new Date(log.created_at).toLocaleString()}</span>
+                                                        </div>
+                                                        <p className="text-sm font-bold text-slate-800">{log.description}</p>
+                                                        <p className="text-xs text-slate-500 mt-1">By: {log.user?.name || 'System'}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>

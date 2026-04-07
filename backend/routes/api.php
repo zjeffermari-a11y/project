@@ -31,9 +31,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/documents/{document}/download', [App\Http\Controllers\Api\DocumentController::class , 'download']);
         Route::post('/documents/upload', [App\Http\Controllers\Api\DocumentController::class , 'upload']);
         Route::post('/documents/{document}/sign', [App\Http\Controllers\Api\DocumentController::class , 'sign']);
+        Route::patch('/documents/{document}/assign', [App\Http\Controllers\Api\DocumentController::class , 'assignReviewer']);
 
         // Audit Tool Data (JSON form data)
         Route::post('/engagements/{engagement}/tools/{toolKey}', [App\Http\Controllers\Api\DocumentController::class , 'saveToolData']);
         Route::get('/engagements/{engagement}/tools/{toolKey}', [App\Http\Controllers\Api\DocumentController::class , 'getToolData']);
+        
+        // Audit Trail
+        Route::get('/engagements/{engagement}/activity-logs', [App\Http\Controllers\Api\EngagementController::class , 'activityLogs']);
     });
 

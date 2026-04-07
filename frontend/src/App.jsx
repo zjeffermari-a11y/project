@@ -45,7 +45,7 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'division_chief', 'director']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'division_chief', 'director', 'auditee']}>
             <AuditWorkspace />
           </ProtectedRoute>
         } />

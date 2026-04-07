@@ -248,7 +248,7 @@ export default function DirectorDashboard() {
                                     <div className="max-h-64 overflow-y-auto">
                                         {pendingReview > 0 ? (
                                             <div className="p-4 text-sm text-slate-600 font-medium tracking-tight">
-                                                There are <span className="font-bold text-rose-500">{pendingReview} document(s)</span> pending review system-wide. Check the Master File for details.
+                                                There are <span className="font-bold text-rose-500">{pendingReview} document(s)</span> pending review system-wide. Check the Masterfile for details.
                                             </div>
                                         ) : (
                                             <div className="p-8 text-center text-slate-400 font-bold text-xs tracking-tight">No pending tasks. System is clear!</div>
@@ -344,12 +344,12 @@ export default function DirectorDashboard() {
                             </div>
                         </div>
 
-                        {/* Master File Directory */}
+                        {/* Masterfile Directory */}
                         <div className="flex flex-col xl:flex-row gap-6 items-start">
                             <div className="flex-1 w-full min-w-0">
                                 <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
                                     <Database className="w-5 h-5 text-indigo-500" />
-                                    Ongoing Master File Directory
+                                    Masterfile Directory
                                     {filter !== 'all' && (
                                         <span className="ml-3 px-2 py-0.5 rounded-full bg-indigo-50 border border-indigo-100 text-[9px] font-black text-indigo-600 uppercase tracking-widest animate-pulse">Filtered</span>
                                     )}
@@ -390,24 +390,15 @@ export default function DirectorDashboard() {
                                                             {eng.start_date || 'TBD'} → {eng.end_date || 'TBD'}
                                                         </td>
                                                         <td className="p-5">
-                                                            <select
-                                                                onClick={(e) => e.stopPropagation()}
-                                                                onChange={(e) => handleEngagementStatusUpdate(eng.id, e.target.value)}
-                                                                value={eng.status || 'planning'}
-                                                                className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border outline-none cursor-pointer ${
+                                                            <div className={`inline-flex px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
                                                                     eng.status === 'completed' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
                                                                     eng.status === 'follow_up' ? 'bg-rose-50 text-rose-600 border-rose-200' :
                                                                     eng.status === 'reporting' ? 'bg-slate-100 text-slate-600 border-slate-300' :
                                                                     eng.status === 'execution' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                                                     'bg-indigo-50 text-indigo-600 border-indigo-200'
-                                                                }`}
-                                                            >
-                                                                <option value="planning">Planning</option>
-                                                                <option value="execution">Execution</option>
-                                                                <option value="reporting">Reporting</option>
-                                                                <option value="follow_up">Follow Up</option>
-                                                                <option value="completed">Completed</option>
-                                                            </select>
+                                                                }`}>
+                                                                {(eng.status || 'planning').replace('_', ' ')}
+                                                            </div>
                                                         </td>
                                                         <td className="py-5 text-xs font-black text-slate-700 tracking-widest">
                                                             {total === 0 ? <span className="text-slate-400 italic">0 MOVs</span> : <><span className="text-emerald-600">{sub}</span> / {total}</>}

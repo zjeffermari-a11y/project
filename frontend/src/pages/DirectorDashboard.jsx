@@ -7,13 +7,20 @@ import iamsLogo from '../assets/IAMS logo.png';
 import PageTransition from '../components/ui/PageTransition';
 import LogoutOverlay from '../components/ui/LogoutOverlay';
 
+import { useDataContext } from '../context/DataContext';
+
 export default function DirectorDashboard() {
-    const [pendingUsers, setPendingUsers] = useState([]);
-    const [stats, setStats] = useState({ totalEngagements: 0, totalMovs: 0, complianceRate: 0 });
-    const [loading, setLoading] = useState(true);
-    const [engagements, setEngagements] = useState([]);
-    const [auditees, setAuditees] = useState([]);
-    const [availableAuditors, setAvailableAuditors] = useState([]);
+    const { 
+        engagements, 
+        auditees, 
+        availableAuditors, 
+        pendingUsers,
+        initialLoad, 
+        refreshData 
+    } = useDataContext();
+
+    const [stats, setStats] = useState({ totalEngagements: 0, totalMovs: 0, complianceRate: 0, totalCompleted: 0, totalCount: 0 });
+    
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isActiveAuditsModalOpen, setIsActiveAuditsModalOpen] = useState(false);
@@ -38,58 +45,39 @@ export default function DirectorDashboard() {
 
     useEffect(() => {
         document.title = 'Internal Audit Management | Director Portal';
-        fetchData();
     }, []);
 
-    const fetchData = async () => {
-        try {
-            setLoading(true);
-            const [usersRes, engRes, audRes, auditorsRes] = await Promise.all([
-                api.get('/users/pending'),
-                api.get('/engagements'),
-                api.get('/auditees'),
-                api.get('/users/auditors')
-            ]);
+    // Derived stats
+    useEffect(() => {
+        if (!engagements) return;
+        
+        let mCount = 0;
+        let mSub = 0;
+        engagements.forEach(eng => {
+            if (eng.movs) {
+                eng.movs.forEach(m => {
+                    mCount++;
+                    if (m.status === 'approved' || m.status === 'submitted') mSub++;
+                });
+            }
+        });
 
-            setPendingUsers(usersRes.data);
-            setEngagements(engRes.data);
-            setAuditees(audRes.data);
-            setAvailableAuditors(auditorsRes.data);
+        const totalCompleted = engagements.filter(e => e.status === 'completed').length;
+        const totalCount = engagements.length;
 
-            const engagementsData = engRes.data;
-            let mCount = 0;
-            let mSub = 0;
-            engagementsData.forEach(eng => {
-                if (eng.movs) {
-                    eng.movs.forEach(m => {
-                        mCount++;
-                        if (m.status === 'approved' || m.status === 'submitted') mSub++;
-                    });
-                }
-            });
-
-            const totalCompleted = engagementsData.filter(e => e.status === 'completed').length;
-            const totalCount = engagementsData.length;
-
-            setStats({
-                totalEngagements: engagementsData.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length,
-                totalCompleted: totalCompleted,
-                totalCount: totalCount,
-                totalMovs: mCount,
-                complianceRate: totalCount === 0 ? 0 : Math.round((totalCompleted / totalCount) * 100)
-            });
-
-        } catch (err) {
-            console.error('Failed to fetch data', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+        setStats({
+            totalEngagements: engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length,
+            totalCompleted: totalCompleted,
+            totalCount: totalCount,
+            totalMovs: mCount,
+            complianceRate: totalCount === 0 ? 0 : Math.round((totalCompleted / totalCount) * 100)
+        });
+    }, [engagements]);
 
     const handleApproval = async (id, status) => {
         try {
             await api.patch(`/users/${id}/approve`, { status });
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Failed to update user status');
         }
@@ -123,8 +111,8 @@ export default function DirectorDashboard() {
             setOffices([]);
             setLeadAuditors([]);
             setMembers([]);
-            setDoNumber(''); setOffices([]); setLeadAuditors([]); setMembers([]);
-            fetchData();
+            setDoNumber(''); 
+            refreshData();
         } catch (err) {
             alert('Failed to register audit: ' + (err.response?.data?.message || err.message));
         }
@@ -135,7 +123,7 @@ export default function DirectorDashboard() {
         if (window.confirm("Are you sure you want to completely delete this audit engagement? This will permanently delete all related MOVs and Documents.")) {
             try {
                 await api.delete(`/engagements/${id}`);
-                fetchData();
+                refreshData();
             } catch (err) {
                 alert('Deletion failed: ' + (err.response?.data?.message || err.message));
             }
@@ -145,7 +133,7 @@ export default function DirectorDashboard() {
     const handleEngagementStatusUpdate = async (id, status) => {
         try {
             await api.put(`/engagements/${id}`, { status });
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Failed to update engagement status');
         }
@@ -585,12 +573,26 @@ export default function DirectorDashboard() {
                                             e.lead_auditor?.name?.toLowerCase().includes(term)
                                         );
                                     }).length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                                                <Database className="w-10 h-10 opacity-20" />
-                                            </div>
-                                            <p className="font-black uppercase tracking-widest text-[11px] mb-2">No Matching Engagements</p>
-                                            <p className="text-xs font-medium text-slate-400">Try adjusting your filters or search term</p>
+                                        <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-[2.5rem] border border-dashed border-slate-200 relative">
+                                            {initialLoad ? (
+                                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-[2.5rem]">
+                                                    <div className="flex flex-col items-center gap-6">
+                                                        <div className="w-12 h-12 border-4 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
+                                                        <div className="flex flex-col items-center">
+                                                            <p className="text-xs font-black text-indigo-600 uppercase tracking-[0.3em] animate-pulse">Synchronizing Dashboard</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 mt-2">Connecting to secure audit layers...</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <>
+                                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                                        <Database className="w-10 h-10 opacity-20" />
+                                                    </div>
+                                                    <p className="font-black uppercase tracking-widest text-[11px] mb-2">No Matching Engagements</p>
+                                                    <p className="text-xs font-medium text-slate-400">Try adjusting your filters or search term</p>
+                                                </>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 gap-6">

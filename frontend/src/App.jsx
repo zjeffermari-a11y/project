@@ -10,7 +10,7 @@ import AuditTool from './pages/AuditTool';
 import ProtectedRoute from './components/ProtectedRoute';
 import DirectorDashboard from './pages/DirectorDashboard';
 import DivisionChiefDashboard from './pages/DivisionChiefDashboard';
-
+import { DataProvider } from './context/DataContext';
 
 function AnimatedRoutes({ user, DefaultRouteComponent }) {
   const location = useLocation();
@@ -96,7 +96,9 @@ function App() {
 
   return (
     <BrowserRouter basename={import.meta.env.BASE_URL}>
-      <AnimatedRoutes user={user} DefaultRouteComponent={DefaultRouteComponent} />
+      <DataProvider>
+        <AnimatedRoutes user={user} DefaultRouteComponent={DefaultRouteComponent} />
+      </DataProvider>
     </BrowserRouter>
   )
 }

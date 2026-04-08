@@ -7,12 +7,18 @@ import iamsLogo from '../assets/IAMS logo.png';
 import PageTransition from '../components/ui/PageTransition';
 import LogoutOverlay from '../components/ui/LogoutOverlay';
 
+import { useDataContext } from '../context/DataContext';
+
 export default function DivisionChiefDashboard() {
-    const [engagements, setEngagements] = useState([]);
-    const [auditees, setAuditees] = useState([]);
-    const [availableAuditors, setAvailableAuditors] = useState([]);
-    const [pendingUsers, setPendingUsers] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { 
+        engagements, 
+        auditees, 
+        availableAuditors, 
+        pendingUsers,
+        initialLoad, 
+        refreshData 
+    } = useDataContext();
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -40,28 +46,7 @@ export default function DivisionChiefDashboard() {
 
     useEffect(() => {
         document.title = user?.designation === 'assistant_division_chief' ? 'Internal Audit Management | Assistant Division Chief Portal' : 'Internal Audit Management | Division Chief Portal';
-        fetchData();
-    }, []);
-
-    const fetchData = async () => {
-        setLoading(true);
-        try {
-            const [engRes, audRes, pendingRes, auditorsRes] = await Promise.all([
-                api.get('/engagements'),
-                api.get('/auditees'),
-                api.get('/users/pending'),
-                api.get('/users/auditors')
-            ]);
-            setEngagements(engRes.data);
-            setAuditees(audRes.data);
-            setPendingUsers(pendingRes.data);
-            setAvailableAuditors(auditorsRes.data);
-        } catch (err) {
-            console.error('Failed to load dashboard data:', err);
-        } finally {
-            setLoading(false);
-        }
-    };
+    }, [user?.designation]);
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -75,7 +60,7 @@ export default function DivisionChiefDashboard() {
     const handleApproval = async (id, status) => {
         try {
             await api.patch(`/users/${id}/approve`, { status });
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Failed to update user status');
         }
@@ -98,7 +83,7 @@ export default function DivisionChiefDashboard() {
             setIsModalOpen(false);
             setFormData({ title: '', description: '', start_date: '', end_date: '', requirement_name: '', auditee_id: '' });
             setDoNumber(''); setOffices([]); setLeadAuditors([]); setMembers([]);
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Failed to register audit: ' + (err.response?.data?.message || err.message));
         }
@@ -109,7 +94,7 @@ export default function DivisionChiefDashboard() {
         if (window.confirm("Are you sure you want to completely delete this audit engagement? This will permanently delete all related MOVs and Documents.")) {
             try {
                 await api.delete(`/engagements/${id}`);
-                fetchData();
+                refreshData();
             } catch (err) {
                 alert('Deletion failed: ' + (err.response?.data?.message || err.message));
             }
@@ -119,7 +104,7 @@ export default function DivisionChiefDashboard() {
     const handleEngagementStatusUpdate = async (id, status) => {
         try {
             await api.put(`/engagements/${id}`, { status });
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Failed to update engagement status');
         }
@@ -142,7 +127,7 @@ export default function DivisionChiefDashboard() {
             setIsAssignLeadModalOpen(false);
             setTargetEngagement(null);
             setSelectedLeadsForAssign([]);
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Failed to assign lead: ' + (err.response?.data?.message || err.message));
         }
@@ -644,12 +629,26 @@ export default function DivisionChiefDashboard() {
                                             e.lead_auditor?.name?.toLowerCase().includes(term)
                                         );
                                     }).length === 0 ? (
-                                        <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
-                                            <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
-                                                <Database className="w-10 h-10 opacity-20" />
-                                            </div>
-                                            <p className="font-black uppercase tracking-widest text-[11px] mb-2">No Matching Engagements</p>
-                                            <p className="text-xs font-medium text-slate-400">Try adjusting your filters or search term</p>
+                                        <div className="flex-1 overflow-y-auto px-10 py-10 relative">
+                                            {initialLoad ? (
+                                                <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-50/80 backdrop-blur-sm transition-opacity duration-500">
+                                                    <div className="flex flex-col items-center gap-6">
+                                                        <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+                                                        <div className="flex flex-col items-center">
+                                                            <p className="text-xs font-black text-blue-600 uppercase tracking-[0.3em] animate-pulse underline decoration-blue-200 decoration-4 underline-offset-8">Synchronizing Workspace</p>
+                                                            <p className="text-[10px] font-bold text-slate-400 mt-4 italic">Fetching latest audit engagements...</p>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col items-center justify-center py-24 text-slate-400 bg-white rounded-[2.5rem] border border-dashed border-slate-200">
+                                                    <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mb-6">
+                                                        <Database className="w-10 h-10 opacity-20" />
+                                                    </div>
+                                                    <p className="font-black uppercase tracking-widest text-[11px] mb-2">No Matching Engagements</p>
+                                                    <p className="text-xs font-medium text-slate-400">Try adjusting your filters or search term</p>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-1 gap-6">

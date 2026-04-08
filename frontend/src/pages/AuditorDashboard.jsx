@@ -7,12 +7,17 @@ import iamsLogo from '../assets/IAMS logo.png';
 import PageTransition from '../components/ui/PageTransition';
 import LogoutOverlay from '../components/ui/LogoutOverlay';
 import { motion } from 'framer-motion';
+import { useDataContext } from '../context/DataContext';
 
 export default function AuditorDashboard() {
-    const [engagements, setEngagements] = useState([]);
-    const [auditees, setAuditees] = useState([]);
-    const [availableAuditors, setAvailableAuditors] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { 
+        engagements, 
+        auditees, 
+        availableAuditors, 
+        initialLoad, 
+        refreshData 
+    } = useDataContext();
+
     const [filter, setFilter] = useState('all');
     const [selectedEngagement, setSelectedEngagement] = useState(null);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -26,56 +31,7 @@ export default function AuditorDashboard() {
 
     useEffect(() => {
         document.title = 'Internal Audit Management | Auditor Portal';
-        fetchEngagements();
-        fetchAuditees();
-        fetchAuditors();
     }, []);
-
-    const fetchAuditors = async () => {
-        try {
-            const res = await api.get('/users/auditors');
-            setAvailableAuditors(res.data);
-        } catch (err) {
-            console.error('Failed to load auditors', err);
-        }
-    };
-
-    const fetchEngagements = async () => {
-        try {
-            const res = await api.get('/engagements');
-            setEngagements(res.data);
-
-            // Also extract unique auditees from engagement movs data as a fallback
-            const auditeeMap = {};
-            res.data.forEach(eng => {
-                (eng.movs || []).forEach(mov => {
-                    if (mov.auditee && !auditeeMap[mov.auditee.id]) {
-                        auditeeMap[mov.auditee.id] = mov.auditee;
-                    }
-                });
-            });
-            const extracted = Object.values(auditeeMap);
-            if (extracted.length > 0) {
-                setAuditees(prev => prev.length > 0 ? prev : extracted);
-            }
-
-            setLoading(false);
-        } catch (err) {
-            console.error(err);
-            setLoading(false);
-        }
-    };
-
-    const fetchAuditees = async () => {
-        try {
-            const res = await api.get('/auditees');
-            console.log('Auditees loaded:', res.data);
-            setAuditees(res.data);
-        } catch (err) {
-            console.error('Failed to load auditees:', err);
-            console.error('Response:', err.response?.status, err.response?.data);
-        }
-    };
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -87,17 +43,11 @@ export default function AuditorDashboard() {
             navigate('/login');
         }, 1200);
     };
+
     const handleMovAction = async (movId, status) => {
         try {
             await api.patch(`/movs/${movId}/status`, { status });
-            // Refresh data
-            const res = await api.get('/engagements');
-            setEngagements(res.data);
-            // Update selected engagement with new data
-            if (selectedEngagement) {
-                const updated = res.data.find(e => e.id === selectedEngagement.id);
-                if (updated) setSelectedEngagement(updated);
-            }
+            refreshData();
         } catch (err) {
             alert('Action failed: ' + (err.response?.data?.message || err.message));
         }
@@ -111,7 +61,7 @@ export default function AuditorDashboard() {
                 if (selectedEngagement?.id === id) {
                     setSelectedEngagement(null);
                 }
-                fetchEngagements();
+                refreshData();
             } catch (err) {
                 alert('Deletion failed: ' + (err.response?.data?.message || err.message));
             }
@@ -121,14 +71,13 @@ export default function AuditorDashboard() {
     const handleEngagementStatusUpdate = async (id, status) => {
         try {
             await api.put(`/engagements/${id}`, { status });
-            fetchEngagements();
+            refreshData();
         } catch (err) {
             alert('Failed to update engagement status: ' + (err.response?.data?.message || err.message));
         }
     };
 
     // Computations based on data
-    const totalEngagements = engagements.length;
     let auditeeSubmissions = 0;
     let pendingReview = 0;
     let totalMovs = 0;
@@ -341,8 +290,8 @@ export default function AuditorDashboard() {
                                 </h2>
 
                                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                    {loading ? (
-                                        <div className="p-16 flex justify-center text-slate-400 font-bold">Loading engagements...</div>
+                                    {initialLoad ? (
+                                        <div className="p-16 flex justify-center text-slate-400 font-bold italic animate-pulse uppercase tracking-[0.2em] text-xs">Syncing workspace...</div>
                                     ) : filteredEngagements.length === 0 ? (
                                         <div className="p-16 flex flex-col items-center justify-center text-slate-400">
                                             <FileText className="w-12 h-12 mb-4 opacity-50" />

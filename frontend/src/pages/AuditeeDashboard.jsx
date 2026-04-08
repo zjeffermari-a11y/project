@@ -5,9 +5,14 @@ import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle, Folder, Bell }
 import iamsLogo from '../assets/IAMS logo.png';
 import LogoutOverlay from '../components/ui/LogoutOverlay';
 import PageTransition from '../components/ui/PageTransition';
+import { useDataContext } from '../context/DataContext';
+
 export default function AuditeeDashboard() {
-    const [engagements, setEngagements] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { 
+        engagements, 
+        initialLoad, 
+        refreshData 
+    } = useDataContext();
 
     // Modal State
     const [uploadMovId, setUploadMovId] = useState(null);
@@ -23,19 +28,7 @@ export default function AuditeeDashboard() {
 
     useEffect(() => {
         document.title = 'Internal Audit Management | Auditee Portal';
-        fetchData();
     }, []);
-
-    const fetchData = async () => {
-        try {
-            const res = await api.get('/engagements');
-            setEngagements(res.data);
-            setLoading(false);
-        } catch (err) {
-            console.error(err);
-            setLoading(false);
-        }
-    };
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -71,7 +64,7 @@ export default function AuditeeDashboard() {
             setUploadMovName('');
             setSelectedFile(null);
             setManagementComment('');
-            fetchData();
+            refreshData();
         } catch (err) {
             alert('Upload failed: ' + (err.response?.data?.message || err.message));
         } finally {

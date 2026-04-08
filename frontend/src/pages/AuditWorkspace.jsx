@@ -46,7 +46,10 @@ const THEMES = {
     rose: { ring: 'ring-rose-500', hoverBorder: 'hover:border-rose-500', bgMain: 'bg-rose-600', textMain: 'text-rose-600', bgLight: 'bg-rose-50', bgHover: 'hover:bg-rose-50', borderLight: 'border-rose-100', textLight: 'text-rose-400', borderDash: 'border-rose-300', dashHover: 'hover:border-rose-400' }
 };
 
+import { useDataContext } from '../context/DataContext';
+
 function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRefresh }) {
+    const { refreshData } = useDataContext();
     const [expanded, setExpanded] = useState(false);
     const [uploading, setUploading] = useState(false);
     const fileInputRef = useRef(null);
@@ -63,18 +66,22 @@ function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRe
         const formData = new FormData();
         formData.append('file', file);
         formData.append('engagement_id', engagementId);
-        formData.append('document_type', doc);
+        formData.append('document_type', label);
         formData.append('phase', phaseKey);
         try {
             await api.post('/documents/upload', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
             onRefresh();
+            refreshData();
         } catch (err) { alert('Upload failed: ' + (err.response?.data?.message || err.message)); } 
         finally { setUploading(false); if (fileInputRef.current) fileInputRef.current.value = ''; }
     };
 
     const handleSign = async (docId) => {
-        try { await api.post(`/documents/${docId}/sign`); onRefresh(); } 
-        catch (err) { alert('Sign failed: ' + err.message); }
+        try { 
+            await api.post(`/documents/${docId}/sign`); 
+            onRefresh(); 
+            refreshData();
+        } catch (err) { alert('Sign failed: ' + err.message); }
     };
 
     const handleDownload = async (docId, fileName) => {
@@ -85,6 +92,7 @@ function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRe
             document.body.appendChild(link); link.click(); link.parentNode.removeChild(link);
         } catch (err) { alert('Download failed'); }
     };
+// ... rest of the component
 
     return (
         <div className={`flex flex-col p-5 rounded-xl border ${theme.borderLight} ${theme.bgLight}/30 ${theme.bgHover} transition-colors group`}>
@@ -159,6 +167,7 @@ function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRe
 export default function AuditWorkspace() {
     const { id } = useParams();
     const navigate = useNavigate();
+    const { engagements, refreshData } = useDataContext();
     const [engagement, setEngagement] = useState(null);
     const [documents, setDocuments] = useState([]);
     const [logs, setLogs] = useState([]);
@@ -173,14 +182,14 @@ export default function AuditWorkspace() {
     const fetchWorkspaceData = async () => {
         setLoading(true);
         try {
-            const [engRes, docRes, logRes] = await Promise.all([
-                api.get(`/engagements`),
+            const [docRes, logRes] = await Promise.all([
                 api.get(`/engagements/${id}/documents`),
                 api.get(`/engagements/${id}/activity-logs`).catch(() => ({ data: [] }))
             ]);
-            // Find specific engagement from list
-            const current = engRes.data.find(e => e.id.toString() === id.toString());
-            setEngagement(current || null);
+            
+            // Re-sync global engagements first to ensure we have the latest
+            await refreshData();
+            
             setDocuments(docRes.data);
             setLogs(logRes.data);
         } catch (err) {
@@ -190,9 +199,18 @@ export default function AuditWorkspace() {
         }
     };
 
+    // Derived engagement from global context
+    useEffect(() => {
+        if (engagements.length > 0) {
+            const current = engagements.find(e => e.id.toString() === id.toString());
+            setEngagement(current || null);
+        }
+    }, [engagements, id]);
+
     const handleMovAction = async (movId, status) => {
         try {
             await api.patch(`/movs/${movId}/status`, { status });
+            await refreshData();
             fetchWorkspaceData();
         } catch (err) {
             alert('Action failed: ' + (err.response?.data?.message || err.message));
@@ -202,6 +220,7 @@ export default function AuditWorkspace() {
     const handleAssign = async (docId, roleField, userId) => {
         try {
             await api.patch(`/documents/${docId}/assign`, { [roleField]: userId || null });
+            await refreshData();
             fetchWorkspaceData();
         } catch (err) {
             alert('Assignment failed: ' + (err.response?.data?.message || err.message));

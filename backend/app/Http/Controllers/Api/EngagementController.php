@@ -92,9 +92,40 @@ class EngagementController extends Controller
         }
 
         $engagement = Engagement::findOrFail($id);
+        
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'description' => 'nullable|string',
+            'status' => 'nullable|string',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date',
+            'leadAuditors' => 'nullable|array',
+            'leadAuditors.*' => 'exists:users,id',
+            'members' => 'nullable|array',
+            'members.*' => 'exists:users,id'
+        ]);
+
         $engagement->update($request->only(['title', 'description', 'status', 'start_date', 'end_date']));
 
-        return response()->json($engagement);
+        if ($request->has('leadAuditors') || $request->has('members')) {
+            $syncData = [];
+            if ($request->has('leadAuditors')) {
+                foreach ($request->input('leadAuditors') as $userId) {
+                    $syncData[$userId] = ['role_in_engagement' => 'lead_auditor'];
+                }
+            }
+            if ($request->has('members')) {
+                foreach ($request->input('members') as $userId) {
+                    // Only add if not already a lead
+                    if (!isset($syncData[$userId])) {
+                        $syncData[$userId] = ['role_in_engagement' => 'member'];
+                    }
+                }
+            }
+            $engagement->users()->sync($syncData);
+        }
+
+        return response()->json($engagement->load('users'));
     }
 
     public function destroy($id)

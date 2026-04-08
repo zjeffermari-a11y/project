@@ -65,8 +65,10 @@ export default function DirectorDashboard() {
                 }
             });
 
+            const totalActive = engagementsData.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length;
+
             setStats({
-                totalEngagements: engagementsData.length,
+                totalEngagements: totalActive,
                 totalMovs: mCount,
                 complianceRate: mCount === 0 ? 0 : Math.round((mSub / mCount) * 100)
             });
@@ -268,27 +270,53 @@ export default function DirectorDashboard() {
                     <div className="max-w-7xl mx-auto space-y-8">
                         
                         {/* KPI Cards */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                             <div 
-                                onClick={() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' })}
-                                className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-indigo-300 transition-all group"
+                                onClick={() => { setFilter('ongoing'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-indigo-300 transition-all group"
                             >
-                                <div className="absolute -right-6 -top-6 w-32 h-32 bg-indigo-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Total Active Audits</p>
-                                <p className="text-5xl font-black text-slate-800 tracking-tight relative z-10">{stats.totalEngagements}</p>
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-indigo-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Total Active Audits</p>
+                                <p className="text-4xl font-black text-slate-800 tracking-tight relative z-10">{stats.totalEngagements}</p>
                                 <div className="mt-4 flex items-center gap-1 text-indigo-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Active <ChevronRight className="w-3 h-3" />
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => { setFilter('completed'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-emerald-300 transition-all group"
+                            >
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">System Compliance</p>
+                                <p className="text-4xl font-black text-emerald-500 tracking-tight relative z-10">{stats.complianceRate}%</p>
+                                <div className="mt-4 flex items-center gap-1 text-emerald-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Archives <ChevronRight className="w-3 h-3" />
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => { setFilter('all'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-amber-300 transition-all group"
+                            >
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Tracked MOVs</p>
+                                <p className="text-4xl font-black text-amber-500 tracking-tight relative z-10">{stats.totalMovs}</p>
+                                <div className="mt-4 flex items-center gap-1 text-amber-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
                                     View Masterfile <ChevronRight className="w-3 h-3" />
                                 </div>
                             </div>
-                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                <div className="absolute -right-6 -top-6 w-32 h-32 bg-emerald-50 rounded-full opacity-50 pointer-events-none"></div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">System-Wide Compliance</p>
-                                <p className="text-5xl font-black text-emerald-500 tracking-tight relative z-10">{stats.complianceRate}%</p>
-                            </div>
-                            <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden">
-                                <div className="absolute -right-6 -top-6 w-32 h-32 bg-amber-50 rounded-full opacity-50 pointer-events-none"></div>
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 relative z-10">Tracked MOVs</p>
-                                <p className="text-5xl font-black text-amber-500 tracking-tight relative z-10">{stats.totalMovs}</p>
+
+                            <div 
+                                onClick={() => setIsHistoryModalOpen(true)}
+                                className="bg-indigo-900 p-6 rounded-3xl border border-indigo-800 shadow-lg relative overflow-hidden cursor-pointer hover:bg-slate-900 transition-all group"
+                            >
+                                <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform"></div>
+                                <p className="text-[10px] font-black text-indigo-300 uppercase tracking-widest mb-1 relative z-10">Audit Trail</p>
+                                <p className="text-4xl font-black text-white tracking-tight relative z-10">{allActivities.length}</p>
+                                <div className="mt-4 flex items-center gap-1 text-indigo-200 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Logs <ChevronRight className="w-3 h-3" />
+                                </div>
                             </div>
                         </div>
 

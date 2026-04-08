@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, LayoutGrid, Database, Users, ShieldCheck, XCircle, Trash2, Bell, AlertCircle, Clock, ArrowRightLeft, ChevronRight } from 'lucide-react';
@@ -29,6 +29,7 @@ export default function DivisionChiefDashboard() {
     const [members, setMembers] = useState([]);
 
     const navigate = useNavigate();
+    const masterfileRef = useRef(null);
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
     useEffect(() => {
@@ -252,6 +253,57 @@ export default function DivisionChiefDashboard() {
                 <div className="flex-1 overflow-y-auto px-10 py-8">
                     <div className="max-w-7xl mx-auto space-y-8">
                         
+                        {/* KPI Cards */}
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                            <div 
+                                onClick={() => { setFilter('ongoing'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-blue-300 transition-all group"
+                            >
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Total Active Audits</p>
+                                <p className="text-4xl font-black text-slate-800 tracking-tight relative z-10">{totalOngoing}</p>
+                                <div className="mt-4 flex items-center gap-1 text-blue-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Active <ChevronRight className="w-3 h-3" />
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => { setFilter('completed'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-emerald-300 transition-all group"
+                            >
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">System Compliance</p>
+                                <p className="text-4xl font-black text-emerald-500 tracking-tight relative z-10">{overallCompliance}%</p>
+                                <div className="mt-4 flex items-center gap-1 text-emerald-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Archives <ChevronRight className="w-3 h-3" />
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => { setFilter('all'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-amber-300 transition-all group"
+                            >
+                                <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Tracked MOVs</p>
+                                <p className="text-4xl font-black text-amber-500 tracking-tight relative z-10">{totalMovs}</p>
+                                <div className="mt-4 flex items-center gap-1 text-amber-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Masterfile <ChevronRight className="w-3 h-3" />
+                                </div>
+                            </div>
+
+                            <div 
+                                onClick={() => setIsHistoryModalOpen(true)}
+                                className="bg-slate-900 p-6 rounded-3xl border border-slate-800 shadow-lg relative overflow-hidden cursor-pointer hover:bg-black transition-all group"
+                            >
+                                <div className="absolute -right-4 -top-4 w-20 h-20 bg-white/5 rounded-full pointer-events-none group-hover:scale-125 transition-transform"></div>
+                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Audit Trail</p>
+                                <p className="text-4xl font-black text-white tracking-tight relative z-10">{allActivities.length}</p>
+                                <div className="mt-4 flex items-center gap-1 text-slate-300 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
+                                    View Logs <ChevronRight className="w-3 h-3" />
+                                </div>
+                            </div>
+                        </div>
+                        
 
 
                         {/* Approvals Table (DIRECTOR POWER) */}
@@ -351,7 +403,7 @@ export default function DivisionChiefDashboard() {
 
                         <div className="flex flex-col xl:flex-row gap-6 items-start">
                             <div className="flex-1 w-full min-w-0">
-                                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
+                                <h2 ref={masterfileRef} className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2 scroll-mt-8">
                                     <Database className="w-5 h-5 text-indigo-500" />
                                     Masterfile Directory
                                     {filter !== 'all' && (

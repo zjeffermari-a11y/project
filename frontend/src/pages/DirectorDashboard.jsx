@@ -10,13 +10,13 @@ import LogoutOverlay from '../components/ui/LogoutOverlay';
 import { useDataContext } from '../context/DataContext';
 
 export default function DirectorDashboard() {
-    const { 
-        engagements, 
-        auditees, 
-        availableAuditors, 
+    const {
+        engagements,
+        auditees,
+        availableAuditors,
         pendingUsers,
         loading,
-        initialLoad, 
+        initialLoad,
         refreshData,
         deleteEngagementOptimistic,
         updateEngagementStatusOptimistic,
@@ -24,7 +24,7 @@ export default function DirectorDashboard() {
     } = useDataContext();
 
     const [stats, setStats] = useState({ totalEngagements: 0, totalMovs: 0, complianceRate: 0, totalCompleted: 0, totalCount: 0 });
-    
+
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isActiveAuditsModalOpen, setIsActiveAuditsModalOpen] = useState(false);
@@ -54,7 +54,7 @@ export default function DirectorDashboard() {
     // Derived stats
     useEffect(() => {
         if (!engagements) return;
-        
+
         let mCount = 0;
         let mSub = 0;
         engagements.forEach(eng => {
@@ -99,7 +99,12 @@ export default function DirectorDashboard() {
         e.preventDefault();
         try {
             const combinedDescription = doNumber ? `DO Number: DO-${doNumber}\n${formData.description}` : formData.description;
+
+            // Add ae_number to the payload
+            const computedAeNumber = `AE-${doNumber}`;
+
             await api.post('/engagements', {
+                ae_number: computedAeNumber, // <-- NEW ADDITION
                 title: formData.title,
                 description: combinedDescription,
                 start_date: formData.start_date,
@@ -114,7 +119,7 @@ export default function DirectorDashboard() {
             setOffices([]);
             setLeadAuditors([]);
             setMembers([]);
-            setDoNumber(''); 
+            setDoNumber('');
             refreshData();
         } catch (err) {
             alert('Failed to register audit: ' + (err.response?.data?.message || err.message));
@@ -200,6 +205,26 @@ export default function DirectorDashboard() {
         return true;
     });
 
+    // --- Loading State Handling ---
+    // If it's the very first load and we have no data, show a global premium loader
+    if (initialLoad && engagements.length === 0) {
+        return (
+            <div className="h-screen bg-slate-900 flex flex-col items-center justify-center relative overflow-hidden text-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-500/10 via-transparent to-transparent"></div>
+                <div className="relative z-10 flex flex-col items-center gap-8">
+                    <div className="relative">
+                        <div className="w-24 h-24 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin"></div>
+                        <img src={iamsLogo} className="w-12 h-12 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" alt="Loading" />
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <h2 className="text-white font-black uppercase tracking-[0.4em] text-sm mb-2">Synchronizing IAMS</h2>
+                        <p className="text-indigo-400 font-bold text-[10px] uppercase tracking-widest animate-pulse">Initializing Executive Dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <PageTransition className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans relative">
             <LogoutOverlay isOpen={isLoggingOut} userName={user?.name} />
@@ -228,7 +253,7 @@ export default function DirectorDashboard() {
                             </div>
                             <div className="flex items-center gap-4">
                                 <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
-                                <button 
+                                <button
                                     onClick={refreshData}
                                     disabled={loading}
                                     className={`p-2 rounded-xl transition-all ${loading ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}
@@ -532,18 +557,17 @@ export default function DirectorDashboard() {
                                 {/* Tabs Row */}
                                 <div className="flex gap-2 mb-8">
                                     {['all', 'planning', 'execution', 'reporting', 'follow_up'].map(tab => {
-                                        const count = tab === 'all' 
+                                        const count = tab === 'all'
                                             ? engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length
                                             : engagements.filter(e => e.status === tab).length;
                                         return (
                                             <button
                                                 key={tab}
                                                 onClick={() => setActiveTab(tab)}
-                                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${
-                                                    activeTab === tab 
-                                                    ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105' 
-                                                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
-                                                }`}
+                                                className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${activeTab === tab
+                                                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
+                                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                                    }`}
                                             >
                                                 {tab.replace('_', '-')} ({count})
                                             </button>
@@ -573,13 +597,27 @@ export default function DirectorDashboard() {
                             </div>
 
                             {/* Modal Content */}
-                            <div className="flex-1 overflow-y-auto w-full custom-scrollbar bg-slate-50/50 p-12">
+                            <div className="flex-1 overflow-y-auto w-full custom-scrollbar bg-slate-50/50 p-12 relative">
+                                
+                                {/* Loading Overlay inside the modal to prevent flicker */}
+                                {initialLoad && (
+                                    <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-50/80 backdrop-blur-sm transition-opacity duration-500">
+                                        <div className="flex flex-col items-center gap-6">
+                                            <div className="w-12 h-12 border-4 border-indigo-600/20 border-t-indigo-600 rounded-full animate-spin"></div>
+                                            <div className="flex flex-col items-center text-center">
+                                                <p className="text-xs font-black text-indigo-600 uppercase tracking-[0.3em] animate-pulse underline decoration-indigo-200 decoration-4 underline-offset-8">Synchronizing Workspace</p>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-4 italic">Fetching latest executive data...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="max-w-6xl mx-auto space-y-8">
                                     {engagements.filter(e => {
                                         const ongoingOnly = e.status !== 'completed' && e.status !== 'follow_up';
                                         if (!ongoingOnly) return false;
                                         if (activeTab !== 'all' && e.status !== activeTab) return false;
-                                        
+
                                         if (!activeAuditSearch) return true;
                                         const term = activeAuditSearch.toLowerCase();
                                         return (
@@ -617,7 +655,7 @@ export default function DirectorDashboard() {
                                                 const ongoingOnly = e.status !== 'completed' && e.status !== 'follow_up';
                                                 if (!ongoingOnly) return false;
                                                 if (activeTab !== 'all' && e.status !== activeTab) return false;
-                                                
+
                                                 if (!activeAuditSearch) return true;
                                                 const term = activeAuditSearch.toLowerCase();
                                                 return (
@@ -632,7 +670,7 @@ export default function DirectorDashboard() {
                                                 const endDate = eng.end_date ? new Date(eng.end_date) : null;
                                                 const diffTime = endDate ? endDate - new Date() : 0;
                                                 const daysRemaining = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                                                
+
                                                 // Urgency Logic
                                                 let urgencyColor = 'bg-slate-100 text-slate-600';
                                                 let urgencyText = 'Low urgency';
@@ -706,12 +744,10 @@ export default function DirectorDashboard() {
                                                             <div className="flex gap-1.5">
                                                                 {stages.map((stage, idx) => (
                                                                     <div key={stage} className="flex-1 flex flex-col gap-3">
-                                                                        <div className={`h-1.5 rounded-full transition-all duration-500 ${
-                                                                            idx <= currentStageIndex ? 'bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]' : 'bg-slate-100'
-                                                                        }`}></div>
-                                                                        <p className={`text-[9px] font-black uppercase tracking-widest ${
-                                                                            idx <= currentStageIndex ? 'text-indigo-600' : 'text-slate-300'
-                                                                        }`}>
+                                                                        <div className={`h-1.5 rounded-full transition-all duration-500 ${idx <= currentStageIndex ? 'bg-indigo-600 shadow-[0_0_10px_rgba(79,70,229,0.2)]' : 'bg-slate-100'
+                                                                            }`}></div>
+                                                                        <p className={`text-[9px] font-black uppercase tracking-widest ${idx <= currentStageIndex ? 'text-indigo-600' : 'text-slate-300'
+                                                                            }`}>
                                                                             {stage.replace('_', '-')}
                                                                         </p>
                                                                     </div>
@@ -721,7 +757,7 @@ export default function DirectorDashboard() {
 
                                                         <div className="pt-8 border-t border-slate-50 flex items-center justify-between">
                                                             <div className="flex gap-3">
-                                                                <button 
+                                                                <button
                                                                     onClick={() => navigate('/auditor/workspace/' + eng.id)}
                                                                     className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center gap-2 shadow-lg hover:shadow-indigo-200"
                                                                 >
@@ -730,7 +766,7 @@ export default function DirectorDashboard() {
                                                                 <button className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-indigo-600 hover:text-indigo-600 transition-all">
                                                                     Assign lead
                                                                 </button>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => navigate('/auditor/workspace/' + eng.id)}
                                                                     className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:border-indigo-600 hover:text-indigo-600 transition-all"
                                                                 >

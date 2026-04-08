@@ -1,7 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Download, Save, Printer } from 'lucide-react';
 import api from '../api';
+import { formatRef } from '../utils/formatters';
 
 export default function GenerateDocument() {
     const { id, doc } = useParams();
@@ -326,7 +324,7 @@ export default function GenerateDocument() {
 
             <div className="mb-5">
                 <h1 className="text-sm font-bold font-serif leading-tight">AUDIT NOTIFICATION MEMORANDUM</h1>
-                <p className="text-[11px] font-serif text-gray-800">(ANM Reference No. <input type="text" defaultValue={`ANM-${new Date().getFullYear()}-001`} className="bg-transparent border-none outline-none w-32 font-serif" />)</p>
+                <p className="text-[11px] font-serif text-gray-800">(ANM Reference No. <input type="text" defaultValue={formatRef('ANM', engagement.ae_number)} className="bg-transparent border-none outline-none w-32 font-serif" />)</p>
             </div>
 
             <div className="grid grid-cols-[85px_15px_1fr] gap-y-2 mb-5 text-[13px] font-serif items-center leading-tight">
@@ -394,8 +392,8 @@ export default function GenerateDocument() {
 
             <table className="text-xs font-bold items-center max-w-3xl mb-6 text-left">
                 <tbody>
-                    <tr><td className="w-[180px] py-1">AWP Reference No.</td><td className="w-4 py-1">:</td><td><input type="text" defaultValue={`AWP-${new Date().getFullYear()}-001`} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
-                    <tr><td className="py-1">Audit Engagement No.</td><td className="py-1">:</td><td><input type="text" defaultValue={`AE-${new Date().getFullYear()}-04`} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
+                    <tr><td className="w-[180px] py-1">AWP Reference No.</td><td className="w-4 py-1">:</td><td><input type="text" defaultValue={formatRef('AWP', engagement.ae_number)} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
+                    <tr><td className="py-1">Audit Engagement No.</td><td className="py-1">:</td><td><input type="text" defaultValue={engagement.ae_number || 'AE-202X-XXX'} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
                     <tr><td className="py-1">Audit Engagement Title</td><td className="py-1">:</td><td><input type="text" defaultValue={engagement.title} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
                     <tr><td className="py-1">Audit Duration</td><td className="py-1">:</td><td><input type="text" defaultValue={`${engagement.start_date || 'TBD'} - ${engagement.end_date || 'TBD'}`} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
                     <tr><td className="py-1">Agency/Office</td><td className="py-1">:</td><td><input type="text" defaultValue={auditeeName} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>

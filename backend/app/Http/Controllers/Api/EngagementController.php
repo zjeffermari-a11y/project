@@ -14,14 +14,16 @@ class EngagementController extends Controller
         $user = Auth::user();
         if ($user->role === 'auditor') {
             return response()->json(Engagement::with(['movs.auditee', 'documents.uploader', 'users'])->get());
-        }
-        else {
+        } else {
             // Auditees only see engagements they are involved in (via MOVs)
             $engagements = Engagement::whereHas('movs', function ($q) use ($user) {
                 $q->where('auditee_id', $user->id);
-            })->with(['movs' => function ($q) use ($user) {
-                $q->where('auditee_id', $user->id);
-            }, 'users'])->get();
+            })->with([
+                        'movs' => function ($q) use ($user) {
+                            $q->where('auditee_id', $user->id);
+                        },
+                        'users'
+                    ])->get();
             return response()->json($engagements);
         }
     }
@@ -92,7 +94,7 @@ class EngagementController extends Controller
         }
 
         $engagement = Engagement::findOrFail($id);
-        
+
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'description' => 'nullable|string',
@@ -143,19 +145,20 @@ class EngagementController extends Controller
     public function activityLogs($id)
     {
         $engagement = Engagement::findOrFail($id);
-        
+
         // Allowed users: Auditors + Auditees involved
         $user = Auth::user();
         if ($user->role !== 'auditor') {
             $isInvolved = $engagement->movs()->where('auditee_id', $user->id)->exists();
-            if (!$isInvolved) return response()->json(['message' => 'Unauthorized'], 403);
+            if (!$isInvolved)
+                return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $logs = \App\Models\ActivityLog::with('user')
             ->where('engagement_id', $id)
             ->latest()
             ->get();
-            
+
         return response()->json($logs);
     }
 }

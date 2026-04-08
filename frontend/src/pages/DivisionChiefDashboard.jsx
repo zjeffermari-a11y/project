@@ -203,6 +203,26 @@ export default function DivisionChiefDashboard() {
         return true;
     });
 
+    // --- Loading State Handling ---
+    // If it's the very first load and we have no data, show a global premium loader
+    if (initialLoad && engagements.length === 0) {
+        return (
+            <div className="h-screen bg-slate-900 flex flex-col items-center justify-center relative overflow-hidden text-center">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-500/10 via-transparent to-transparent"></div>
+                <div className="relative z-10 flex flex-col items-center gap-8">
+                    <div className="relative">
+                        <div className="w-24 h-24 border-4 border-blue-500/20 border-t-blue-500 rounded-full animate-spin"></div>
+                        <img src={iamsLogo} className="w-12 h-12 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 animate-pulse" alt="Loading" />
+                    </div>
+                    <div className="flex flex-col items-center">
+                        <h2 className="text-white font-black uppercase tracking-[0.4em] text-sm mb-2">Synchronizing IAMS</h2>
+                        <p className="text-blue-400 font-bold text-[10px] uppercase tracking-widest animate-pulse">Initializing Management Dashboard...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <PageTransition className="flex h-screen overflow-hidden bg-slate-50 text-slate-900 font-sans relative">
             <LogoutOverlay isOpen={isLoggingOut} userName={user?.name} />
@@ -630,7 +650,21 @@ export default function DivisionChiefDashboard() {
                             </div>
 
                             {/* Modal Content */}
-                            <div className="flex-1 overflow-y-auto w-full custom-scrollbar bg-slate-50/50 p-12">
+                            <div className="flex-1 overflow-y-auto w-full custom-scrollbar bg-slate-50/50 p-12 relative">
+                                
+                                {/* Loading Overlay inside the modal to prevent flicker */}
+                                {initialLoad && (
+                                    <div className="absolute inset-0 z-[60] flex items-center justify-center bg-slate-50/80 backdrop-blur-sm transition-opacity duration-500">
+                                        <div className="flex flex-col items-center gap-6">
+                                            <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin"></div>
+                                            <div className="flex flex-col items-center text-center">
+                                                <p className="text-xs font-black text-blue-600 uppercase tracking-[0.3em] animate-pulse underline decoration-blue-200 decoration-4 underline-offset-8">Synchronizing Workspace</p>
+                                                <p className="text-[10px] font-bold text-slate-400 mt-4 italic">Fetching latest audit engagements...</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="max-w-6xl mx-auto space-y-8">
                                     {engagements.filter(e => {
                                         const ongoingOnly = e.status !== 'completed' && e.status !== 'follow_up';

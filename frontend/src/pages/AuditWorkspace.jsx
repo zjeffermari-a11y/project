@@ -209,8 +209,7 @@ export default function AuditWorkspace() {
 
     const handleMovAction = async (movId, status) => {
         try {
-            await api.patch(`/movs/${movId}/status`, { status });
-            await refreshData();
+            await updateMovStatusOptimistic(movId, status);
             fetchWorkspaceData();
         } catch (err) {
             alert('Action failed: ' + (err.response?.data?.message || err.message));

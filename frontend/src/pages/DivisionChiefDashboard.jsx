@@ -16,7 +16,10 @@ export default function DivisionChiefDashboard() {
         availableAuditors, 
         pendingUsers,
         initialLoad, 
-        refreshData 
+        refreshData,
+        deleteEngagementOptimistic,
+        updateEngagementStatusOptimistic,
+        approveUserOptimistic
     } = useDataContext();
 
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -59,10 +62,9 @@ export default function DivisionChiefDashboard() {
 
     const handleApproval = async (id, status) => {
         try {
-            await api.patch(`/users/${id}/approve`, { status });
-            refreshData();
+            await approveUserOptimistic(id, status);
         } catch (err) {
-            alert('Failed to update user status');
+            alert('Failed to update user status: ' + (err.response?.data?.message || err.message));
         }
     };
 
@@ -93,8 +95,7 @@ export default function DivisionChiefDashboard() {
         e.stopPropagation();
         if (window.confirm("Are you sure you want to completely delete this audit engagement? This will permanently delete all related MOVs and Documents.")) {
             try {
-                await api.delete(`/engagements/${id}`);
-                refreshData();
+                await deleteEngagementOptimistic(id);
             } catch (err) {
                 alert('Deletion failed: ' + (err.response?.data?.message || err.message));
             }
@@ -103,10 +104,9 @@ export default function DivisionChiefDashboard() {
 
     const handleEngagementStatusUpdate = async (id, status) => {
         try {
-            await api.put(`/engagements/${id}`, { status });
-            refreshData();
+            await updateEngagementStatusOptimistic(id, status);
         } catch (err) {
-            alert('Failed to update engagement status');
+            alert('Failed to update engagement status: ' + (err.response?.data?.message || err.message));
         }
     };
 

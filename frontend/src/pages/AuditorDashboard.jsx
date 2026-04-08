@@ -15,7 +15,10 @@ export default function AuditorDashboard() {
         auditees, 
         availableAuditors, 
         initialLoad, 
-        refreshData 
+        refreshData,
+        updateMovStatusOptimistic,
+        deleteEngagementOptimistic,
+        updateEngagementStatusOptimistic
     } = useDataContext();
 
     const [filter, setFilter] = useState('all');
@@ -46,8 +49,7 @@ export default function AuditorDashboard() {
 
     const handleMovAction = async (movId, status) => {
         try {
-            await api.patch(`/movs/${movId}/status`, { status });
-            refreshData();
+            await updateMovStatusOptimistic(movId, status);
         } catch (err) {
             alert('Action failed: ' + (err.response?.data?.message || err.message));
         }
@@ -57,11 +59,10 @@ export default function AuditorDashboard() {
         e.stopPropagation();
         if (window.confirm("Are you sure you want to completely delete this audit engagement? This will permanently delete all related MOVs and Documents.")) {
             try {
-                await api.delete(`/engagements/${id}`);
+                await deleteEngagementOptimistic(id);
                 if (selectedEngagement?.id === id) {
                     setSelectedEngagement(null);
                 }
-                refreshData();
             } catch (err) {
                 alert('Deletion failed: ' + (err.response?.data?.message || err.message));
             }
@@ -70,8 +71,7 @@ export default function AuditorDashboard() {
 
     const handleEngagementStatusUpdate = async (id, status) => {
         try {
-            await api.put(`/engagements/${id}`, { status });
-            refreshData();
+            await updateEngagementStatusOptimistic(id, status);
         } catch (err) {
             alert('Failed to update engagement status: ' + (err.response?.data?.message || err.message));
         }

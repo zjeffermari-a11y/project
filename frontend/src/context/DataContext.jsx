@@ -93,6 +93,76 @@ export const DataProvider = ({ children }) => {
         fetchData();
     }, []);
 
+    const deleteEngagementOptimistic = useCallback(async (id) => {
+        const previousEngagements = [...engagements];
+        // Optimistic update
+        setEngagements(prev => prev.filter(e => e.id !== id));
+        
+        try {
+            await api.delete(`/engagements/${id}`);
+            // Success, no further action needed as state is already updated
+        } catch (err) {
+            console.error('Delete failed, rolling back:', err);
+            setEngagements(previousEngagements);
+            throw err;
+        }
+    }, [engagements]);
+
+    const updateEngagementStatusOptimistic = useCallback(async (id, status) => {
+        const previousEngagements = [...engagements];
+        // Optimistic update
+        setEngagements(prev => prev.map(e => e.id === id ? { ...e, status } : e));
+        
+        try {
+            await api.put(`/engagements/${id}`, { status });
+            // Refresh data in background to ensure all nested fields are correct
+            fetchData(true);
+        } catch (err) {
+            console.error('Status update failed, rolling back:', err);
+            setEngagements(previousEngagements);
+            throw err;
+        }
+    }, [engagements, fetchData]);
+
+    const updateMovStatusOptimistic = useCallback(async (movId, status) => {
+        const previousEngagements = [...engagements];
+        
+        // Optimistic update: Deep update in engagements list
+        setEngagements(prev => prev.map(eng => {
+            const hasMov = eng.movs?.some(m => m.id === movId);
+            if (!hasMov) return eng;
+            
+            return {
+                ...eng,
+                movs: eng.movs.map(m => m.id === movId ? { ...m, status } : m)
+            };
+        }));
+        
+        try {
+            await api.patch(`/movs/${movId}/status`, { status });
+            // Background sync
+            fetchData(true);
+        } catch (err) {
+            console.error('MOV status update failed, rolling back:', err);
+            setEngagements(previousEngagements);
+            throw err;
+        }
+    }, [engagements, fetchData]);
+
+    const approveUserOptimistic = useCallback(async (id, status) => {
+        const previousPending = [...pendingUsers];
+        // Optimistic update
+        setPendingUsers(prev => prev.filter(u => u.id !== id));
+        
+        try {
+            await api.patch(`/users/${id}/approve`, { status });
+        } catch (err) {
+            console.error('User approval failed, rolling back:', err);
+            setPendingUsers(previousPending);
+            throw err;
+        }
+    }, [pendingUsers]);
+
     const value = {
         engagements,
         setEngagements,
@@ -106,6 +176,10 @@ export const DataProvider = ({ children }) => {
         initialLoad,
         error,
         refreshData: () => fetchData(true),
+        deleteEngagementOptimistic,
+        updateEngagementStatusOptimistic,
+        updateMovStatusOptimistic,
+        approveUserOptimistic,
         lastFetched
     };
 

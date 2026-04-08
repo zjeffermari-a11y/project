@@ -11,7 +11,8 @@ export default function AuditeeDashboard() {
     const { 
         engagements, 
         initialLoad, 
-        refreshData 
+        refreshData,
+        updateMovStatusOptimistic
     } = useDataContext();
 
     // Modal State
@@ -54,17 +55,15 @@ export default function AuditeeDashboard() {
             await api.post('/documents/upload', formData, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            await api.patch(`/movs/${uploadMovId}/status`, {
-                status: 'submitted',
-                management_comment: managementComment || undefined
-            });
+            
+            // Optimistically update the status to 'submitted'
+            await updateMovStatusOptimistic(uploadMovId, 'submitted');
 
             setUploadMovId(null);
             setUploadEngId(null);
             setUploadMovName('');
             setSelectedFile(null);
             setManagementComment('');
-            refreshData();
         } catch (err) {
             alert('Upload failed: ' + (err.response?.data?.message || err.message));
         } finally {

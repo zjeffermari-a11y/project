@@ -14,6 +14,7 @@ export default function AuditorDashboard() {
         engagements, 
         auditees, 
         availableAuditors, 
+        loading,
         initialLoad, 
         refreshData,
         updateMovStatusOptimistic,

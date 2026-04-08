@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
 import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle, Folder, Bell, RefreshCw } from 'lucide-react';
@@ -16,7 +16,7 @@ export default function AuditeeDashboard() {
         updateMovStatusOptimistic
     } = useDataContext();
 
-    // Modal State
+    // Modal & Tab State
     const [uploadMovId, setUploadMovId] = useState(null);
     const [uploadEngId, setUploadEngId] = useState(null);
     const [uploadMovName, setUploadMovName] = useState('');
@@ -24,6 +24,8 @@ export default function AuditeeDashboard() {
     const [managementComment, setManagementComment] = useState('');
     const [uploading, setUploading] = useState(false);
     const [isLoggingOut, setIsLoggingOut] = useState(false);
+    const [activeTab, setActiveTab] = useState('overview');
+    const hasCheckedSmartDefault = useRef(false);
 
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user')) || {};
@@ -31,6 +33,16 @@ export default function AuditeeDashboard() {
     useEffect(() => {
         document.title = 'Internal Audit Management | Auditee Portal';
     }, []);
+
+    // Smart Default: If pending actions exist, prioritizes Ongoing Audits
+    useEffect(() => {
+        if (!initialLoad && !hasCheckedSmartDefault.current) {
+            if (pendingTasks.length > 0) {
+                setActiveTab('ongoing');
+            }
+            hasCheckedSmartDefault.current = true;
+        }
+    }, [initialLoad, pendingTasks.length]);
 
     const handleLogout = async () => {
         setIsLoggingOut(true);
@@ -202,28 +214,52 @@ export default function AuditeeDashboard() {
                             </div>
                             <p className="text-sm font-semibold text-slate-500 mt-2">Current Engagement: <span className="text-emerald-600">{currentEngagement}</span></p>
                         </div>
-                        <div className="flex items-center gap-6">
-                            {initialLoad && (
-                                <div className="flex items-center gap-3 bg-emerald-900 border border-emerald-700 px-4 py-2 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
-                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
-                                    <span className="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Synchronizing</span>
+                        <div className="flex flex-col items-end gap-4">
+                            <div className="flex items-center gap-6">
+                                {initialLoad && (
+                                    <div className="flex items-center gap-3 bg-emerald-900 border border-emerald-700 px-4 py-2 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                                        <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                                        <span className="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Synchronizing</span>
+                                    </div>
+                                )}
+                                <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
+                                    <Bell className="w-6 h-6" />
+                                    <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white">3</span>
+                                </button>
+                                <div className="text-right">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Phase</p>
+                                    <div className={`flex items-center gap-2 ${currentPhaseConfig.badgeBg} border ${currentPhaseConfig.badgeBorder} px-4 py-2 rounded-xl ${currentPhaseConfig.badgeText}`}>
+                                        {currentEngagementStatus !== 'completed' && (
+                                            <span className="relative flex h-3 w-3">
+                                                <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${currentPhaseConfig.ping} opacity-75`}></span>
+                                                <span className={`relative inline-flex rounded-full h-3 w-3 ${currentPhaseConfig.dot}`}></span>
+                                            </span>
+                                        )}
+                                        <span className="text-sm font-bold">{currentPhaseConfig.label}</span>
+                                    </div>
                                 </div>
-                            )}
-                            <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
-                                <Bell className="w-6 h-6" />
-                                <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white">3</span>
-                            </button>
-                            <div className="text-right">
-                                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Current Phase</p>
-                                <div className={`flex items-center gap-2 ${currentPhaseConfig.badgeBg} border ${currentPhaseConfig.badgeBorder} px-4 py-2 rounded-xl ${currentPhaseConfig.badgeText}`}>
-                                    {currentEngagementStatus !== 'completed' && (
-                                        <span className="relative flex h-3 w-3">
-                                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full ${currentPhaseConfig.ping} opacity-75`}></span>
-                                            <span className={`relative inline-flex rounded-full h-3 w-3 ${currentPhaseConfig.dot}`}></span>
-                                        </span>
-                                    )}
-                                    <span className="text-sm font-bold">{currentPhaseConfig.label}</span>
-                                </div>
+                            </div>
+
+                            {/* Tab Navigation */}
+                            <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
+                                <button 
+                                    onClick={() => setActiveTab('overview')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'overview' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Overview
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('ongoing')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'ongoing' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Ongoing Audits ({ongoingAudits.length})
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('follow-up')}
+                                    className={`px-4 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'follow-up' ? 'bg-white text-emerald-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                                >
+                                    Follow-up ({followUpAudits.length})
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -251,179 +287,217 @@ export default function AuditeeDashboard() {
                                 </div>
 
                                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                                    <div className="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mb-4">
+                                        <FileText className="h-5 w-5" />
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Pending Actions</p>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Ongoing Audits</p>
+                                    <p className="text-2xl font-black text-slate-800">{ongoingAudits.length}</p>
+                                </div>
+
+                                <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
+                                    <div className="w-8 h-8 bg-rose-100 text-rose-600 rounded-lg flex items-center justify-center mb-4">
+                                        <AlertCircle className="h-5 w-5" />
+                                    </div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Actions Required</p>
                                     <p className="text-2xl font-black text-slate-800">{pendingTasks.length}</p>
                                 </div>
 
                                 <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm">
-                                    <div className="w-8 h-8 bg-indigo-100 text-indigo-600 rounded-lg flex items-center justify-center mb-4">
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                                    <div className="w-8 h-8 bg-emerald-100 text-emerald-600 rounded-lg flex items-center justify-center mb-4">
+                                        <CheckCircle className="h-5 w-5" />
                                     </div>
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Submitted MOVs</p>
-                                    <p className="text-2xl font-black text-slate-800">{submittedMovsCount} <span className="text-xs font-bold text-slate-400 ml-1">/ {totalMovs} Required</span></p>
-                                </div>
-
-                                <div className="bg-slate-900 text-white p-6 rounded-3xl border border-slate-800 shadow-lg relative overflow-hidden">
-                                    <div className="relative z-10">
-                                        <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest mb-1">Deadline & Task</p>
-                                        <p className="text-2xl font-black mb-1">Approaching</p>
-                                        <p className="text-xs text-slate-300 font-bold">Please check tasks</p>
-                                    </div>
-                                    <svg xmlns="http://www.w3.org/2000/svg" className="h-24 w-24 absolute -right-4 -bottom-4 text-white opacity-5" fill="currentColor" viewBox="0 0 24 24"><path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 002 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V10h14v10zm0-12H5V6h14v2z" /></svg>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Follow-up Phase</p>
+                                    <p className="text-2xl font-black text-slate-800">{followUpAudits.length}</p>
                                 </div>
                             </div>
 
                             <div className="space-y-8 pb-10">
-                                {/* Action Required */}
-                                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                    <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
-                                        <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>
-                                            Action Required
-                                        </h2>
-                                    </div>
-                                    <div className="divide-y divide-slate-100">
-                                        {pendingTasks.length === 0 ? (
-                                            <div className="p-10 text-center text-slate-400 font-semibold italic">No actions currently required.</div>
-                                        ) : pendingTasks.map((task, idx) => (
-                                            <div key={idx} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition-colors gap-4">
-                                                <div className="flex items-start gap-4">
-                                                    <div className="mt-1 w-5 h-5 rounded border-2 border-slate-300 flex-shrink-0"></div>
-                                                    <div>
-                                                        <h3 className="text-sm font-bold text-slate-800">{task.title}</h3>
-                                                        <div className="flex items-center gap-3 mt-1.5">
-                                                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{task.type}</span>
-                                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
-                                                            <span className={`text-xs font-bold ${task.urgent ? 'text-rose-600' : 'text-slate-500'}`}>
-                                                                Due: <span>{task.due}</span>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                                <button onClick={() => { setUploadMovId(task.id); setUploadEngId(task.engId); setUploadMovName(task.title); }} className="px-5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm whitespace-nowrap">
-                                                    Take Action
-                                                </button>
+                                {/* Tab: Overview */}
+                                {(activeTab === 'overview' || activeTab === 'ongoing') && (
+                                    <>
+                                        {/* Action Required */}
+                                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                                                <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest flex items-center gap-2">
+                                                    <AlertCircle className="h-5 w-5 text-indigo-500" />
+                                                    Actions & Submissions Required
+                                                </h2>
+                                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Priority Checklist</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {/* Ongoing Audit – MOV Submission Status */}
-                                {ongoingAudits.length > 0 && (
-                                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                        <div className="px-6 py-5 border-b border-slate-100 bg-indigo-50">
-                                            <h2 className="text-sm font-black text-indigo-700 uppercase tracking-widest flex items-center gap-2">
-                                                <FileText className="h-5 w-5 text-indigo-500" />
-                                                Ongoing Audit – Submission Status
-                                            </h2>
-                                            <p className="text-xs text-indigo-500 font-bold mt-1">Live status of your MOV submissions per engagement.</p>
-                                        </div>
-                                        {ongoingAudits.map(({ eng, myMovs, total, approved, submitted, returned, pending }) => (
-                                            <div key={eng.id} className="px-6 py-5 border-b border-slate-100 last:border-b-0">
-                                                <div className="flex items-start justify-between mb-4">
-                                                    <div>
-                                                        <h3 className="text-sm font-black text-slate-800">{eng.title}</h3>
-                                                        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{eng.start_date || 'TBD'}</p>
-                                                        <button onClick={() => navigate(`/auditor/workspace/${eng.id}`)} className="mt-3 px-3 py-1.5 bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-600 hover:text-white rounded-lg text-[9px] font-black uppercase tracking-widest transition-colors flex items-center gap-1.5 w-fit">
-                                                            <Folder className="w-3.5 h-3.5" /> Open Masterfile Workspace
+                                            <div className="divide-y divide-slate-100">
+                                                {pendingTasks.length === 0 ? (
+                                                    <div className="p-10 text-center text-slate-400 font-semibold italic">No actions currently required. All caught up!</div>
+                                                ) : pendingTasks.map((task, idx) => (
+                                                    <div key={idx} className="p-6 flex flex-col sm:flex-row sm:items-center justify-between hover:bg-slate-50 transition-colors gap-4">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className={`mt-1 w-5 h-5 rounded border-2 border-slate-300 flex-shrink-0 ${task.urgent ? 'border-rose-300 bg-rose-50' : ''}`}></div>
+                                                            <div>
+                                                                <h3 className="text-sm font-bold text-slate-800">{task.title}</h3>
+                                                                <div className="flex items-center gap-3 mt-1.5">
+                                                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{task.type}</span>
+                                                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                                    <span className={`text-xs font-bold ${task.urgent ? 'text-rose-600' : 'text-slate-500'}`}>
+                                                                        Due: <span>{task.due}</span>
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <button onClick={() => { setUploadMovId(task.id); setUploadEngId(task.engId); setUploadMovName(task.title); }} className="px-5 py-2.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-colors shadow-sm whitespace-nowrap">
+                                                            Upload MOV
                                                         </button>
                                                     </div>
-                                                    <div className="flex gap-3 text-center shrink-0">
-                                                        <div className="flex flex-col items-center"><span className="text-lg font-black text-emerald-600">{approved}</span><span className="text-[9px] text-slate-400 font-black uppercase">Approved</span></div>
-                                                        <div className="flex flex-col items-center"><span className="text-lg font-black text-amber-500">{submitted}</span><span className="text-[9px] text-slate-400 font-black uppercase">Pending</span></div>
-                                                        <div className="flex flex-col items-center"><span className="text-lg font-black text-rose-500">{returned}</span><span className="text-[9px] text-slate-400 font-black uppercase">Returned</span></div>
-                                                        <div className="flex flex-col items-center"><span className="text-lg font-black text-slate-400">{pending}</span><span className="text-[9px] text-slate-400 font-black uppercase">Pending Sub.</span></div>
-                                                    </div>
-                                                </div>
-                                                <div className="space-y-2">
-                                                    {myMovs.map(mov => {
-                                                        const cfg = getMovStatusConfig(mov.status);
-                                                        return (
-                                                            <div key={mov.id} className="flex items-center justify-between py-2 px-3 rounded-xl bg-slate-50 border border-slate-100">
-                                                                <span className="text-xs font-bold text-slate-700 truncate max-w-xs">{mov.requirement_name}</span>
-                                                                <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.text} ${cfg.border}`}>
-                                                                    {cfg.icon}{cfg.label}
-                                                                </span>
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
+                                                ))}
                                             </div>
-                                        ))}
-                                    </div>
+                                        </div>
+                                    </>
                                 )}
 
-                                {/* Audit Follow-up – Compliance Rating */}
-                                {followUpAudits.length > 0 && (
-                                    <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                        <div className="px-6 py-5 border-b border-slate-100 bg-rose-50">
-                                            <h2 className="text-sm font-black text-rose-700 uppercase tracking-widest flex items-center gap-2">
-                                                <CheckCircle className="h-5 w-5 text-rose-500" />
-                                                Audit Follow-up – Compliance Rating
-                                            </h2>
-                                            <p className="text-xs text-rose-500 font-bold mt-1">Compliance summary for completed and follow-up phase audits.</p>
-                                        </div>
-                                        <div className="divide-y divide-slate-100">
-                                            {followUpAudits.map(({ eng, total, approved, compRate }) => (
-                                                <div key={eng.id} className="px-6 py-5">
-                                                    <div className="flex items-center justify-between mb-3">
+                                {/* Tab: Ongoing Audits */}
+                                {activeTab === 'ongoing' && (
+                                    ongoingAudits.length > 0 ? (
+                                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div className="px-6 py-5 border-b border-slate-100 bg-emerald-50/50">
+                                                <h2 className="text-sm font-black text-emerald-700 uppercase tracking-widest flex items-center gap-2">
+                                                    <FileText className="h-5 w-5 text-emerald-500" />
+                                                    Active Monitoring – Ongoing Audits
+                                                </h2>
+                                                <p className="text-xs text-emerald-600 font-bold mt-1">Live status of your MOV submissions per engagement.</p>
+                                            </div>
+                                            {ongoingAudits.map(({ eng, myMovs, total, approved, submitted, returned, pending }) => (
+                                                <div key={eng.id} className="px-6 py-8 border-b border-slate-100 last:border-b-0">
+                                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
                                                         <div>
-                                                            <h3 className="text-sm font-black text-slate-800">{eng.title}</h3>
-                                                            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">{approved} / {total} MOVs Approved</p>
+                                                            <div className="flex items-center gap-3 mb-2">
+                                                                <span className="bg-amber-100 text-amber-700 text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded border border-amber-200">Active engagement</span>
+                                                                <span className="text-xs font-bold text-slate-400">{eng.start_date || 'TBD'}</span>
+                                                            </div>
+                                                            <h3 className="text-xl font-black text-slate-800 tracking-tight">{eng.title}</h3>
+                                                            <div className="mt-4 flex gap-2">
+                                                                <button onClick={() => navigate(`/auditor/workspace/${eng.id}`)} className="px-4 py-2 bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-100 flex items-center gap-2">
+                                                                    <Folder className="w-4 h-4" /> Open Masterfile
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <span className={`text-2xl font-black ${compRate === 100 ? 'text-emerald-600' : compRate >= 75 ? 'text-amber-500' : 'text-rose-600'}`}>{compRate}%</span>
+                                                        <div className="grid grid-cols-4 gap-4 bg-slate-50 p-6 rounded-2xl border border-slate-100">
+                                                            <div className="flex flex-col items-center"><span className="text-xl font-black text-emerald-600">{approved}</span><span className="text-[9px] text-slate-400 font-black uppercase">Approved</span></div>
+                                                            <div className="flex flex-col items-center"><span className="text-xl font-black text-amber-500">{submitted}</span><span className="text-[9px] text-slate-400 font-black uppercase">Reviewing</span></div>
+                                                            <div className="flex flex-col items-center"><span className="text-xl font-black text-rose-500">{returned}</span><span className="text-[9px] text-slate-400 font-black uppercase">Returned</span></div>
+                                                            <div className="flex flex-col items-center"><span className="text-xl font-black text-slate-400">{pending}</span><span className="text-[9px] text-slate-400 font-black uppercase">Pending Sub.</span></div>
+                                                        </div>
                                                     </div>
-                                                    <div className="w-full bg-slate-100 rounded-full h-2">
-                                                        <div
-                                                            className={`h-2 rounded-full transition-all duration-700 ${compRate === 100 ? 'bg-emerald-500' : compRate >= 75 ? 'bg-amber-400' : 'bg-rose-400'}`}
-                                                            style={{ width: `${compRate}%` }}
-                                                        />
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                        {myMovs.map(mov => {
+                                                            const cfg = getMovStatusConfig(mov.status);
+                                                            return (
+                                                                <div key={mov.id} className="flex items-center justify-between py-3 px-4 rounded-xl bg-white border border-slate-100 hover:border-emerald-200 transition-colors shadow-sm">
+                                                                    <span className="text-xs font-bold text-slate-700 truncate pr-4">{mov.requirement_name}</span>
+                                                                    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-[9px] font-black uppercase tracking-widest border ${cfg.bg} ${cfg.text} ${cfg.border} shrink-0`}>
+                                                                        {cfg.icon}{cfg.label}
+                                                                    </span>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
-                                                    <p className="text-[10px] text-slate-400 font-bold mt-2 uppercase tracking-widest">
-                                                        Status: <span className={`${eng.status === 'completed' ? 'text-emerald-600' : 'text-rose-600'}`}>{eng.status === 'completed' ? 'Completed' : 'Follow-up Phase'}</span>
-                                                    </p>
                                                 </div>
                                             ))}
                                         </div>
-                                    </div>
+                                    ) : (
+                                        <div className="bg-white rounded-3xl border border-slate-200 border-dashed p-20 text-center">
+                                            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <FileText className="w-8 h-8" />
+                                            </div>
+                                            <h3 className="text-slate-800 font-black uppercase tracking-tight">No Ongoing Audits</h3>
+                                            <p className="text-slate-400 text-sm font-medium mt-1">You currently have no active audit engagements in progress.</p>
+                                        </div>
+                                    )
                                 )}
 
-                                {/* Recent Submissions */}
-                                <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                    <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
-                                        <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Recent Submissions Status</h2>
-                                    </div>
-                                    <div className="overflow-x-auto">
-                                        <table className="w-full text-left">
-                                            <thead className="bg-slate-50 border-b border-slate-200">
-                                                <tr>
-                                                    <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Requirement Name</th>
-                                                    <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Submitted</th>
-                                                    <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody className="divide-y divide-slate-100">
-                                                {recentSubmissions.length === 0 ? (
-                                                    <tr><td colSpan="3" className="p-6 text-center text-slate-400 text-sm">No recent submissions.</td></tr>
-                                                ) : recentSubmissions.map((sub, idx) => (
-                                                    <tr key={idx} className="hover:bg-slate-50 transition-colors">
-                                                        <td className="p-4 text-xs font-bold text-slate-700">{sub.name}</td>
-                                                        <td className="p-4 text-xs text-slate-500 font-medium">{sub.date}</td>
-                                                        <td className="p-4">
-                                                            <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${sub.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
-                                                                    sub.status === 'Pending Review' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                                                        'bg-rose-50 text-rose-600 border-rose-200'
-                                                                }`}>{sub.status}</span>
-                                                        </td>
-                                                    </tr>
+                                {/* Tab: Follow-up */}
+                                {activeTab === 'follow-up' && (
+                                    followUpAudits.length > 0 ? (
+                                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div className="px-6 py-5 border-b border-slate-100 bg-rose-50/50">
+                                                <h2 className="text-sm font-black text-rose-700 uppercase tracking-widest flex items-center gap-2">
+                                                    <CheckCircle className="h-5 w-5 text-rose-500" />
+                                                    Historical & Follow-up Phased Audits
+                                                </h2>
+                                                <p className="text-xs text-rose-600 font-bold mt-1">Summary of past performance and ongoing follow-up monitoring.</p>
+                                            </div>
+                                            <div className="divide-y divide-slate-100">
+                                                {followUpAudits.map(({ eng, total, approved, compRate }) => (
+                                                    <div key={eng.id} className="px-6 py-8 hover:bg-slate-50 transition-colors">
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div>
+                                                                <h3 className="text-lg font-black text-slate-800 tracking-tight">{eng.title}</h3>
+                                                                <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-400 font-black uppercase tracking-widest">
+                                                                    <span>{approved} / {total} MOVs Cleared</span>
+                                                                    <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                                    <span className={`${eng.status === 'completed' ? 'text-emerald-600' : 'text-rose-600'}`}>{eng.status === 'completed' ? 'Completed' : 'Follow-up Monitoring'}</span>
+                                                                </div>
+                                                            </div>
+                                                            <div className="text-right">
+                                                                <span className={`text-3xl font-black ${compRate === 100 ? 'text-emerald-600' : compRate >= 75 ? 'text-amber-500' : 'text-rose-600'}`}>{compRate}%</span>
+                                                            </div>
+                                                        </div>
+                                                        <div className="w-full bg-slate-200 rounded-full h-3">
+                                                            <div
+                                                                className={`h-3 rounded-full transition-all duration-1000 ${compRate === 100 ? 'bg-emerald-500' : compRate >= 75 ? 'bg-amber-400' : 'bg-rose-400'} shadow-sm`}
+                                                                style={{ width: `${compRate}%` }}
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 ))}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="bg-white rounded-3xl border border-slate-200 border-dashed p-20 text-center">
+                                            <div className="w-16 h-16 bg-slate-50 text-slate-300 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <CheckCircle className="w-8 h-8" />
+                                            </div>
+                                            <h3 className="text-slate-800 font-black uppercase tracking-tight">No Follow-up History</h3>
+                                            <p className="text-slate-400 text-sm font-medium mt-1">There are no completed or follow-up phase audits for your office yet.</p>
+                                        </div>
+                                    )
+                                )}
+
+                                {/* Tab: Overview Sub-sections */}
+                                {activeTab === 'overview' && (
+                                    <>
+                                        {/* Recent Submissions */}
+                                        <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+                                            <div className="px-6 py-5 border-b border-slate-100 flex justify-between items-center">
+                                                <h2 className="text-sm font-black text-slate-700 uppercase tracking-widest">Recent Activity Status</h2>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-left">
+                                                    <thead className="bg-slate-50 border-b border-slate-200">
+                                                        <tr>
+                                                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Requirement Item</th>
+                                                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Submitted</th>
+                                                            <th className="p-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Status</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody className="divide-y divide-slate-100">
+                                                        {recentSubmissions.length === 0 ? (
+                                                            <tr><td colSpan="3" className="p-10 text-center text-slate-400 text-sm font-medium italic">No recent submission activity.</td></tr>
+                                                        ) : recentSubmissions.map((sub, idx) => (
+                                                            <tr key={idx} className="hover:bg-slate-50 transition-colors">
+                                                                <td className="p-4 text-xs font-bold text-slate-700">{sub.name}</td>
+                                                                <td className="p-4 text-xs text-slate-500 font-medium text-center">{sub.date}</td>
+                                                                <td className="p-4 text-right">
+                                                                    <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest border ${sub.status === 'Approved' ? 'bg-emerald-50 text-emerald-600 border-emerald-200' :
+                                                                            sub.status === 'Pending Review' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                                                                'bg-rose-50 text-rose-600 border-rose-200'
+                                                                        }`}>{sub.status}</span>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </div>
                         </div>
                     )}

@@ -1,16 +1,32 @@
 import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
+import MultiFileAttach from './MultiFileAttach';
+import { formatRef } from '../../utils/formatters';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
 // Shared row for checklist tables with Yes/No/NA checkboxes
-const CheckRow = ({ num, row, onChange, readOnly }) => (
+const CheckRow = ({ num, row, onChange, readOnly, engagementId }) => (
     <tr>
         <td className="text-center font-bold">{num}</td>
         <td><textarea className="tbl-input" value={row.policy} onChange={e=>onChange('policy',e.target.value)} disabled={readOnly} /></td>
         <td><textarea className="tbl-input" value={row.requirement} onChange={e=>onChange('requirement',e.target.value)} disabled={readOnly} /></td>
-        <td><textarea className="tbl-input" value={row.movs} onChange={e=>onChange('movs',e.target.value)} disabled={readOnly} /></td>
+        <td className="p-1 space-y-1">
+            <textarea 
+                className="tbl-input min-h-[50px]" 
+                value={row.movs} 
+                onChange={e=>onChange('movs',e.target.value)} 
+                disabled={readOnly} 
+                placeholder="Description..."
+            />
+            <MultiFileAttach 
+                files={row.attachments} 
+                onUpdate={(files) => onChange('attachments', files)}
+                engagementId={engagementId}
+                readOnly={readOnly}
+            />
+        </td>
         <td className="text-center align-middle"><input type="checkbox" className="doc-checkbox" checked={row.yes} onChange={e=>onChange('yes',e.target.checked)} disabled={readOnly} /></td>
         <td className="text-center align-middle"><input type="checkbox" className="doc-checkbox" checked={row.no} onChange={e=>onChange('no',e.target.checked)} disabled={readOnly} /></td>
         <td className="text-center align-middle"><input type="checkbox" className="doc-checkbox" checked={row.na} onChange={e=>onChange('na',e.target.checked)} disabled={readOnly} /></td>
@@ -18,7 +34,7 @@ const CheckRow = ({ num, row, onChange, readOnly }) => (
     </tr>
 );
 
-const emptyRow = () => ({ policy:'', requirement:'', movs:'', yes:false, no:false, na:false, notes:'' });
+const emptyRow = () => ({ policy:'', requirement:'', movs:'', attachments:[], yes:false, no:false, na:false, notes:'' });
 
 const CATEGORIES_OAC = [
     { label: '1. PROGRAM', count: 6 },
@@ -42,15 +58,15 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
     };
 
     const [formData, setFormData] = useState({
-        oacRef: engagement.ae_number ? `OAC-${engagement.ae_number}` : `OAC-${new Date().getFullYear()}-001`,
+        oacRef: formatRef('OAC', engagement.ae_number),
         program: '',
         preparedBy: '', reviewedBy: '', approvedBy: '',
         rows: initRows(),
     });
 
     useEffect(() => {
-        if (engagement.ae_number && !formData.oacRef.includes(engagement.ae_number)) {
-            set('oacRef', `OAC-${engagement.ae_number}`);
+        if (engagement.ae_number) {
+            set('oacRef', formatRef('OAC', engagement.ae_number));
         }
         const load = async () => {
             try {
@@ -178,7 +194,7 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
                             </tr>
                             <tr>
                                 <th colSpan="2">Criteria</th>
-                                <th rowSpan="2" className="w-48">MOVs</th>
+                                <th rowSpan="2" className="w-56">MOVs / Remarks</th>
                                 <th rowSpan="2" className="w-8">Yes</th>
                                 <th rowSpan="2" className="w-8">No</th>
                                 <th rowSpan="2" className="w-10">N/A</th>
@@ -197,7 +213,7 @@ export default function OperationsAuditChecklist({ engagement, readOnly = false 
                                         <td colSpan="7">{cat.label}</td>
                                     </tr>
                                     {formData.rows[cat.label]?.map((row, ri) => (
-                                        <CheckRow key={ri} num={itemNo++} row={row} onChange={(f,v)=>setRow(cat.label,ri,f,v)} readOnly={readOnly} />
+                                        <CheckRow key={ri} num={itemNo++} row={row} onChange={(f,v)=>setRow(cat.label,ri,f,v)} readOnly={readOnly} engagementId={engagement.id} />
                                     ))}
                                     {!readOnly && (
                                         <tr className="hide-on-print">

@@ -1,17 +1,19 @@
 import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
+import MultiFileAttach from './MultiFileAttach';
+import { formatRef } from '../../utils/formatters';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
-const emptyIccRow = () => ({ ccRef:'', activity:'', attributes:'', movs:'', procedure:'', docs:'', notes:'' });
-const emptyProcRow = () => ({ actNo:'', activity:'', attributes:'', movs:'', procedure:'', docs:'', notes:'' });
+const emptyIccRow = () => ({ ccRef:'', activity:'', attributes:'', movs:'', procedure:'', docs:'', notes:'', attachments: [] });
+const emptyProcRow = () => ({ actNo:'', activity:'', attributes:'', movs:'', procedure:'', docs:'', notes:'', attachments: [] });
 
 export default function WalkthroughTest({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [formData, setFormData] = useState({
-        wtRef: engagement.ae_number ? `WT-${engagement.ae_number}` : `WT-${new Date().getFullYear()}-001`,
+        wtRef: formatRef('WT', engagement.ae_number),
         agency: '',
         titleProcess: '',
         participant: '',
@@ -29,8 +31,8 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
-        if (engagement.ae_number && !formData.wtRef.includes(engagement.ae_number)) {
-            set('wtRef', `WT-${engagement.ae_number}`);
+        if (engagement.ae_number) {
+            set('wtRef', formatRef('WT', engagement.ae_number));
         }
         const load = async () => {
             try {
@@ -104,7 +106,7 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
                 <th className="w-48 border border-black text-[9px]">Control Attributes<br/>A2R4C2SM* / VaCATE**</th>
                 <th className="w-40 border border-black text-[9px]">Sample MOV</th>
                 <th className="w-40 border border-black text-[9px]">Walkthrough Procedure</th>
-                <th className="w-52 border border-black text-[9px]">Documents Examined</th>
+                <th className="w-64 border border-black text-[9px]">Documents Examined / Remarks</th>
                 <th className="w-52 border border-black text-[9px]">Audit Notes</th>
             </tr>
         </thead>
@@ -174,8 +176,24 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
                                 <tr key={ri}>
                                     <td className="text-center font-bold border border-black small">{ri}</td>
                                     {[['ccRef','text','text-center'],['activity','textarea',null],['attributes','textarea',null],['movs','textarea',null],['procedure','textarea',null],['docs','textarea',null],['notes','textarea',null]].map(([f,type,cls])=>(
-                                        <td key={f} className="border border-black">
-                                            {type==='textarea'
+                                        <td key={f} className="border border-black p-1 space-y-1">
+                                            {f === 'docs' ? (
+                                                <>
+                                                    <textarea 
+                                                        className="tbl-input min-h-[50px]" 
+                                                        value={row[f]} 
+                                                        onChange={e=>setIcc(ri,f,e.target.value)} 
+                                                        disabled={readOnly} 
+                                                        placeholder="Description..."
+                                                    />
+                                                    <MultiFileAttach 
+                                                        files={row.attachments} 
+                                                        onUpdate={(files) => setIcc(ri, 'attachments', files)}
+                                                        engagementId={engagement.id}
+                                                        readOnly={readOnly}
+                                                    />
+                                                </>
+                                            ) : type==='textarea'
                                                 ? <textarea className="tbl-input" value={row[f]} onChange={e=>setIcc(ri,f,e.target.value)} disabled={readOnly} />
                                                 : <input type="text" className={`tbl-input ${cls||''}`} value={row[f]} onChange={e=>setIcc(ri,f,e.target.value)} disabled={readOnly} />
                                             }
@@ -204,8 +222,24 @@ export default function WalkthroughTest({ engagement, readOnly = false }) {
                                 <tr key={ri}>
                                     <td className="text-center font-bold border border-black small">{ri}</td>
                                     {[['actNo','text','text-center'],['activity','textarea',null],['attributes','textarea',null],['movs','textarea',null],['procedure','textarea',null],['docs','textarea',null],['notes','textarea',null]].map(([f,type,cls])=>(
-                                        <td key={f} className="border border-black">
-                                            {type==='textarea'
+                                        <td key={f} className="border border-black p-1 space-y-1">
+                                            {f === 'docs' ? (
+                                                <>
+                                                    <textarea 
+                                                        className="tbl-input min-h-[50px]" 
+                                                        value={row[f]} 
+                                                        onChange={e=>setProc(ri,f,e.target.value)} 
+                                                        disabled={readOnly} 
+                                                        placeholder="Description..."
+                                                    />
+                                                    <MultiFileAttach 
+                                                        files={row.attachments} 
+                                                        onUpdate={(files) => setProc(ri, 'attachments', files)}
+                                                        engagementId={engagement.id}
+                                                        readOnly={readOnly}
+                                                    />
+                                                </>
+                                            ) : type==='textarea'
                                                 ? <textarea className="tbl-input" value={row[f]} onChange={e=>setProc(ri,f,e.target.value)} disabled={readOnly} />
                                                 : <input type="text" className={`tbl-input ${cls||''}`} value={row[f]} onChange={e=>setProc(ri,f,e.target.value)} disabled={readOnly} />
                                             }

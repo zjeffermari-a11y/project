@@ -1,12 +1,14 @@
 import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
+import MultiFileAttach from './MultiFileAttach';
+import { formatRef } from '../../utils/formatters';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
 const emptyRow = () => ({
     policy:'', requirement:'', movs:'',
-    selfYes:false, selfNo:false, selfNA:false, selfDocs:'', selfRemarks:'',
+    selfYes:false, selfNo:false, selfNA:false, selfDocs:'', selfRemarks:'', selfAttachments: [],
     auditorYes:false, auditorNo:false, auditorNA:false, auditorNotes:'',
 });
 
@@ -14,7 +16,7 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [formData, setFormData] = useState({
-        ccRef: engagement.ae_number ? `CC-${engagement.ae_number}` : `CC-${new Date().getFullYear()}-001`,
+        ccRef: formatRef('CC', engagement.ae_number),
         auditDuration: '',
         auditObjectives: '',
         rows: Array(5).fill(null).map(emptyRow),
@@ -29,8 +31,8 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
-        if (engagement.ae_number && !formData.ccRef.includes(engagement.ae_number)) {
-            set('ccRef', `CC-${engagement.ae_number}`);
+        if (engagement.ae_number) {
+            set('ccRef', formatRef('CC', engagement.ae_number));
         }
         const load = async () => {
             try {
@@ -164,7 +166,7 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                                 <th className="w-8 border border-black">Yes</th>
                                 <th className="w-8 border border-black">No</th>
                                 <th className="w-10 border border-black">N/A</th>
-                                <th className="w-32 px-1 border border-black">Supporting Documents<br/><span className="text-[8px] font-normal">(for Yes answers)</span></th>
+                                <th className="w-56 px-1 border border-black">Supporting Docs / Remarks<br/><span className="text-[8px] font-normal">(for Yes answers)</span></th>
                                 <th className="w-32 px-1 border border-black">Remarks/Explanation<br/><span className="text-[8px] font-normal">(for No or N/A)</span></th>
                                 <th className="w-8 border border-black">Yes</th>
                                 <th className="w-8 border border-black">No</th>
@@ -180,7 +182,21 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                                     <td className="border border-black"><textarea className="tbl-input" value={row.requirement} onChange={e=>setRow(ri,'requirement',e.target.value)} disabled={readOnly} /></td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.movs} onChange={e=>setRow(ri,'movs',e.target.value)} disabled={readOnly} /></td>
                                     {['selfYes','selfNo','selfNA'].map(f=><td key={f} className="align-middle border border-black"><input type="checkbox" className="doc-checkbox mx-auto" checked={row[f]} onChange={e=>setRow(ri,f,e.target.checked)} disabled={readOnly}/></td>)}
-                                    <td className="border border-black"><textarea className="tbl-input" value={row.selfDocs} onChange={e=>setRow(ri,'selfDocs',e.target.value)} disabled={readOnly} /></td>
+                                    <td className="border border-black p-1 space-y-1">
+                                        <textarea 
+                                            className="tbl-input min-h-[60px]" 
+                                            value={row.selfDocs} 
+                                            onChange={e=>setRow(ri,'selfDocs',e.target.value)} 
+                                            disabled={readOnly} 
+                                            placeholder="Description/Remarks..."
+                                        />
+                                        <MultiFileAttach 
+                                            files={row.selfAttachments} 
+                                            onUpdate={(files) => setRow(ri, 'selfAttachments', files)}
+                                            engagementId={engagement.id}
+                                            readOnly={readOnly}
+                                        />
+                                    </td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.selfRemarks} onChange={e=>setRow(ri,'selfRemarks',e.target.value)} disabled={readOnly} /></td>
                                     {['auditorYes','auditorNo','auditorNA'].map(f=><td key={f} className="align-middle border border-black"><input type="checkbox" className="doc-checkbox mx-auto" checked={row[f]} onChange={e=>setRow(ri,f,e.target.checked)} disabled={readOnly}/></td>)}
                                     <td className="border border-black"><textarea className="tbl-input" value={row.auditorNotes} onChange={e=>setRow(ri,'auditorNotes',e.target.value)} disabled={readOnly} /></td>

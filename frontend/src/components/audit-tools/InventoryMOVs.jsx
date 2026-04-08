@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
+import MultiFileAttach from './MultiFileAttach';
+import { formatRef } from '../../utils/formatters';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
@@ -10,18 +12,18 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
     const [versions, setVersions] = useState([]);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [formData, setFormData] = useState({
-        iomRef: engagement.ae_number ? `IOM-${engagement.ae_number}` : `IOM-${new Date().getFullYear()}-001`,
+        iomRef: formatRef('IOM', engagement.ae_number),
         auditArea: '',
         auditTeam: '',
         initialDate: '',
         additionalDate: '',
-        initialRows: Array(5).fill(null).map(() => ['', '', '', '']),
-        additionalRows: Array(4).fill(null).map(() => ['', '', '', '']),
+        initialRows: Array(5).fill(null).map(() => ['', '', '', '', []]),
+        additionalRows: Array(4).fill(null).map(() => ['', '', '', '', []]),
     });
 
     useEffect(() => {
-        if (engagement.ae_number && !formData.iomRef.includes(engagement.ae_number)) {
-            set('iomRef', `IOM-${engagement.ae_number}`);
+        if (engagement.ae_number) {
+            set('iomRef', formatRef('IOM', engagement.ae_number));
         }
         fetchVersions();
         loadLatest();
@@ -60,7 +62,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
         ...fd,
         [key]: fd[key].map((r, i) => i === ri ? r.map((c, j) => j === ci ? val : c) : r)
     }));
-    const addRow = (key) => setFormData(fd => ({ ...fd, [key]: [...fd[key], ['', '', '', '']] }));
+    const addRow = (key) => setFormData(fd => ({ ...fd, [key]: [...fd[key], ['', '', '', '', []]] }));
 
     const handleSave = async () => {
         setSaving(true);
@@ -162,7 +164,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                             <th className="w-[35%]">Documents/Records Requested<br /><span className="font-normal text-[9px] italic">(Generic name of the documents)</span></th>
                             <th className="w-[18%]">Type of Submission<br /><span className="font-normal text-[9px] italic">(Online/Physical/Both)</span></th>
                             <th className="w-[15%]">Date Submitted</th>
-                            <th className="w-[32%]">Actual Documents/Records Received<br /><span className="font-normal text-[9px] italic">(Description; indicate whether sufficient or insufficient)</span></th>
+                            <th className="w-[32%]">Actual Documents/Remarks<br /><span className="font-normal text-[9px] italic">(Description; indicate whether sufficient or insufficient)</span></th>
                         </tr>
                     </thead>
                     <tbody>
@@ -180,7 +182,19 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                                 <td><Row val={row[0]} onChange={v=>setRow('initialRows',ri,0,v)} /></td>
                                 <td><InRow val={row[1]} onChange={v=>setRow('initialRows',ri,1,v)} /></td>
                                 <td><InRow val={row[2]} onChange={v=>setRow('initialRows',ri,2,v)} /></td>
-                                <td><Row val={row[3]} onChange={v=>setRow('initialRows',ri,3,v)} /></td>
+                                <td className="p-1 space-y-1">
+                                    <Row 
+                                        val={row[3]} 
+                                        onChange={v=>setRow('initialRows',ri,3,v)} 
+                                        placeholder="Description/Remarks..."
+                                    />
+                                    <MultiFileAttach 
+                                        files={row[4] || []} 
+                                        onUpdate={(files) => setRow('initialRows', ri, 4, files)}
+                                        engagementId={engagement.id}
+                                        readOnly={readOnly}
+                                    />
+                                </td>
                             </tr>
                         ))}
                         {!readOnly && (
@@ -205,7 +219,19 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                                 <td><Row val={row[0]} onChange={v=>setRow('additionalRows',ri,0,v)} /></td>
                                 <td><InRow val={row[1]} onChange={v=>setRow('additionalRows',ri,1,v)} /></td>
                                 <td><InRow val={row[2]} onChange={v=>setRow('additionalRows',ri,2,v)} /></td>
-                                <td><Row val={row[3]} onChange={v=>setRow('additionalRows',ri,3,v)} /></td>
+                                <td className="p-1 space-y-1">
+                                    <Row 
+                                        val={row[3]} 
+                                        onChange={v=>setRow('additionalRows',ri,3,v)} 
+                                        placeholder="Description/Remarks..."
+                                    />
+                                    <MultiFileAttach 
+                                        files={row[4] || []} 
+                                        onUpdate={(files) => setRow('additionalRows', ri, 4, files)}
+                                        engagementId={engagement.id}
+                                        readOnly={readOnly}
+                                    />
+                                </td>
                             </tr>
                         ))}
                         {!readOnly && (

@@ -30,60 +30,6 @@ export default function AuditeeDashboard() {
     const navigate = useNavigate();
     const user = JSON.parse(localStorage.getItem('user')) || {};
 
-    useEffect(() => {
-        document.title = 'Internal Audit Management | Auditee Portal';
-    }, []);
-
-    // Smart Default: If pending actions exist, prioritizes Ongoing Audits
-    useEffect(() => {
-        if (!initialLoad && !hasCheckedSmartDefault.current) {
-            if (pendingTasks.length > 0) {
-                setActiveTab('ongoing');
-            }
-            hasCheckedSmartDefault.current = true;
-        }
-    }, [initialLoad, pendingTasks.length]);
-
-    const handleLogout = async () => {
-        setIsLoggingOut(true);
-        try { await api.post('/logout'); } catch (e) { }
-        setTimeout(() => {
-            localStorage.clear();
-            navigate('/login');
-        }, 1200);
-    };
-
-    const handleUpload = async (e) => {
-        e.preventDefault();
-        if (!selectedFile) return alert('Please select a file');
-
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('engagement_id', uploadEngId);
-        formData.append('document_type', uploadMovName || 'MOV Submission');
-        formData.append('phase', 'execution');
-
-        try {
-            setUploading(true);
-            await api.post('/documents/upload', formData, {
-                headers: { 'Content-Type': 'multipart/form-data' }
-            });
-            
-            // Optimistically update the status to 'submitted'
-            await updateMovStatusOptimistic(uploadMovId, 'submitted');
-
-            setUploadMovId(null);
-            setUploadEngId(null);
-            setUploadMovName('');
-            setSelectedFile(null);
-            setManagementComment('');
-        } catch (err) {
-            alert('Upload failed: ' + (err.response?.data?.message || err.message));
-        } finally {
-            setUploading(false);
-        }
-    };
-
     // Calculate dynamic data
     let totalMovs = 0;
     let submittedMovsCount = 0;
@@ -141,6 +87,61 @@ export default function AuditeeDashboard() {
     });
 
     const complianceRate = totalMovs === 0 ? 0 : Math.round((submittedMovsCount / totalMovs) * 100);
+
+    useEffect(() => {
+        document.title = 'Internal Audit Management | Auditee Portal';
+    }, []);
+
+    // Smart Default: If pending actions exist, prioritizes Ongoing Audits
+    useEffect(() => {
+        if (!initialLoad && !hasCheckedSmartDefault.current) {
+            if (pendingTasks.length > 0) {
+                setActiveTab('ongoing');
+            }
+            hasCheckedSmartDefault.current = true;
+        }
+    }, [initialLoad, pendingTasks.length]);
+
+    const handleLogout = async () => {
+        setIsLoggingOut(true);
+        try { await api.post('/logout'); } catch (e) { }
+        setTimeout(() => {
+            localStorage.clear();
+            navigate('/login');
+        }, 1200);
+    };
+
+    const handleUpload = async (e) => {
+        e.preventDefault();
+        if (!selectedFile) return alert('Please select a file');
+
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('engagement_id', uploadEngId);
+        formData.append('document_type', uploadMovName || 'MOV Submission');
+        formData.append('phase', 'execution');
+
+        try {
+            setUploading(true);
+            await api.post('/documents/upload', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            
+            // Optimistically update the status to 'submitted'
+            await updateMovStatusOptimistic(uploadMovId, 'submitted');
+
+            setUploadMovId(null);
+            setUploadEngId(null);
+            setUploadMovName('');
+            setSelectedFile(null);
+            setManagementComment('');
+        } catch (err) {
+            alert('Upload failed: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setUploading(false);
+        }
+    };
+
 
     const PHASES = {
         planning: { index: 0, label: 'Audit Planning', text: 'ANM, MOVs generated.', activeText: 'Auditors are currently planning the audit schedule and requirements.',

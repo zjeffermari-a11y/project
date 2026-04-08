@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
+import { formatRef } from '../../utils/formatters';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
@@ -10,7 +11,7 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
     const [versions, setVersions] = useState([]);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
     const [formData, setFormData] = useState({
-        aapRef: engagement.ae_number ? `AAP-${engagement.ae_number}` : `AAP-${new Date().getFullYear()}-001`,
+        aapRef: formatRef('AAP', engagement.ae_number),
         auditArea: '',
         preparedBy: '', reviewedBy: '', notedBy: '',
         // Section tables - stored as arrays of [col1, col2, col3] strings
@@ -35,8 +36,8 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
     });
 
     useEffect(() => {
-        if (engagement.ae_number && !formData.aapRef.includes(engagement.ae_number)) {
-            set('aapRef', `AAP-${engagement.ae_number}`);
+        if (engagement.ae_number) {
+            set('aapRef', formatRef('AAP', engagement.ae_number));
         }
         fetchVersions();
         loadLatest();

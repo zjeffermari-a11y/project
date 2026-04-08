@@ -1,3 +1,6 @@
+import { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, Download, Save, Printer } from 'lucide-react';
 import api from '../api';
 import { formatRef } from '../utils/formatters';
 

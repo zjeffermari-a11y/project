@@ -1,7 +1,8 @@
+import { useState, useEffect } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import { formatRef } from '../../utils/formatters';
-import MultiFileAttach from '../MultiFileAttach';
+import MultiFileAttach from './MultiFileAttach';
 
 export default function NoticeConference({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);

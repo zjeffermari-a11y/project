@@ -2,7 +2,7 @@ import { useState, useEffect, Fragment } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import { formatRef } from '../../utils/formatters';
-import MultiFileAttach from '../MultiFileAttach';
+import MultiFileAttach from './MultiFileAttach';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 

@@ -316,6 +316,10 @@ export default function AuditWorkspace() {
                                                     const preparedBy = latestDoc?.uploader?.name || null;
                                                     const preparedInitials = preparedBy ? preparedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '';
 
+                                                    // Lead Auditor fallback for "Awaiting" state
+                                                    const leadName = engagement.lead_auditor?.name || 'Unassigned';
+                                                    const leadInitials = leadName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
+
                                                     // For the frontend demo of the screenshot
                                                     const reviewedBy = latestDoc?.reviewed_by?.name || null;
                                                     const reviewStatus = reviewedBy ? 'reviewed' : (preparedBy ? 'Awaiting Receipt' : 'Awaiting');
@@ -360,7 +364,13 @@ export default function AuditWorkspace() {
                                                                         </div>
                                                                     </div>
                                                                 ) : (
-                                                                    <span className="px-3 py-1.5 bg-slate-100 text-slate-400 text-[9px] font-black uppercase tracking-widest rounded-lg border border-dashed border-slate-200">Awaiting Upload</span>
+                                                                    <div className="flex items-center gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black border border-slate-300 shadow-sm">{leadInitials}</div>
+                                                                        <div>
+                                                                            <div className="text-xs font-bold text-slate-500">{leadName}</div>
+                                                                            <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Awaiting Prep</div>
+                                                                        </div>
+                                                                    </div>
                                                                 )}
                                                             </td>
 

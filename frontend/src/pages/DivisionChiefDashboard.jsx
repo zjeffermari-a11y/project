@@ -264,8 +264,8 @@ export default function DivisionChiefDashboard() {
                                 <div className="absolute -right-6 -top-6 w-24 h-24 bg-blue-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Total Active Audits</p>
                                 <p className="text-4xl font-black text-slate-800 tracking-tight relative z-10">{totalOngoing}</p>
-                                <div className="mt-4 flex items-center gap-1 text-blue-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                    Open Sub-page <ChevronRight className="w-3 h-3" />
+                                <div className="mt-4 flex items-center gap-1 text-blue-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity uppercase tracking-widest">
+                                    View <ChevronRight className="w-3 h-3" />
                                 </div>
                             </div>
 

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle, Folder, Bell } from 'lucide-react';
+import { X, CheckCircle, Clock, RotateCcw, FileText, AlertCircle, Folder, Bell, RefreshCw } from 'lucide-react';
 import iamsLogo from '../assets/IAMS logo.png';
 import LogoutOverlay from '../components/ui/LogoutOverlay';
 import PageTransition from '../components/ui/PageTransition';
@@ -182,15 +182,33 @@ export default function AuditeeDashboard() {
                 <header className="bg-white border-b border-slate-200 px-10 py-8 shrink-0 z-10">
                     <div className="flex justify-between items-end">
                         <div>
-                            <div className="flex items-center gap-3 mb-2">
-                                <span className="bg-emerald-100 text-emerald-700 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border border-emerald-200">Auditee Portal</span>
-                                <span className="text-xs font-bold text-slate-400">{user.agency_name}</span>
+                            <div className="flex items-center gap-2 mb-2">
+                                <span className="bg-emerald-50 text-emerald-700 font-black uppercase tracking-widest text-[10px] px-2 py-0.5 rounded border border-emerald-100 flex items-center gap-1.5">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500"></div>
+                                    Auditee Portal
+                                </span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">Compliance Hub</span>
                             </div>
-                            <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
-                            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Office Compliance Dashboard</h2>
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Hi, {user.name}</h1>
+                                <button 
+                                    onClick={refreshData}
+                                    disabled={loading}
+                                    className={`p-2 rounded-xl transition-all ${loading ? 'text-emerald-600 bg-emerald-50' : 'text-slate-400 hover:text-emerald-600 hover:bg-emerald-50'}`}
+                                    title="Force Synchronize"
+                                >
+                                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
                             <p className="text-sm font-semibold text-slate-500 mt-2">Current Engagement: <span className="text-emerald-600">{currentEngagement}</span></p>
                         </div>
                         <div className="flex items-center gap-6">
+                            {initialLoad && (
+                                <div className="flex items-center gap-3 bg-emerald-900 border border-emerald-700 px-4 py-2 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></div>
+                                    <span className="text-[10px] font-black text-emerald-100 uppercase tracking-widest">Synchronizing</span>
+                                </div>
+                            )}
                             <button className="relative p-2 text-slate-400 hover:text-indigo-600 transition-colors">
                                 <Bell className="w-6 h-6" />
                                 <span className="absolute top-1 right-1 w-4 h-4 bg-rose-500 text-white text-[10px] font-black flex items-center justify-center rounded-full border-2 border-white">3</span>

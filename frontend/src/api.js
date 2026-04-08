@@ -19,9 +19,13 @@ api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response && error.response.status === 401) {
-            localStorage.clear();
-            if (window.location.pathname !== '/login') {
-                window.location.href = '/login';
+            // Token expired or invalid
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            // Redirect only if not already on login page
+            if (!window.location.pathname.includes('/login')) {
+                window.location.href = '/login?expired=true';
             }
         }
         return Promise.reject(error);

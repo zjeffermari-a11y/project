@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, LayoutGrid, Database, Users, ShieldCheck, XCircle, Trash2, Bell, AlertCircle, Clock, ArrowRightLeft, ChevronRight, Search, ChevronDown, Check, ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft, Bell, Search, ChevronDown, LayoutGrid, RefreshCw } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
 import PageTransition from '../components/ui/PageTransition';
@@ -229,11 +229,28 @@ export default function DivisionChiefDashboard() {
                                 <span className="bg-blue-100 text-blue-700 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border border-blue-200">
                                     {user.designation === 'assistant_division_chief' ? 'Assistant ' : ''}Division Chief Operations
                                 </span>
+                                <span className="text-xs font-bold text-slate-400">Department Overview</span>
                             </div>
-                            <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
-                            <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">System Administration & Audits</h2>
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
+                                <button 
+                                    onClick={refreshData}
+                                    disabled={loading}
+                                    className={`p-2 rounded-xl transition-all ${loading ? 'text-blue-600 bg-blue-50' : 'text-slate-400 hover:text-blue-600 hover:bg-blue-50'}`}
+                                    title="Force Synchronize"
+                                >
+                                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
+                             <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">Strategic Audit Management</h2>
                         </div>
-                        <div className="text-right flex items-center justify-end gap-4">
+                        <div className="text-right flex items-center justify-end gap-3">
+                            {initialLoad && (
+                                <div className="flex items-center gap-3 bg-blue-900 border border-blue-700 px-4 py-2 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></div>
+                                    <span className="text-[10px] font-black text-blue-100 uppercase tracking-widest">Synchronizing Workspace</span>
+                                </div>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button className="p-3 bg-blue-50 text-blue-600 hover:bg-blue-100 outline-none rounded-full transition-colors relative border border-blue-100 cursor-pointer">

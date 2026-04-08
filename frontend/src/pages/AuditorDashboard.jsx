@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, ChevronRight, LayoutGrid, Folder, Database, BarChart3, Trash2, Bell, Clock, ArrowRightLeft, Search, ChevronDown, Check, ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { LogOut, Plus, X, FileText, CheckCircle, RotateCcw, ChevronRight, LayoutGrid, Folder, Database, BarChart3, Trash2, Bell, Clock, ArrowRightLeft, Search, ChevronDown, Check, ArrowUpRight, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
 import PageTransition from '../components/ui/PageTransition';
@@ -168,10 +168,26 @@ export default function AuditorDashboard() {
                     <div className="relative z-10 flex justify-between items-end">
                         <div>
                             <h2 className="text-indigo-300 font-black uppercase tracking-widest text-xs mb-2">Welcome Back, Lead Auditor</h2>
-                            <h1 className="text-4xl font-black uppercase tracking-tight mb-2">{user.name}</h1>
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-4xl font-black uppercase tracking-tight mb-2 text-white">{user.name}</h1>
+                                <button 
+                                    onClick={refreshData}
+                                    disabled={loading}
+                                    className={`p-2 rounded-xl transition-all ${loading ? 'text-white bg-indigo-700' : 'text-indigo-400 hover:text-white hover:bg-indigo-700'}`}
+                                    title="Force Synchronize"
+                                >
+                                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
                             <p className="text-indigo-200 font-medium text-sm">Auditor Operations Center</p>
                         </div>
                         <div className="text-right flex items-center gap-4">
+                            {initialLoad && (
+                                <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 px-4 py-2 rounded-2xl shadow-xl animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>
+                                    <span className="text-[10px] font-black text-white uppercase tracking-widest">Synchronizing Workspace</span>
+                                </div>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button className="p-3 bg-indigo-800 text-indigo-300 hover:text-white outline-none rounded-full transition-colors relative cursor-pointer">

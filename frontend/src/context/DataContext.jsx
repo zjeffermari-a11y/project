@@ -24,6 +24,13 @@ export const DataProvider = ({ children }) => {
     const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
     const fetchData = useCallback(async (force = false) => {
+        const user = JSON.parse(localStorage.getItem('user'));
+        if (!user) {
+             setLoading(false);
+             setInitialLoad(false);
+             return;
+        }
+
         const now = Date.now();
         if (!force && lastFetched && (now - lastFetched < CACHE_TTL)) {
             return;
@@ -33,13 +40,6 @@ export const DataProvider = ({ children }) => {
         setError(null);
 
         try {
-            const user = JSON.parse(localStorage.getItem('user'));
-            if (!user) {
-                 setLoading(false);
-                 setInitialLoad(false);
-                 return;
-            }
-
             // Parallel fetching for performance
             const fetchPromises = [
                 api.get('/engagements'),
@@ -88,7 +88,18 @@ export const DataProvider = ({ children }) => {
         return () => window.removeEventListener('focus', handleFocus);
     }, [fetchData]);
 
-    // Initial fetch
+    // Reactive Initial Fetch: Watches for user availability
+    // This is CRITICAL for the login -> dashboard transition
+    useEffect(() => {
+        const user = localStorage.getItem('user');
+        if (user && !lastFetched && initialLoad) {
+            fetchData();
+        } else if (!user) {
+            setInitialLoad(false);
+        }
+    }, [fetchData, lastFetched, initialLoad]);
+
+    // Force sync on mount to catch redirects
     useEffect(() => {
         fetchData();
     }, []);

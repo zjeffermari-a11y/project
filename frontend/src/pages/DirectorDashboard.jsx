@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
-import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft, Bell, Search, ChevronDown, ArrowUpRight, MoreHorizontal } from 'lucide-react';
+import { LogOut, Users, CheckCircle, XCircle, TrendingUp, Filter, Trash2, Plus, X, BarChart3, Database, FileText, ChevronRight, Clock, ArrowRightLeft, Bell, Search, ChevronDown, ArrowUpRight, MoreHorizontal, RefreshCw } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
 import iamsLogo from '../assets/IAMS logo.png';
 import PageTransition from '../components/ui/PageTransition';
@@ -226,10 +226,26 @@ export default function DirectorDashboard() {
                                 <span className="bg-indigo-100 text-indigo-700 px-2.5 py-0.5 rounded text-[10px] font-black uppercase tracking-widest border border-indigo-200">Director Portal</span>
                                 <span className="text-xs font-bold text-slate-400">Executive Overview</span>
                             </div>
-                            <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
+                            <div className="flex items-center gap-4">
+                                <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">Welcome, {user.name}</h1>
+                                <button 
+                                    onClick={refreshData}
+                                    disabled={loading}
+                                    className={`p-2 rounded-xl transition-all ${loading ? 'text-indigo-600 bg-indigo-50' : 'text-slate-400 hover:text-indigo-600 hover:bg-indigo-50'}`}
+                                    title="Force Synchronize"
+                                >
+                                    <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
+                                </button>
+                            </div>
                             <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest mt-1">System Performance & KPIs</h2>
                         </div>
                         <div className="text-right flex items-center justify-end gap-4">
+                            {initialLoad && (
+                                <div className="flex items-center gap-3 bg-indigo-900 border border-indigo-700 px-4 py-2 rounded-2xl shadow-lg animate-in fade-in slide-in-from-top-4 duration-500">
+                                    <div className="w-2 h-2 rounded-full bg-indigo-400 animate-pulse"></div>
+                                    <span className="text-[10px] font-black text-indigo-100 uppercase tracking-widest">Synchronizing Workspace</span>
+                                </div>
+                            )}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <button className="p-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 outline-none rounded-full transition-colors relative border border-indigo-100 cursor-pointer">

@@ -156,6 +156,7 @@ export default function DivisionChiefDashboard() {
     const totalOngoing = engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length;
     const totalFollowUp = engagements.filter(e => e.status === 'follow_up').length;
     const totalCompleted = engagements.filter(e => e.status === 'completed').length;
+    const overallCompliance = totalEngagements === 0 ? 0 : Math.round((totalCompleted / totalEngagements) * 100);
 
     const allActivities = [];
     engagements.forEach(eng => {
@@ -181,7 +182,6 @@ export default function DivisionChiefDashboard() {
     allActivities.sort((a, b) => b.date - a.date);
     const recentActivities = allActivities.slice(0, 5);
 
-    const overallCompliance = totalMovs === 0 ? 0 : Math.round((auditeeSubmissions / totalMovs) * 100);
 
     const filteredEngagements = engagements.filter(eng => {
         if (filter === 'ongoing') return eng.status !== 'completed' && eng.status !== 'follow_up';
@@ -270,26 +270,35 @@ export default function DivisionChiefDashboard() {
                             </div>
 
                             <div 
-                                onClick={() => { setFilter('completed'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
-                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-emerald-300 transition-all group"
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden transition-all group"
                             >
                                 <div className="absolute -right-6 -top-6 w-24 h-24 bg-emerald-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">System Compliance</p>
-                                <p className="text-4xl font-black text-emerald-500 tracking-tight relative z-10">{overallCompliance}%</p>
-                                <div className="mt-4 flex items-center gap-1 text-emerald-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                    View Archives <ChevronRight className="w-3 h-3" />
+                                <div className="flex items-end gap-2 relative z-10">
+                                    <p className="text-4xl font-black text-emerald-500 tracking-tight">{overallCompliance}%</p>
+                                    <p className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Rate</p>
+                                </div>
+                                <div className="mt-4 flex items-center justify-between relative z-10">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase">Completed Audits</span>
+                                    <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-100">{totalCompleted} / {totalEngagements}</span>
                                 </div>
                             </div>
 
                             <div 
-                                onClick={() => { setFilter('all'); setTimeout(() => masterfileRef.current?.scrollIntoView({ behavior: 'smooth' }), 100); }}
-                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden cursor-pointer hover:border-amber-300 transition-all group"
+                                className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm relative overflow-hidden transition-all group"
                             >
                                 <div className="absolute -right-6 -top-6 w-24 h-24 bg-amber-50 rounded-full opacity-50 pointer-events-none group-hover:scale-110 transition-transform"></div>
                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 relative z-10">Tracked MOVs</p>
-                                <p className="text-4xl font-black text-amber-500 tracking-tight relative z-10">{totalMovs}</p>
-                                <div className="mt-4 flex items-center gap-1 text-amber-600 text-[10px] font-bold opacity-0 group-hover:opacity-100 transition-opacity">
-                                    View Masterfile <ChevronRight className="w-3 h-3" />
+                                <div className="flex items-end gap-2 relative z-10">
+                                    <p className="text-4xl font-black text-amber-500 tracking-tight">{totalMovs}</p>
+                                    <p className="text-[10px] font-bold text-slate-400 mb-1.5 uppercase">Files</p>
+                                </div>
+                                <div className="mt-4 flex items-center justify-between relative z-10">
+                                    <span className="text-[9px] font-black text-slate-400 uppercase">System Activity</span>
+                                    <div className="flex items-center gap-1">
+                                        <TrendingUp className="w-3 h-3 text-amber-500" />
+                                        <span className="text-[10px] font-bold text-amber-600">Dynamic Count</span>
+                                    </div>
                                 </div>
                             </div>
 

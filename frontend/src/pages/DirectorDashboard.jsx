@@ -17,6 +17,7 @@ export default function DirectorDashboard() {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isActiveAuditsModalOpen, setIsActiveAuditsModalOpen] = useState(false);
+    const [activeAuditSearch, setActiveAuditSearch] = useState('');
     const [filter, setFilter] = useState('all');
     const [isLoggingOut, setIsLoggingOut] = useState(false);
     
@@ -486,70 +487,154 @@ export default function DirectorDashboard() {
 
                 {/* Active Audits Focus View (Sub-page) */}
                 {isActiveAuditsModalOpen && (
-                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
-                        <div className="bg-white rounded-3xl shadow-xl w-full max-w-6xl overflow-hidden my-8 border border-slate-200 animate-in fade-in zoom-in duration-200">
-                            <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center sticky top-0 z-10">
-                                <div>
-                                    <nav className="flex text-xs text-slate-400 font-bold uppercase tracking-widest mb-2 gap-2">
-                                        <span>Director Portal</span> <span>/</span>
-                                        <span className="text-indigo-600">Active Audit Engagements</span>
-                                    </nav>
-                                    <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight">Ongoing Audits & Activities</h1>
-                                </div>
-                                <button onClick={() => setIsActiveAuditsModalOpen(false)} className="text-slate-400 hover:text-rose-500 transition-colors bg-white p-2 rounded-xl shadow-sm border border-slate-200">
-                                    <X className="w-5 h-5" />
-                                </button>
+                    <div className="fixed inset-0 z-[60] bg-white animate-in slide-in-from-bottom duration-300 flex flex-col">
+                        {/* Sub-page Header */}
+                        <div className="px-10 py-6 border-b border-slate-200 bg-slate-50 flex justify-between items-center shrink-0">
+                            <div>
+                                <nav className="flex text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1 gap-2">
+                                    <span>Director Portal</span> <span className="text-slate-300">/</span>
+                                    <span className="text-indigo-600">Active Hub</span>
+                                </nav>
+                                <h1 className="text-2xl font-black text-slate-800 uppercase tracking-tight flex items-center gap-3">
+                                    Ongoing Audits
+                                    <span className="px-2 py-0.5 rounded-full bg-indigo-100 text-indigo-600 text-[10px] font-black">{engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length}</span>
+                                </h1>
                             </div>
-                            <div className="p-10 max-h-[75vh] overflow-y-auto w-full custom-scrollbar">
-                                <div className="grid grid-cols-1 gap-4 mb-8">
-                                    {engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length === 0 ? (
-                                        <div className="p-20 text-center text-slate-400 font-bold">No ongoing audits currently active.</div>
-                                    ) : (
-                                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                                            {engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').map(eng => {
-                                                const engMovs = eng.movs || [];
-                                                return (
-                                                    <div key={eng.id} onClick={() => { navigate('/auditor/workspace/' + eng.id); setIsActiveAuditsModalOpen(false); }} className="bg-slate-50 rounded-3xl p-6 border border-slate-200 hover:border-indigo-400 hover:bg-white transition-all cursor-pointer group shadow-sm hover:shadow-md">
-                                                        <div className="flex justify-between items-start mb-4">
-                                                            <div>
-                                                                <h3 className="text-lg font-black text-slate-800 group-hover:text-indigo-600 transition-colors">{eng.title}</h3>
-                                                                <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">{eng.description?.split('\n')[0] || 'No AE Reference'}</p>
-                                                            </div>
-                                                            <div className={`px-3 py-1.5 rounded-xl text-[9px] font-black uppercase tracking-widest border ${
-                                                                eng.status === 'execution' ? 'bg-amber-50 text-amber-600 border-amber-200' :
-                                                                eng.status === 'reporting' ? 'bg-slate-100 text-slate-600 border-slate-300' :
-                                                                'bg-indigo-50 text-indigo-600 border-indigo-200'
-                                                            }`}>
-                                                                {(eng.status || 'planning').replace('_', ' ')}
-                                                            </div>
-                                                        </div>
-                                                        <div className="grid grid-cols-3 gap-4 mb-4">
-                                                            <div className="bg-white p-3 rounded-2xl border border-slate-100">
-                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Timeline</p>
-                                                                <p className="text-[10px] font-bold text-slate-700">{eng.start_date || 'TBD'}</p>
-                                                            </div>
-                                                            <div className="bg-white p-3 rounded-2xl border border-slate-100">
-                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Submissions</p>
-                                                                <p className="text-[10px] font-bold text-slate-700">{engMovs.filter(m => m.status === 'submitted' || m.status === 'approved').length} / {engMovs.length}</p>
-                                                            </div>
-                                                            <div className="bg-white p-3 rounded-2xl border border-slate-100">
-                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-1">Review</p>
-                                                                <p className="text-[10px] font-bold text-rose-600">{engMovs.filter(m => m.status === 'submitted').length} Pending</p>
-                                                            </div>
-                                                        </div>
-                                                        <div className="w-full bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                                                            <div className="bg-indigo-500 h-full rounded-full transition-all duration-1000" style={{ width: `${engMovs.length === 0 ? 0 : (engMovs.filter(m => m.status === 'approved').length / engMovs.length) * 100}%` }}></div>
-                                                        </div>
-                                                        <div className="flex justify-between items-center mt-3">
-                                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Workspace Readiness</span>
-                                                            <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest group-hover:translate-x-1 transition-transform flex items-center gap-1">Open Portal <ArrowRightLeft className="w-3 h-3" /></span>
-                                                        </div>
-                                                    </div>
-                                                );
-                                            })}
-                                        </div>
+                            
+                            <div className="flex items-center gap-6">
+                                {/* Search Bar */}
+                                <div className="relative w-96 group">
+                                    <Database className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-500 transition-colors" />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Search active audits by title, reference, or office..." 
+                                        value={activeAuditSearch}
+                                        onChange={(e) => setActiveAuditSearch(e.target.value)}
+                                        className="w-full bg-white border border-slate-200 rounded-2xl pl-12 pr-4 py-3 text-sm font-bold focus:ring-4 focus:ring-indigo-50/50 focus:border-indigo-400 outline-none transition-all shadow-sm"
+                                    />
+                                    {activeAuditSearch && (
+                                        <button onClick={() => setActiveAuditSearch('')} className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-300 hover:text-slate-500">
+                                            <X className="w-4 h-4" />
+                                        </button>
                                     )}
                                 </div>
+
+                                <button 
+                                    onClick={() => { setIsActiveAuditsModalOpen(false); setActiveAuditSearch(''); }} 
+                                    className="text-slate-500 hover:text-rose-500 transition-all bg-white hover:bg-rose-50 p-3 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-2 group"
+                                >
+                                    <span className="text-xs font-black uppercase tracking-widest">Close Hub</span>
+                                    <X className="w-5 h-5 group-hover:rotate-90 transition-transform" />
+                                </button>
+                            </div>
+                        </div>
+
+                        {/* Sub-page Content */}
+                        <div className="flex-1 overflow-y-auto w-full custom-scrollbar bg-slate-50/50 p-10">
+                            <div className="max-w-7xl mx-auto">
+                                {engagements.filter(e => {
+                                    const ongoingOnly = e.status !== 'completed' && e.status !== 'follow_up';
+                                    if (!ongoingOnly) return false;
+                                    if (!activeAuditSearch) return true;
+                                    const term = activeAuditSearch.toLowerCase();
+                                    return (
+                                        e.title?.toLowerCase().includes(term) ||
+                                        e.description?.toLowerCase().includes(term) ||
+                                        e.auditee?.agency_name?.toLowerCase().includes(term)
+                                    );
+                                }).length === 0 ? (
+                                    <div className="flex flex-col items-center justify-center py-32 text-slate-400">
+                                        <Database className="w-16 h-16 mb-4 opacity-20" />
+                                        <p className="font-black uppercase tracking-widest text-sm">No Matching Audits Found</p>
+                                        <p className="text-xs mt-2 font-bold opacity-60">Try adjusting your search criteria or clear the search bar.</p>
+                                        {activeAuditSearch && (
+                                            <button onClick={() => setActiveAuditSearch('')} className="mt-6 text-indigo-600 font-bold text-xs uppercase tracking-widest underline underline-offset-4">Clear All Filters</button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                                        {engagements.filter(e => {
+                                            const ongoingOnly = e.status !== 'completed' && e.status !== 'follow_up';
+                                            if (!ongoingOnly) return false;
+                                            if (!activeAuditSearch) return true;
+                                            const term = activeAuditSearch.toLowerCase();
+                                            return (
+                                                e.title?.toLowerCase().includes(term) ||
+                                                e.description?.toLowerCase().includes(term) ||
+                                                e.auditee?.agency_name?.toLowerCase().includes(term)
+                                            );
+                                        }).map(eng => {
+                                            const engMovs = eng.movs || [];
+                                            return (
+                                                <div 
+                                                    key={eng.id} 
+                                                    onClick={() => { navigate('/auditor/workspace/' + eng.id); setIsActiveAuditsModalOpen(false); }} 
+                                                    className="bg-white rounded-[2rem] p-8 border border-slate-200 hover:border-indigo-400 transition-all cursor-pointer group shadow-sm hover:shadow-2xl hover:-translate-y-1 relative"
+                                                >
+                                                    <div className="flex justify-between items-start mb-6">
+                                                        <div className="min-w-0">
+                                                            <h3 className="text-xl font-black text-slate-800 group-hover:text-indigo-600 transition-colors truncate leading-tight">{eng.title}</h3>
+                                                            <p className="text-[10px] font-black text-slate-400 mt-2 uppercase tracking-widest flex items-center gap-2">
+                                                                <FileText className="w-3 h-3" />
+                                                                {eng.description?.split('\n')[0] || 'AE-REF-PENDING'}
+                                                            </p>
+                                                        </div>
+                                                        <div className={`shrink-0 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm ${
+                                                            eng.status === 'execution' ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                                                            eng.status === 'reporting' ? 'bg-slate-100 text-slate-600 border-slate-300' :
+                                                            'bg-indigo-50 text-indigo-600 border-indigo-200'
+                                                        }`}>
+                                                            {eng.status || 'planning'}
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="space-y-6">
+                                                        <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                                            <span>Submission Status</span>
+                                                            <span className="text-slate-800">{Math.round((engMovs.filter(m => m.status === 'approved').length / (engMovs.length || 1)) * 100)}%</span>
+                                                        </div>
+
+                                                        <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden border border-slate-200/50">
+                                                            <div 
+                                                                className="bg-indigo-500 h-full rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(99,102,241,0.5)]" 
+                                                                style={{ width: `${engMovs.length === 0 ? 0 : (engMovs.filter(m => m.status === 'approved').length / engMovs.length) * 100}%` }}
+                                                            ></div>
+                                                        </div>
+
+                                                        <div className="grid grid-cols-2 gap-4">
+                                                            <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Lead Auditor</p>
+                                                                <p className="text-xs font-black text-slate-800">{eng.lead_auditor?.name || 'Unassigned'}</p>
+                                                            </div>
+                                                            <div className="bg-slate-50/80 p-4 rounded-2xl border border-slate-100 group-hover:bg-white transition-colors">
+                                                                <p className="text-[9px] font-black text-slate-400 uppercase mb-2">Total MOVs</p>
+                                                                <p className="text-xs font-black text-slate-800">{engMovs.length} Documents</p>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="flex items-center justify-between pt-2">
+                                                            <div className="flex -space-x-2">
+                                                                {[1,2,3].map(i => (
+                                                                    <div key={i} className="w-8 h-8 rounded-full bg-slate-200 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-500">
+                                                                        {i}
+                                                                    </div>
+                                                                ))}
+                                                                {eng.members?.length > 3 && (
+                                                                    <div className="w-8 h-8 rounded-full bg-slate-100 border-2 border-white flex items-center justify-center text-[10px] font-bold text-slate-400">
+                                                                        +{eng.members.length - 3}
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                            <div className="flex items-center gap-1 text-[10px] font-black text-indigo-600 uppercase tracking-widest opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 transition-all">
+                                                                Enter Portal <ArrowRightLeft className="w-3 h-3" />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
                             </div>
                         </div>
                     </div>

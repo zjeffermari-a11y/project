@@ -15,6 +15,7 @@ export default function DivisionChiefDashboard() {
         auditees, 
         availableAuditors, 
         pendingUsers,
+        loading,
         initialLoad, 
         refreshData,
         deleteEngagementOptimistic,
@@ -337,7 +338,7 @@ export default function DivisionChiefDashboard() {
                             </h2>
 
                             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                {loading ? (
+                                {initialLoad ? (
                                     <div className="p-10 flex justify-center text-slate-400 font-bold">Loading...</div>
                                 ) : pendingUsers.length === 0 ? (
                                     <div className="p-10 flex flex-col items-center justify-center text-slate-400">
@@ -435,7 +436,7 @@ export default function DivisionChiefDashboard() {
                                 </h2>
 
                                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
-                                    {loading ? (
+                                    {initialLoad ? (
                                         <div className="p-16 flex justify-center text-slate-400 font-bold">Loading engagements...</div>
                                     ) : filteredEngagements.length === 0 ? (
                                         <div className="p-16 flex flex-col items-center justify-center text-slate-400">

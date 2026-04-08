@@ -10,6 +10,7 @@ import { useDataContext } from '../context/DataContext';
 export default function AuditeeDashboard() {
     const { 
         engagements, 
+        loading,
         initialLoad, 
         refreshData,
         updateMovStatusOptimistic
@@ -211,7 +212,7 @@ export default function AuditeeDashboard() {
                 </header>
 
                 <div className="flex-1 overflow-y-auto px-10 py-8">
-                    {loading ? (
+                    {initialLoad ? (
                         <div className="flex justify-center items-center h-full text-slate-400 font-bold">Loading dashboard...</div>
                     ) : (
                         <div className="max-w-7xl mx-auto space-y-8 pb-10">

@@ -57,6 +57,8 @@ EXPOSE 80
 CMD sed -i "s/80/${PORT}/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf \
     && rm -f .env \
     && cp .env.example .env \
+    && echo "DB_HOST is: $DB_HOST" \
+    && echo "DB_PORT is: $DB_PORT" \
     && php artisan key:generate \
     && php artisan migrate --force \
     && apache2-foreground

@@ -13,6 +13,7 @@ import ActivityFeed from '../components/dashboard/ActivityFeed';
 import EngagementTable from '../components/dashboard/EngagementTable';
 import ActiveAuditsModal from '../components/dashboard/ActiveAuditsModal';
 import HistoryModal from '../components/dashboard/HistoryModal';
+import NewAuditModal from '../components/dashboard/NewAuditModal';
 
 export default function AuditorDashboard() {
     const { 
@@ -20,9 +21,13 @@ export default function AuditorDashboard() {
         loading,
         initialLoad, 
         refreshData,
-        deleteEngagementOptimistic
+        deleteEngagementOptimistic,
+        createEngagementOptimistic,
+        auditees,
+        availableAuditors
     } = useDataContext();
 
+    const [isNewAuditModalOpen, setIsNewAuditModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isActiveAuditsModalOpen, setIsActiveAuditsModalOpen] = useState(false);
@@ -47,7 +52,8 @@ export default function AuditorDashboard() {
 
     // Nav Items for Sidebar
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} }
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
+        { icon: <Plus className="h-5 w-5 text-indigo-500" />, title: 'Initialize Engagement', onClick: () => setIsNewAuditModalOpen(true) }
     ];
 
     if (initialLoad && engagements.length === 0) {
@@ -96,10 +102,16 @@ export default function AuditorDashboard() {
                         <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Masterfile View</h3>
                         <p className="text-xs font-bold text-slate-400 leading-relaxed italic">Global, searchable database of all documents uploaded across the system.</p>
                     </div>
-                    <div className="bg-indigo-50 p-6 rounded-3xl border border-indigo-200 shadow-sm flex flex-col justify-center relative overflow-hidden">
-                        <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-indigo-100 rounded-full opacity-50 pointer-events-none"></div>
-                        <h3 className="text-sm font-black text-indigo-800 uppercase tracking-widest mb-2 z-10">Workspace Active</h3>
-                        <p className="text-xs font-bold text-indigo-500 leading-relaxed z-10 italic">Access engagement-specific Working Papers and MOVs by selecting a row in the table below.</p>
+                    <div 
+                        onClick={() => setIsNewAuditModalOpen(true)}
+                        className="bg-indigo-600 p-6 rounded-3xl border border-indigo-200 shadow-xl shadow-indigo-100 flex flex-col justify-center relative overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group"
+                    >
+                        <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full pointer-events-none group-hover:scale-110 transition-transform"></div>
+                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-4">
+                            <Plus className="w-6 h-6 text-white" />
+                        </div>
+                        <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2 z-10">Initialize New Engagement</h3>
+                        <p className="text-xs font-bold text-indigo-100 leading-relaxed z-10 italic">Launch a new workspace for an agency audit with automated Ref No. generation.</p>
                     </div>
                 </div>
             </section>
@@ -177,6 +189,21 @@ export default function AuditorDashboard() {
                 isOpen={isHistoryModalOpen} 
                 onClose={() => setIsHistoryModalOpen(false)} 
                 activities={allActivities}
+            />
+            <NewAuditModal 
+                isOpen={isNewAuditModalOpen} 
+                onClose={() => setIsNewAuditModalOpen(false)} 
+                onSubmit={async (data) => {
+                    try {
+                        await createEngagementOptimistic(data);
+                        setIsNewAuditModalOpen(false);
+                    } catch (err) {
+                        alert('Initialization failed: ' + err.message);
+                    }
+                }}
+                auditees={auditees}
+                availableAuditors={availableAuditors}
+                engagements={engagements}
             />
         </DashboardLayout>
     );

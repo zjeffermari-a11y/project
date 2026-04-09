@@ -23,11 +23,19 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
 
     useEffect(() => {
         if (engagement.ae_number) {
-            set('iomRef', formatRef('IOM', engagement.ae_number));
+            const team = engagement.users?.map(u => u.name).join(', ') || '';
+            const offices = engagement.offices?.map(o => o.name).join(', ') || '';
+            
+            setFormData(fd => ({
+                ...fd,
+                iomRef: formatRef('IOM', engagement.ae_number),
+                auditTeam: team,
+                auditArea: offices || fd.auditArea
+            }));
         }
         fetchVersions();
         loadLatest();
-    }, [engagement.id, engagement.ae_number]);
+    }, [engagement.id, engagement.ae_number, engagement.users]);
 
     const fetchVersions = async () => {
         try {

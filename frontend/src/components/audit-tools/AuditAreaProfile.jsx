@@ -39,11 +39,16 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
 
     useEffect(() => {
         if (engagement.ae_number) {
-            set('aapRef', formatRef('AAP', engagement.ae_number));
+            const offices = [...new Set(engagement.movs?.map(m => m.auditee?.name).filter(Boolean))].join(', ');
+            setFormData(fd => ({
+                ...fd,
+                aapRef: formatRef('AAP', engagement.ae_number),
+                auditArea: fd.auditArea || offices
+            }));
         }
         fetchVersions();
         loadLatest();
-    }, [engagement.id, engagement.ae_number]);
+    }, [engagement.id, engagement.ae_number, engagement.movs]);
 
     const fetchVersions = async () => {
         try {

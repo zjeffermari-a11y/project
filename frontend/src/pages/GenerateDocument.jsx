@@ -407,17 +407,17 @@ export default function GenerateDocument() {
                 <tbody>
                     <tr>
                         <td className="w-[180px] py-1">Audit Engagement Type</td><td className="w-4 py-1">:</td>
-                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" /> Compliance</label></td>
-                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" /> Management</label></td>
-                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" defaultChecked /> Operations</label></td>
-                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" /> Follow-up</label></td>
+                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" checked={engagement.audit_type === 'Compliance'} readOnly /> Compliance</label></td>
+                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" checked={engagement.audit_type === 'Management'} readOnly /> Management</label></td>
+                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" checked={engagement.audit_type === 'Operations' || !engagement.audit_type} readOnly /> Operations</label></td>
+                        <td className="pr-4"><label className="flex items-center"><input type="checkbox" className="doc-checkbox" checked={engagement.audit_type === 'Follow-up'} readOnly /> Follow-up</label></td>
                     </tr>
                 </tbody>
             </table>
 
             <table className="text-xs font-bold items-center max-w-4xl mt-4 mb-8 text-left">
                 <tbody>
-                    <tr><td className="w-[180px] py-1">Audit Objective</td><td className="w-4 py-1">:</td><td><input type="text" defaultValue={engagement.description || "To evaluate protocols."} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
+                    <tr><td className="w-[180px] py-1">Audit Objective</td><td className="w-4 py-1">:</td><td><input type="text" defaultValue={`DO Number: DO-${engagement.ae_number?.replace('AE-', '')} ${engagement.description || "To evaluate protocols."}`} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
                     <tr><td className="w-[180px] pt-4">Team Leader</td><td className="w-4 pt-4">:</td><td className="pt-4"><input type="text" defaultValue="Lead Auditor" className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
                 </tbody>
             </table>

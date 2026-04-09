@@ -104,6 +104,18 @@ export const DataProvider = ({ children }) => {
         fetchData();
     }, []);
 
+    const createEngagementOptimistic = useCallback(async (data) => {
+        try {
+            const res = await api.post('/engagements', data);
+            const newEng = res.data;
+            setEngagements(prev => [newEng, ...prev]);
+            return newEng;
+        } catch (err) {
+            console.error('Create failed:', err);
+            throw err;
+        }
+    }, []);
+
     const deleteEngagementOptimistic = useCallback(async (id) => {
         const previousEngagements = [...engagements];
         // Optimistic update
@@ -191,6 +203,7 @@ export const DataProvider = ({ children }) => {
         updateEngagementStatusOptimistic,
         updateMovStatusOptimistic,
         approveUserOptimistic,
+        createEngagementOptimistic,
         lastFetched
     };
 

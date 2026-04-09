@@ -29,13 +29,13 @@ export default function NewAuditModal({
         if (isOpen) {
             const currentYear = new Date().getFullYear();
             let maxSequence = 0;
+            // Scan ae_number for sequences like AE-2026-004
             engagements.forEach(eng => {
-                if (eng.description) {
-                    const match = eng.description.match(new RegExp(`DO-${currentYear}-(\\d+)`));
-                    if (match) {
-                        const seq = parseInt(match[1], 10);
-                        if (seq > maxSequence) maxSequence = seq;
-                    }
+                const ae = eng.ae_number || '';
+                const match = ae.match(/AE-(\d{4})-(\d+)/);
+                if (match && match[1] === currentYear.toString()) {
+                    const seq = parseInt(match[2], 10);
+                    if (seq > maxSequence) maxSequence = seq;
                 }
             });
             const nextSequence = String(maxSequence + 1).padStart(3, '0');
@@ -103,17 +103,31 @@ export default function NewAuditModal({
                 <form onSubmit={handleFormSubmit} className="p-10 space-y-8">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div className="space-y-6">
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">DO Sequence Number</label>
-                                <div className="flex items-center gap-2">
-                                    <span className="font-bold text-slate-400">DO-</span>
-                                    <input 
-                                        type="text" 
-                                        value={doNumber} 
-                                        onChange={(e) => setDoNumber(e.target.value)}
-                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black focus:ring-4 focus:ring-indigo-50 outline-none transition-all" 
-                                        required 
-                                    />
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">DO Sequence Number</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-slate-400">DO-</span>
+                                        <input 
+                                            type="text" 
+                                            value={doNumber} 
+                                            onChange={(e) => setDoNumber(e.target.value)}
+                                            className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black focus:ring-4 focus:ring-indigo-50 outline-none transition-all" 
+                                            required 
+                                        />
+                                    </div>
+                                </div>
+                                <div>
+                                    <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Engagement Number (Auto)</label>
+                                    <div className="flex items-center gap-2">
+                                        <span className="font-bold text-slate-400">AE-</span>
+                                        <input 
+                                            type="text" 
+                                            value={doNumber} 
+                                            className="flex-1 bg-indigo-50/50 border border-indigo-100 rounded-xl px-4 py-3 text-sm font-black text-indigo-600 outline-none cursor-not-allowed" 
+                                            disabled
+                                        />
+                                    </div>
                                 </div>
                             </div>
 

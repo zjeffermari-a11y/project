@@ -54,18 +54,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 80
 
 # Start: dynamically bind Apache to Render's $PORT, safely migrate DB, then run Apache
-# Note: We do NOT overwrite .env at runtime anymore so that Render dashboard variables are preserved.
+# We avoid runtime .env manipulation to ensure system environment variables take priority.
 CMD sed -i "s/80/${PORT}/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf \
-    && php artisan migrate --force \
-    && apache2-foregroundCMD sed -i "s/80/${PORT}/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf \
-    && rm -f .env \
-    && cp .env.example .env \
-    && sed -i 's/^DB_HOST=.*/DB_HOST=/' .env \
-    && sed -i 's/^DB_PORT=.*/DB_PORT=/' .env \
-    && sed -i 's/^DB_DATABASE=.*/DB_DATABASE=/' .env \
-    && sed -i 's/^DB_USERNAME=.*/DB_USERNAME=/' .env \
-    && sed -i 's/^DB_PASSWORD=.*/DB_PASSWORD=/' .env \
-    && sed -i 's/^DB_CONNECTION=.*/DB_CONNECTION=pgsql/' .env \
-    && php artisan key:generate \
     && php artisan migrate --force \
     && apache2-foreground

@@ -7,7 +7,8 @@
  * @returns {string} The formatted reference ID
  */
 export const formatRef = (prefix, aeNumber) => {
-    if (!aeNumber) return prefix + "-202X-XXX";
+    const currentYear = new Date().getFullYear();
+    if (!aeNumber) return prefix + `-${currentYear}-XXX`;
     
     // Extract year and sequence using regex
     // Matches patterns like AE-2026-001 or just 2026-001

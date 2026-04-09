@@ -148,7 +148,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                     <div>IoM Reference No.</div><div>:</div>
                     <div><input type="text" className="doc-input font-bold" value={formData.iomRef} onChange={e=>set('iomRef',e.target.value)} disabled={readOnly} /></div>
                     <div>Audit Engagement No.</div><div>:</div>
-                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || 'AE-202X-XXX'} disabled /></div>
+                    <div><input type="text" className="doc-input font-bold" value={engagement.ae_number || `AE-${new Date().getFullYear()}-XXX`} disabled /></div>
                     <div>Audit Engagement Title</div><div>:</div>
                     <div><input type="text" className="doc-input font-bold uppercase" value={engagement.title || ''} disabled /></div>
                     <div>Auditee Office/s</div><div>:</div>

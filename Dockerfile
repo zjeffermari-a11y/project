@@ -44,8 +44,8 @@ COPY --from=frontend-build /app/frontend/dist /var/www/html/public/app
 # Create SQLite database
 RUN touch database/database.sqlite
 
-# Setup .env
-RUN cp .env.example .env
+# Setup initial .env from template (this only runs during build)
+RUN cp .env.example .env && php artisan key:generate
 
 # Set permissions
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache /var/www/html/database
@@ -54,11 +54,7 @@ RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cac
 EXPOSE 80
 
 # Start: dynamically bind Apache to Render's $PORT, safely migrate DB, then run Apache
+# Note: We do NOT overwrite .env at runtime anymore so that Render dashboard variables are preserved.
 CMD sed -i "s/80/${PORT}/g" /etc/apache2/sites-available/000-default.conf /etc/apache2/ports.conf \
-    && rm -f .env \
-    && cp .env.example .env \
-    && echo "DB_HOST is: $DB_HOST" \
-    && echo "DB_PORT is: $DB_PORT" \
-    && php artisan key:generate \
     && php artisan migrate --force \
     && apache2-foreground

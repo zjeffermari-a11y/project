@@ -45,8 +45,13 @@ class UserController extends Controller
 
             $results = $query->get(['id', 'name', 'email', 'agency_name', 'designation']);
             return response()->json($results);
-        } catch (\Exception $e) {
-            Log::error("Failed to fetch auditors: " . $e->getMessage());
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("CRITICAL: Failed to fetch auditors in production: " . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
             // Return empty array instead of 500 to keep UI functional
             return response()->json([]);
         }

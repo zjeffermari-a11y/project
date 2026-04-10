@@ -11,20 +11,48 @@ class EngagementController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        if ($user->role === 'auditor') {
-            return response()->json(Engagement::with(['movs.auditee', 'documents.uploader', 'users'])->get());
-        } else {
-            // Auditees only see engagements they are involved in (via MOVs)
-            $engagements = Engagement::whereHas('movs', function ($q) use ($user) {
-                $q->where('auditee_id', $user->id);
-            })->with([
-                        'movs' => function ($q) use ($user) {
-                            $q->where('auditee_id', $user->id);
-                        },
-                        'users'
-                    ])->get();
-            return response()->json($engagements);
+        try {
+            $user = Auth::user();
+
+            if (!$user) {
+                return response()->json(['message' => 'Unauthenticated'], 401);
+            }
+
+            // Diagnostic logging for Render
+            \Illuminate\Support\Facades\Log::info("Fetching engagements for user", [
+                'user_id' => $user->id,
+                'role' => $user->role
+            ]);
+
+            // Ensure the engagements table exists before querying
+            if (!\Illuminate\Support\Facades\Schema::hasTable('engagements')) {
+                \Illuminate\Support\Facades\Log::warning("Engagements table missing on Render.");
+                return response()->json([]);
+            }
+
+            if ($user->role === 'auditor') {
+                return response()->json(Engagement::with(['movs.auditee', 'documents.uploader', 'users'])->get());
+            } else {
+                // Auditees only see engagements they are involved in (via MOVs)
+                $engagements = Engagement::whereHas('movs', function ($q) use ($user) {
+                    $q->where('auditee_id', $user->id);
+                })->with([
+                            'movs' => function ($q) use ($user) {
+                                $q->where('auditee_id', $user->id);
+                            },
+                            'users'
+                        ])->get();
+                return response()->json($engagements);
+            }
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error("CRITICAL: Failed to fetch engagements in production: " . $e->getMessage(), [
+                'exception' => get_class($e),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            // Return empty array instead of 500 to maintain UX
+            return response()->json([]);
         }
     }
 

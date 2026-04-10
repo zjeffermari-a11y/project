@@ -3,14 +3,32 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\UserController;
+use Illuminate\Support\Facades\Artisan;
 
 Route::post('/login', [AuthController::class , 'login']);
 Route::post('/register', [AuthController::class , 'register']);
 
+// Emergency Migration Route for Render Free Tier
+Route::get('/system/migrate', function () {
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        return response()->json([
+            'message' => 'Migrations executed successfully.',
+            'output' => Artisan::output()
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'error' => 'Migration failed',
+            'message' => $e->getMessage()
+        ], 500);
+    }
+});
+
 Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/users/pending', [App\Http\Controllers\Api\UserController::class, 'pending']);
-    Route::get('/users/auditors', [App\Http\Controllers\Api\UserController::class, 'auditors']);
-    Route::patch('/users/{id}/approve', [App\Http\Controllers\Api\UserController::class, 'approve']);
+    Route::get('/users/pending', [UserController::class, 'pending']);
+    Route::get('/users/auditors', [UserController::class, 'auditors']);
+    Route::patch('/users/{id}/approve', [UserController::class, 'approve']);
 
     Route::get('/user', [AuthController::class , 'user']);
     Route::get('/auditees', function () {

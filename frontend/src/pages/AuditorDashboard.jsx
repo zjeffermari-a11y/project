@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText } from 'lucide-react';
+import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Plus } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 
 // Shared Components & Hooks

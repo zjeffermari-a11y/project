@@ -16,7 +16,7 @@ class AuthController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8',
-            'designation' => 'required|in:director,division_chief,assistant_division_chief,lead_auditor,auditor,auditee',
+            'designation' => 'required|in:director,division_chief,assistant_division_chief,lead_auditor,auditor,assistant_auditor,auditee',
             'agency_name' => 'nullable|string|max:255',
         ]);
 

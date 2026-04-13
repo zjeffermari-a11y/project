@@ -27,7 +27,7 @@ export default function Login() {
             if (res.data.user.designation === 'director') navigate('/director');
             else if (res.data.user.designation === 'division_chief') navigate('/division-chief');
             else if (res.data.user.designation === 'assistant_division_chief') navigate('/assistant-division-chief');
-            else if (res.data.user.designation === 'lead_auditor' || res.data.user.designation === 'auditor') navigate('/auditor');
+            else if (res.data.user.designation === 'lead_auditor' || res.data.user.designation === 'auditor' || res.data.user.designation === 'assistant_auditor') navigate('/auditor');
             else navigate('/auditee');
         } catch (err) {
             setError(err.response?.data?.message || 'Invalid login credentials');

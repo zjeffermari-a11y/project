@@ -164,6 +164,7 @@ function Signup() {
                                 <option value="director">Director</option>
                                 <option value="division_chief">Division Chief</option>
                                 <option value="assistant_division_chief">Assistant Division Chief</option>
+                                <option value="assistant_auditor">Assistant Auditor</option>
                                 <option value="auditor">Auditor</option>
                                 <option value="auditee">Auditee</option>
                             </select>

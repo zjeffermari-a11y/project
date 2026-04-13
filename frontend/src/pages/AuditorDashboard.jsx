@@ -53,7 +53,7 @@ export default function AuditorDashboard() {
     // Nav Items for Sidebar
     const navItems = [
         { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
-        { icon: <Plus className="h-5 w-5 text-indigo-500" />, title: 'Initialize Engagement', onClick: () => setIsNewAuditModalOpen(true) }
+        { icon: <Plus className="h-5 w-5 text-indigo-500" />, title: 'New Audit Engagements', onClick: () => setIsNewAuditModalOpen(true) }
     ];
 
     if (initialLoad && engagements.length === 0) {
@@ -86,35 +86,18 @@ export default function AuditorDashboard() {
                     isLoading={loading}
                     onRefresh={refreshData}
                     pendingTasksCount={engagements.reduce((acc, eng) => acc + (eng.movs?.filter(m => m.status === 'submitted').length || 0), 0)}
+                    actions={
+                        <button
+                            onClick={() => setIsNewAuditModalOpen(true)}
+                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-200 transition-all active:scale-95"
+                        >
+                            <Plus className="w-4 h-4" />
+                            New Audit Engagements
+                        </button>
+                    }
                 />
             }
         >
-            {/* Core Operations */}
-            <section>
-                <h2 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-6 flex items-center gap-2 border-b border-slate-200 pb-2">
-                    <LayoutGrid className="w-4 h-4 text-indigo-500" /> Core Operations
-                </h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col group">
-                        <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
-                            <Database className="w-6 h-6 text-blue-600" />
-                        </div>
-                        <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest mb-2">Masterfile View</h3>
-                        <p className="text-xs font-bold text-slate-400 leading-relaxed italic">Global, searchable database of all documents uploaded across the system.</p>
-                    </div>
-                    <div 
-                        onClick={() => setIsNewAuditModalOpen(true)}
-                        className="bg-indigo-600 p-6 rounded-3xl border border-indigo-200 shadow-xl shadow-indigo-100 flex flex-col justify-center relative overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all group"
-                    >
-                        <div className="absolute -right-6 -bottom-6 w-32 h-32 bg-white/10 rounded-full pointer-events-none group-hover:scale-110 transition-transform"></div>
-                        <div className="w-10 h-10 rounded-xl bg-white/20 flex items-center justify-center mb-4">
-                            <Plus className="w-6 h-6 text-white" />
-                        </div>
-                        <h3 className="text-sm font-black text-white uppercase tracking-widest mb-2 z-10">Initialize New Engagement</h3>
-                        <p className="text-xs font-bold text-indigo-100 leading-relaxed z-10 italic">Launch a new workspace for an agency audit with automated Ref No. generation.</p>
-                    </div>
-                </div>
-            </section>
 
             {/* KPI Cards */}
             <section>

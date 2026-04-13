@@ -164,6 +164,67 @@ function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRe
     );
 }
 
+const AuditCycleProgress = ({ status }) => {
+    const stages = [
+        { id: 'planning', label: 'Planning', percentage: 25 },
+        { id: 'execution', label: 'Execution', percentage: 50 },
+        { id: 'reporting', label: 'Reporting', percentage: 75 },
+        { id: 'followup', label: 'Follow-up', percentage: 100 }
+    ];
+
+    const currentStageIndex = status === 'completed' || status === 'followup' || status === 'follow_up'
+        ? 3 
+        : stages.findIndex(s => s.id === (status || 'planning'));
+    
+    const currentStage = stages[currentStageIndex === -1 ? 0 : currentStageIndex];
+
+    return (
+        <div className="bg-white p-10 rounded-[2.5rem] border border-slate-200 shadow-sm mb-12 animate-in fade-in slide-in-from-top-4 duration-700">
+            <div className="flex justify-between items-end mb-8">
+                <div>
+                    <h2 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em] mb-2">Audit Cycle Progress</h2>
+                    <p className="text-3xl font-black text-slate-800 uppercase tracking-tight italic">
+                        {currentStage.percentage}% - {currentStage.label} Phase
+                    </p>
+                </div>
+                <div className="text-right">
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Engagement Status</span>
+                    <p className="text-sm font-black text-indigo-600 uppercase tracking-widest mt-1">Active Activity</p>
+                </div>
+            </div>
+            
+            <div className="relative h-4 bg-slate-100 rounded-full flex overflow-hidden border border-slate-200/50 shadow-inner">
+                {stages.map((stage, idx) => (
+                    <div 
+                        key={stage.id}
+                        className={`flex-1 h-full border-r border-white/20 last:border-none transition-all duration-1000 ease-out ${
+                            idx <= currentStageIndex ? 'bg-indigo-600' : 'bg-slate-200'
+                        }`}
+                        style={{ transitionDelay: `${idx * 150}ms` }}
+                    />
+                ))}
+            </div>
+            
+            <div className="flex justify-between mt-6 px-2">
+                {stages.map((stage, idx) => (
+                    <div key={stage.id} className="flex flex-col items-center group">
+                        <div className={`w-3.5 h-3.5 rounded-full mb-3 border-4 transition-all duration-500 ${
+                            idx <= currentStageIndex 
+                                ? 'bg-indigo-600 border-indigo-100 scale-125 shadow-lg shadow-indigo-100' 
+                                : 'bg-slate-300 border-slate-100 group-hover:bg-slate-400'
+                        }`} />
+                        <span className={`text-[9px] font-black uppercase tracking-widest transition-colors ${
+                            idx <= currentStageIndex ? 'text-indigo-600' : 'text-slate-400'
+                        }`}>
+                            {stage.label}
+                        </span>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
+
 export default function AuditWorkspace() {
     const { id } = useParams();
     const navigate = useNavigate();
@@ -294,6 +355,7 @@ export default function AuditWorkspace() {
             {/* Content Area */}
             <div className="flex-1 overflow-y-auto px-8 py-10">
                 <div className="max-w-7xl mx-auto">
+                    <AuditCycleProgress status={engagement.status} />
                     
                     {/* TOOLS TAB */}
                     {activeTab === 'tools' && (

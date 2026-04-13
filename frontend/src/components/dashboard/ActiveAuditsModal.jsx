@@ -58,7 +58,7 @@ export default function ActiveAuditsModal({
 
                     {/* Tabs Row */}
                     <div className="flex gap-2 mb-8">
-                        {['all', 'planning', 'execution', 'reporting', 'follow_up'].map(tab => {
+                        {['all', 'planning', 'execution', 'reporting'].map(tab => {
                             const count = tab === 'all'
                                 ? engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length
                                 : engagements.filter(e => e.status === tab).length;

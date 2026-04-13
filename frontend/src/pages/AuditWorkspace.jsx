@@ -10,7 +10,7 @@ const DOCUMENTS = {
         { label: 'Inventory of MOVs (IM)', toolKey: 'iom' },
         { label: 'Audit Area Profile (AAP)', toolKey: 'aap' },
         { label: 'Audit Engagement Plan (AEP)', toolKey: null },
-        { label: 'Audit Work Program (AWP)', toolKey: null, generateKey: 'awp' },
+        { label: 'Audit Work Program (AWP)', toolKey: 'awp' },
         { label: 'Summary of Audit Team Roles (RR)', toolKey: null },
         { label: 'Compliance Checklist (CC)', toolKey: 'ccl' },
         { label: 'Management Audit Checklist', toolKey: 'mac' },
@@ -92,7 +92,6 @@ function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRe
             document.body.appendChild(link); link.click(); link.parentNode.removeChild(link);
         } catch (err) { alert('Download failed'); }
     };
-// ... rest of the component
 
     return (
         <div className={`flex flex-col p-5 rounded-xl border ${theme.borderLight} ${theme.bgLight}/30 ${theme.bgHover} transition-colors group`}>
@@ -234,6 +233,7 @@ export default function AuditWorkspace() {
     const [logs, setLogs] = useState([]);
     const [activeTab, setActiveTab] = useState('tools'); // 'tools', 'movs', 'trail'
     const [selectedPhase, setSelectedPhase] = useState(null);
+    const [awpTool, setAwpTool] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -243,9 +243,10 @@ export default function AuditWorkspace() {
     const fetchWorkspaceData = async () => {
         setLoading(true);
         try {
-            const [docRes, logRes] = await Promise.all([
+            const [docRes, logRes, awpRes] = await Promise.all([
                 api.get(`/engagements/${id}/documents`),
-                api.get(`/engagements/${id}/activity-logs`).catch(() => ({ data: [] }))
+                api.get(`/engagements/${id}/activity-logs`).catch(() => ({ data: [] })),
+                api.get(`/engagements/${id}/tool/awp`).catch(() => ({ data: null }))
             ]);
             
             // Re-sync global engagements first to ensure we have the latest
@@ -253,6 +254,7 @@ export default function AuditWorkspace() {
             
             setDocuments(docRes.data);
             setLogs(logRes.data);
+            setAwpTool(awpRes.data);
         } catch (err) {
             console.error('Failed to load workspace', err);
         } finally {
@@ -392,20 +394,47 @@ export default function AuditWorkspace() {
                                                     const relatedDocs = documents.filter(d => d.phase === selectedPhase && d.document_type === doc.label);
                                                     const latestDoc = relatedDocs.length > 0 ? relatedDocs[relatedDocs.length - 1] : null;
 
-                                                    // Mock authors/reviewers for now if backend is not fully updated with these columns
-                                                    const preparedBy = latestDoc?.uploader?.name || null;
+                                                    // 1. Prepared By: From AWP "Responsible Personnel" for matching labels
+                                                    let awpPersonnelMatched = null;
+                                                    if (awpTool?.form_data?.phases) {
+                                                        for (const p of awpTool.form_data.phases) {
+                                                            const row = p.rows?.find(r => 
+                                                                r.activity && 
+                                                                (r.activity.toLowerCase().includes(doc.label.toLowerCase()) || 
+                                                                 doc.label.toLowerCase().includes(r.activity.toLowerCase()))
+                                                            );
+                                                            if (row?.personnel) {
+                                                                awpPersonnelMatched = row.personnel;
+                                                                break;
+                                                            }
+                                                        }
+                                                    }
+
+                                                    const preparedBy = latestDoc?.uploader?.name || awpPersonnelMatched || null;
                                                     const preparedInitials = preparedBy ? preparedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '';
 
-                                                    // Lead Auditor fallback for "Awaiting" state
-                                                    const leadName = engagement.lead_auditor?.name || 'Unassigned';
+                                                    // Leader fallback for initials display
+                                                    const leadUser = engagement.users?.find(u => u.pivot?.role_in_engagement === 'lead_auditor' || u.pivot?.role_in_engagement === 'Lead Auditor');
+                                                    const leadName = leadUser?.name || 'Unassigned';
                                                     const leadInitials = leadName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
 
-                                                    // For the frontend demo of the screenshot
-                                                    const reviewedBy = latestDoc?.reviewed_by?.name || null;
-                                                    const reviewStatus = reviewedBy ? 'reviewed' : (preparedBy ? 'Awaiting Receipt' : 'Awaiting');
+                                                    // 2. Approved By: Director (Dynamic fetch from engagement roles)
+                                                    const directorUser = engagement.users?.find(u => 
+                                                        u.pivot?.role_in_engagement?.toLowerCase() === 'director'
+                                                    );
+                                                    const approvedBy = latestDoc?.approved_by?.name || directorUser?.name || 'Director';
+                                                    const aprvStatus = latestDoc?.approved_by?.name ? 'Approved' : 'Awaiting';
+
+                                                    // 3. Reviewed By: Asst TL or Team Leader
+                                                    const atlUser = engagement.users?.find(u => 
+                                                        ['assistant team leader', 'asst_team_leader', 'atl'].includes(u.pivot?.role_in_engagement?.toLowerCase())
+                                                    );
+                                                    const tlUser = engagement.users?.find(u => 
+                                                        ['team leader', 'lead_auditor', 'tl'].includes(u.pivot?.role_in_engagement?.toLowerCase())
+                                                    );
                                                     
-                                                    const approvedBy = latestDoc?.approved_by?.name || null;
-                                                    const aprvStatus = approvedBy ? 'approved' : 'Awaiting';
+                                                    const reviewedBy = latestDoc?.reviewed_by?.name || atlUser?.name || tlUser?.name || null;
+                                                    const reviewStatus = latestDoc?.reviewed_by?.name ? 'Reviewed' : (preparedBy ? 'Awaiting Receipt' : 'Awaiting');
 
                                                     return (
                                                         <tr key={idx} className="hover:bg-slate-50 transition-colors group">

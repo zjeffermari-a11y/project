@@ -11,6 +11,7 @@ import ManagementAuditChecklist from '../components/audit-tools/ManagementAuditC
 import WalkthroughTest from '../components/audit-tools/WalkthroughTest';
 import EntryConferenceBriefer from '../components/audit-tools/EntryConferenceBriefer';
 import NoticeConference from '../components/audit-tools/NoticeConference';
+import AuditWorkProgram from '../components/audit-tools/AuditWorkProgram';
 
 /**
  * Maps the URL "tool key" to the corresponding tool component.
@@ -25,6 +26,7 @@ const TOOL_MAP = {
     wt:    WalkthroughTest,
     ecb:   EntryConferenceBriefer,
     neecm: NoticeConference,
+    awp:   AuditWorkProgram,
 };
 
 /**
@@ -96,6 +98,7 @@ export default function AuditTool() {
     return (
         <ToolComponent
             engagement={engagement}
+            engagementId={id}
             readOnly={isAuditee}
         />
     );

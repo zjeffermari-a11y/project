@@ -8,7 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Document extends Model
 {
     use HasFactory;
-    protected $fillable = ['engagement_id', 'uploaded_by', 'file_name', 'file_path', 'status', 'signed_by', 'document_type', 'phase', 'reviewed_by', 'approved_by', 'form_data'];
+    protected $fillable = ['engagement_id', 'uploaded_by', 'file_name', 'file_path', 'status', 'signed_by', 'document_type', 'phase', 'reviewed_by', 'approved_by', 'form_data', 'tool_key'];
+
+    protected $casts = [
+        'form_data' => 'array',
+    ];
 
     public function engagement() { return $this->belongsTo(Engagement::class); }
     public function uploader() { return $this->belongsTo(User::class, 'uploaded_by'); }

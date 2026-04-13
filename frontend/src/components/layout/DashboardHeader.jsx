@@ -25,7 +25,7 @@ export default function DashboardHeader({
                     </div>
                     <div className="flex items-center gap-4">
                         <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight">
-                            {title}, {user.name}
+                            {title}
                         </h1>
                         <button
                             onClick={onRefresh}

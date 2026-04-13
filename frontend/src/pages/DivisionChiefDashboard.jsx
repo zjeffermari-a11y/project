@@ -98,7 +98,7 @@ export default function DivisionChiefDashboard() {
                 <DashboardHeader 
                     user={user} 
                     roleLabel={user.designation === 'assistant_division_chief' ? 'Assistant Division Chief' : 'Division Chief'} 
-                    title="Operations" 
+                    title={`Welcome back, ${user?.name || ''}`}
                     subtitle="Department Overview"
                     isInitialLoad={initialLoad}
                     isLoading={loading}

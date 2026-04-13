@@ -80,7 +80,7 @@ export default function AuditorDashboard() {
                 <DashboardHeader 
                     user={user} 
                     roleLabel="Lead Auditor" 
-                    title="Dashboard" 
+                    title={`Welcome back, ${user?.name || ''}`}
                     subtitle="Auditor Operations Center"
                     isInitialLoad={initialLoad}
                     isLoading={loading}

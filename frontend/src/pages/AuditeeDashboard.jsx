@@ -104,7 +104,7 @@ export default function AuditeeDashboard() {
                 <DashboardHeader 
                     user={user} 
                     roleLabel="Auditee Portal" 
-                    title="Compliance Hub" 
+                    title={`Welcome back, ${user?.name || ''}`}
                     subtitle={ongoingAudits.length > 0 ? `Engagement: ${ongoingAudits[0].eng.title}` : 'No Active Engagement'}
                     isInitialLoad={initialLoad}
                     isLoading={loading}

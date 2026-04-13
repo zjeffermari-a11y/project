@@ -98,7 +98,7 @@ export default function DirectorDashboard() {
                 <DashboardHeader 
                     user={user} 
                     roleLabel="Director Portal" 
-                    title="Executive Overview" 
+                    title={`Welcome back, ${user?.name || ''}`}
                     subtitle="System Performance & KPIs"
                     isInitialLoad={initialLoad}
                     isLoading={loading}

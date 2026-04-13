@@ -132,22 +132,36 @@ export default function ActiveAuditsModal({
                                                             <span>{eng.auditee?.agency_name}</span>
                                                         </div>
                                                     </div>
-                                                    <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-600 text-white shadow-lg shadow-indigo-100`}>
-                                                        {eng.status || 'PLANNING'}
-                                                    </span>
+                                                    <div className="flex flex-col items-end gap-2">
+                                                        <div className="flex gap-2">
+                                                            {daysRemaining <= 3 && daysRemaining >= 0 && (
+                                                                <span className="px-3 py-1 bg-rose-50 text-rose-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-rose-100 animate-pulse">
+                                                                    Critical Urgency
+                                                                </span>
+                                                            )}
+                                                            {daysRemaining > 3 && daysRemaining <= 7 && (
+                                                                <span className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[9px] font-black uppercase tracking-widest border border-amber-100">
+                                                                    High Urgency
+                                                                </span>
+                                                            )}
+                                                            <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-600 text-white shadow-lg shadow-indigo-100`}>
+                                                                {eng.status || 'PLANNING'}
+                                                            </span>
+                                                        </div>
+                                                    </div>
                                                 </div>
 
-                                                <div className="flex items-center gap-2 mb-8">
+                                                <div className="flex items-center gap-2 mb-10">
                                                     <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse"></div>
                                                     <span className="text-[10px] font-black text-slate-600 uppercase tracking-widest">
                                                         {eng.start_date} - {eng.end_date}
                                                     </span>
                                                     <span className="text-[10px] font-bold text-slate-400 lowercase">
-                                                        • {daysRemaining > 0 ? `${daysRemaining} days remaining` : 'Timeline ended'}
+                                                        • {daysRemaining > 0 ? `${daysRemaining} days remaining` : daysRemaining === 0 ? 'Today is the deadline' : 'Timeline ended'}
                                                     </span>
                                                 </div>
 
-                                                <div className="grid grid-cols-3 gap-12 mb-10">
+                                                <div className="grid grid-cols-3 gap-12 mb-12">
                                                     <div className="space-y-2">
                                                         <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Engagement Lead</p>
                                                         <p className="text-xs font-black text-slate-700 italic">{eng.lead_auditor?.name || 'Unassigned'}</p>
@@ -162,12 +176,59 @@ export default function ActiveAuditsModal({
                                                     </div>
                                                 </div>
 
-                                                <div className="pt-8 border-t border-slate-50 flex items-center justify-between">
+                                                {/* Audit Cycle Progress Visualizer */}
+                                                <div className="mb-10 bg-slate-50/50 p-6 rounded-3xl border border-slate-100">
+                                                    <div className="flex justify-between items-end mb-4">
+                                                        <h4 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em]">Audit Cycle Progress</h4>
+                                                        <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
+                                                            {(() => {
+                                                                const status = eng.status?.toLowerCase() || 'planning';
+                                                                if (status === 'planning') return '25% — Planning Phase';
+                                                                if (status === 'execution') return '50% — Execution Phase';
+                                                                if (status === 'reporting') return '75% — Reporting Phase';
+                                                                if (status === 'follow_up' || status === 'completed') return '100% — Concluded';
+                                                                return '0% — Pending';
+                                                            })()}
+                                                        </span>
+                                                    </div>
+                                                    <div className="h-2 bg-slate-200 rounded-full flex overflow-hidden gap-1">
+                                                        {['planning', 'execution', 'reporting', 'follow_up'].map((stage, idx) => {
+                                                            const stages = ['planning', 'execution', 'reporting', 'follow_up', 'completed'];
+                                                            const currentIdx = stages.indexOf(eng.status?.toLowerCase() || 'planning');
+                                                            const isPastOrCurrent = idx <= currentIdx;
+                                                            return (
+                                                                <div 
+                                                                    key={stage} 
+                                                                    className={`flex-1 h-full rounded-full transition-all duration-700 ${isPastOrCurrent ? 'bg-indigo-600' : 'bg-slate-300/40'}`}
+                                                                />
+                                                            );
+                                                        })}
+                                                    </div>
+                                                    <div className="flex justify-between mt-3">
+                                                        {['Planning', 'Execution', 'Reporting', 'Follow-up'].map((label, idx) => {
+                                                            const stages = ['planning', 'execution', 'reporting', 'follow_up'];
+                                                            const currentIdx = stages.indexOf(eng.status?.toLowerCase() || 'planning');
+                                                            const isCurrent = idx === currentIdx;
+                                                            return (
+                                                                <span key={label} className={`text-[8px] font-black uppercase tracking-widest ${isCurrent ? 'text-indigo-600' : 'text-slate-400'}`}>
+                                                                    {label}
+                                                                </span>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+
+                                                <div className="pt-8 border-t border-slate-50 flex items-center gap-4">
                                                     <button
                                                         onClick={() => navigate('/auditor/workspace/' + eng.id)}
-                                                        className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-indigo-600 transition-all flex items-center gap-2 shadow-lg hover:shadow-indigo-200"
+                                                        className="px-6 py-2.5 bg-slate-900 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-black transition-all flex items-center gap-2 shadow-lg"
                                                     >
                                                         Open audit <ArrowUpRight className="w-3 h-3" />
+                                                    </button>
+                                                    <button
+                                                        className="px-6 py-2.5 bg-white border border-slate-200 text-slate-600 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-slate-50 transition-all flex items-center gap-2"
+                                                    >
+                                                        Assign Lead
                                                     </button>
                                                 </div>
                                             </div>

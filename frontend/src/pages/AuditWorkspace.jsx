@@ -424,12 +424,20 @@ export default function AuditWorkspace() {
 
                                                             {/* Reviewed By cell */}
                                                             <td className="py-4 px-4 whitespace-nowrap">
-                                                                {reviewedBy ? (
+                                                                {latestDoc?.reviewed_by?.name ? (
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-emerald-100">{reviewedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+                                                                        <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-emerald-100">{latestDoc.reviewed_by.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
                                                                         <div>
-                                                                            <div className="text-xs font-bold text-slate-800">{reviewedBy}</div>
-                                                                            {latestDoc && <div className="text-[10px] text-slate-400 font-bold">Reviewed {new Date(latestDoc.updated_at).toLocaleDateString()}</div>}
+                                                                            <div className="text-xs font-bold text-slate-800">{latestDoc.reviewed_by.name}</div>
+                                                                            <div className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 mt-0.5"><CheckCircle className="w-3 h-3" /> Reviewed</div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : reviewedBy ? (
+                                                                    <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black border border-slate-300 shadow-sm">{reviewedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+                                                                        <div>
+                                                                            <div className="text-xs font-bold text-slate-500">{reviewedBy}</div>
+                                                                            <div className="text-[9px] text-amber-500 font-black uppercase tracking-widest mt-0.5">{reviewStatus}</div>
                                                                         </div>
                                                                     </div>
                                                                 ) : (
@@ -442,12 +450,20 @@ export default function AuditWorkspace() {
 
                                                             {/* Approved By cell */}
                                                             <td className="py-4 px-4 whitespace-nowrap">
-                                                                {approvedBy ? (
+                                                                {latestDoc?.approved_by?.name ? (
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-amber-100">{approvedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+                                                                        <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-amber-100">{latestDoc.approved_by.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
                                                                         <div>
-                                                                            <div className="text-xs font-bold text-slate-800">{approvedBy}</div>
+                                                                            <div className="text-xs font-bold text-slate-800">{latestDoc.approved_by.name}</div>
                                                                             <div className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 mt-0.5"><CheckCircle className="w-3 h-3" /> Approved</div>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : approvedBy ? (
+                                                                    <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
+                                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black border border-slate-300 shadow-sm">{approvedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
+                                                                        <div>
+                                                                            <div className="text-xs font-bold text-slate-500">{approvedBy}</div>
+                                                                            <div className="text-[9px] text-amber-500 font-black uppercase tracking-widest mt-0.5">{aprvStatus}</div>
                                                                         </div>
                                                                     </div>
                                                                 ) : (

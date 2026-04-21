@@ -9,6 +9,11 @@ use Illuminate\Support\Facades\Artisan;
 Route::post('/login', [AuthController::class , 'login']);
 Route::post('/register', [AuthController::class , 'register']);
 
+// Fallback for unauthenticated API requests to prevent "Route [login] not defined" 500 errors
+Route::get('/login', function () {
+    return response()->json(['message' => 'Unauthenticated.'], 401);
+})->name('login');
+
 // Emergency Migration Route for Render Free Tier
 Route::get('/system/migrate', function () {
     try {

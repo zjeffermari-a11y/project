@@ -30,6 +30,28 @@ Route::get('/system/migrate', function () {
     }
 });
 
+// Emergency Diagnostic Route for Render Debugging (reads the last 100 lines of laravel.log)
+Route::get('/system/logs', function () {
+    $logFile = storage_path('logs/laravel.log');
+    if (!file_exists($logFile)) {
+        return response()->json(['message' => 'Log file does not exist.'], 404);
+    }
+    
+    // Read the last 100 lines
+    $file = new \SplFileObject($logFile, 'r');
+    $file->seek(PHP_INT_MAX);
+    $last_line = $file->key();
+    $lines = new \LimitIterator($file, max(0, $last_line - 100));
+    $output = [];
+    foreach ($lines as $line) {
+        $output[] = $line;
+    }
+    
+    return response()->json([
+        'logs' => $output
+    ]);
+});
+
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/pending', [UserController::class, 'pending']);
     Route::get('/users/auditors', [UserController::class, 'auditors']);

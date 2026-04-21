@@ -57,7 +57,7 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose }) 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await api.get(`/engagements/${engagementId}/tool/awp`);
+                const res = await api.get(`/engagements/${engagementId}/tools/awp`);
                 if (res.data.form_data) {
                     const data = res.data.form_data;
                     setAwpRef(data.awpRef);
@@ -120,7 +120,7 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose }) 
                 preparedBy, reviewedBy, approvedBy,
                 phases
             };
-            await api.post(`/engagements/${engagementId}/tool/awp/save`, {
+            await api.post(`/engagements/${engagementId}/tools/awp`, {
                 form_data: formData,
                 document_type: 'Audit Work Program (AWP)',
                 phase: 'planning'
@@ -146,7 +146,7 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose }) 
     );
 
     return (
-        <div className="bg-slate-900 min-h-full flex flex-col p-8 custom-scrollbar">
+        <div className="bg-slate-900 h-full overflow-y-auto flex flex-col p-8 custom-scrollbar">
             <style>{`
                 @media print { 
                     @page { margin: 1cm; size: auto; }

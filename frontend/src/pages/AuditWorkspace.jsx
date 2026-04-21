@@ -186,7 +186,7 @@ export default function AuditWorkspace() {
             const [docRes, logRes, awpRes] = await Promise.all([
                 api.get(`/engagements/${id}/documents`),
                 api.get(`/engagements/${id}/activity-logs`).catch(() => ({ data: [] })),
-                api.get(`/engagements/${id}/tool/awp`).catch(() => ({ data: null }))
+                api.get(`/engagements/${id}/tools/awp`).catch(() => ({ data: null }))
             ]);
             
             // Re-sync global engagements first to ensure we have the latest

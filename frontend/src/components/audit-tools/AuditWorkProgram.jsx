@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Save, Printer, Download, Plus, Trash2, Loader2, CheckCircle2 } from 'lucide-react';
+import { Save, Printer, Download, Plus, Trash2, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
 export default function AuditWorkProgram({ engagementId, engagement, onClose }) {
+    const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
@@ -161,6 +163,9 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose }) 
 
             <div className="max-w-[1200px] mx-auto w-full flex justify-between items-center mb-6 hide-on-print">
                 <div className="flex items-center gap-3">
+                    <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-800">
+                        <ArrowLeft className="w-5 h-5" />
+                    </button>
                     <div className="p-2 bg-indigo-500/10 rounded-lg">
                         <Loader2 className="w-5 h-5 text-indigo-400" />
                     </div>

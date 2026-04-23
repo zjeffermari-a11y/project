@@ -40,23 +40,23 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
         } />
 
         <Route path="/auditor" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor']}>
+          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor']}>
             <AuditorDashboard />
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor', 'division_chief', 'director', 'auditee']}>
+          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor', 'division_chief', 'director', 'auditee']}>
             <AuditWorkspace />
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id/generate/:doc" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor', 'division_chief', 'director']}>
+          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor', 'division_chief', 'director']}>
             <GenerateDocument />
           </ProtectedRoute>
         } />
         {/* Interactive Audit Planning Tools — auditees get read-only access */}
         <Route path="/auditor/workspace/:id/tool/:toolKey" element={
-          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor', 'division_chief', 'assistant_division_chief', 'director', 'auditee']}>
+          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor', 'division_chief', 'assistant_division_chief', 'director', 'auditee']}>
             <AuditTool />
           </ProtectedRoute>
         } />
@@ -90,7 +90,7 @@ function App() {
     if (user.designation === 'director') return <Navigate to="/director" replace />;
     if (user.designation === 'division_chief') return <Navigate to="/division-chief" replace />;
     if (user.designation === 'assistant_division_chief') return <Navigate to="/assistant-division-chief" replace />;
-    if (user.designation === 'lead_auditor' || user.designation === 'auditor' || user.designation === 'assistant_auditor') return <Navigate to="/auditor" replace />;
+    if (user.designation === 'lead_auditor' || user.designation === 'assistant_leader' || user.designation === 'auditor' || user.designation === 'assistant_auditor') return <Navigate to="/auditor" replace />;
     return <Navigate to="/auditee" replace />;
   };
 

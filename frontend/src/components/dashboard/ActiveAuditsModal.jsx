@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { X, Search, ChevronDown, Database, ArrowUpRight, MoreHorizontal } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-export default function ActiveAuditsModal({ 
-    isOpen, 
-    onClose, 
-    engagements = [], 
-    initialLoad 
+export default function ActiveAuditsModal({
+    isOpen,
+    onClose,
+    engagements = [],
+    initialLoad
 }) {
     const [search, setSearch] = useState('');
     const [activeTab, setActiveTab] = useState('all');
@@ -62,16 +62,16 @@ export default function ActiveAuditsModal({
                             const count = tab === 'all'
                                 ? engagements.filter(e => e.status !== 'completed').length
                                 : engagements.filter(e => e.status === tab).length;
-                            
-                            const label = tab === 'follow_up' ? 'Concluded Phase' : tab.replace('_', '-');
+
+                            const label = tab === 'follow_up' ? 'Follow-up' : tab.replace('_', '-');
 
                             return (
                                 <button
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`px-6 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all border ${activeTab === tab
-                                            ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
-                                            : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
+                                        ? 'bg-slate-900 text-white border-slate-900 shadow-lg scale-105'
+                                        : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                                         }`}
                                 >
                                     {label} ({count})
@@ -201,8 +201,8 @@ export default function ActiveAuditsModal({
                                                             const currentIdx = stages.indexOf(eng.status?.toLowerCase() || 'planning');
                                                             const isPastOrCurrent = idx <= currentIdx;
                                                             return (
-                                                                <div 
-                                                                    key={stage} 
+                                                                <div
+                                                                    key={stage}
                                                                     className={`flex-1 h-full rounded-full transition-all duration-700 ${isPastOrCurrent ? 'bg-indigo-600' : 'bg-slate-300/40'}`}
                                                                 />
                                                             );

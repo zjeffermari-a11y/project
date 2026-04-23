@@ -129,6 +129,8 @@ export default function ActiveAuditsModal({
                                                         <div className="flex items-center gap-3 text-[10px] font-black text-slate-400 uppercase tracking-widest">
                                                             <span>{eng.ae_number}</span>
                                                             <span className="w-1 h-1 rounded-full bg-slate-300"></span>
+                                                            <span>{eng.type_of_audit || 'Compliance Management'}</span>
+                                                            <span className="w-1 h-1 rounded-full bg-slate-300"></span>
                                                             <span>{eng.auditee?.agency_name}</span>
                                                         </div>
                                                     </div>
@@ -183,16 +185,15 @@ export default function ActiveAuditsModal({
                                                         <span className="text-[10px] font-black text-indigo-600 uppercase tracking-widest">
                                                             {(() => {
                                                                 const status = eng.status?.toLowerCase() || 'planning';
-                                                                if (status === 'planning') return '25% — Planning Phase';
-                                                                if (status === 'execution') return '50% — Execution Phase';
-                                                                if (status === 'reporting') return '75% — Reporting Phase';
-                                                                if (status === 'follow_up' || status === 'completed') return '100% — Concluded';
+                                                                if (status === 'planning') return '33% — Planning Phase';
+                                                                if (status === 'execution') return '66% — Execution Phase';
+                                                                if (status === 'reporting' || status === 'follow_up' || status === 'completed') return '100% — Concluded';
                                                                 return '0% — Pending';
                                                             })()}
                                                         </span>
                                                     </div>
                                                     <div className="h-2 bg-slate-200 rounded-full flex overflow-hidden gap-1">
-                                                        {['planning', 'execution', 'reporting', 'follow_up'].map((stage, idx) => {
+                                                        {['planning', 'execution', 'reporting'].map((stage, idx) => {
                                                             const stages = ['planning', 'execution', 'reporting', 'follow_up', 'completed'];
                                                             const currentIdx = stages.indexOf(eng.status?.toLowerCase() || 'planning');
                                                             const isPastOrCurrent = idx <= currentIdx;
@@ -205,8 +206,8 @@ export default function ActiveAuditsModal({
                                                         })}
                                                     </div>
                                                     <div className="flex justify-between mt-3">
-                                                        {['Planning', 'Execution', 'Reporting', 'Follow-up'].map((label, idx) => {
-                                                            const stages = ['planning', 'execution', 'reporting', 'follow_up'];
+                                                        {['Planning', 'Execution', 'Reporting'].map((label, idx) => {
+                                                            const stages = ['planning', 'execution', 'reporting', 'follow_up', 'completed'];
                                                             const currentIdx = stages.indexOf(eng.status?.toLowerCase() || 'planning');
                                                             const isCurrent = idx === currentIdx;
                                                             return (

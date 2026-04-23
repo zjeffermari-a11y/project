@@ -13,7 +13,6 @@ import ActivityFeed from '../components/dashboard/ActivityFeed';
 import EngagementTable from '../components/dashboard/EngagementTable';
 import ActiveAuditsModal from '../components/dashboard/ActiveAuditsModal';
 import HistoryModal from '../components/dashboard/HistoryModal';
-import NewAuditModal from '../components/dashboard/NewAuditModal';
 
 export default function AuditorDashboard() {
     const { 
@@ -27,7 +26,6 @@ export default function AuditorDashboard() {
         availableAuditors
     } = useDataContext();
 
-    const [isNewAuditModalOpen, setIsNewAuditModalOpen] = useState(false);
     const [filter, setFilter] = useState('all');
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isActiveAuditsModalOpen, setIsActiveAuditsModalOpen] = useState(false);
@@ -52,8 +50,7 @@ export default function AuditorDashboard() {
 
     // Nav Items for Sidebar
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
-        { icon: <Plus className="h-5 w-5 text-indigo-500" />, title: 'New Audit Engagements', onClick: () => setIsNewAuditModalOpen(true) }
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} }
     ];
 
     if (initialLoad && engagements.length === 0) {
@@ -86,15 +83,7 @@ export default function AuditorDashboard() {
                     isLoading={loading}
                     onRefresh={refreshData}
                     pendingTasksCount={engagements.reduce((acc, eng) => acc + (eng.movs?.filter(m => m.status === 'submitted').length || 0), 0)}
-                    actions={
-                        <button
-                            onClick={() => setIsNewAuditModalOpen(true)}
-                            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-3 rounded-2xl font-black text-[11px] uppercase tracking-widest shadow-lg shadow-indigo-200 transition-all active:scale-95"
-                        >
-                            <Plus className="w-4 h-4" />
-                            New Audit Engagements
-                        </button>
-                    }
+                    actions={null}
                 />
             }
         >
@@ -173,21 +162,7 @@ export default function AuditorDashboard() {
                 onClose={() => setIsHistoryModalOpen(false)} 
                 activities={allActivities}
             />
-            <NewAuditModal 
-                isOpen={isNewAuditModalOpen} 
-                onClose={() => setIsNewAuditModalOpen(false)} 
-                onSubmit={async (data) => {
-                    try {
-                        await createEngagementOptimistic(data);
-                        setIsNewAuditModalOpen(false);
-                    } catch (err) {
-                        alert('Initialization failed: ' + err.message);
-                    }
-                }}
-                auditees={auditees}
-                availableAuditors={availableAuditors}
-                engagements={engagements}
-            />
+
         </DashboardLayout>
     );
 }

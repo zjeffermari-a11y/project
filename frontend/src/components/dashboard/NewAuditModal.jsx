@@ -14,7 +14,8 @@ export default function NewAuditModal({
         description: '', 
         start_date: '', 
         end_date: '', 
-        auditee_id: '' 
+        auditee_id: '',
+        type_of_audit: 'Compliance Management'
     });
     const [doNumber, setDoNumber] = useState('');
     const [offices, setOffices] = useState([]);
@@ -142,6 +143,19 @@ export default function NewAuditModal({
                                     required 
                                 />
                             </div>
+
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Type of Audit</label>
+                                <select 
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-sm font-black focus:ring-4 focus:ring-indigo-50 outline-none transition-all"
+                                    value={formData.type_of_audit}
+                                    onChange={(e) => setFormData({...formData, type_of_audit: e.target.value})}
+                                >
+                                    <option value="Compliance Management">Compliance Management</option>
+                                    <option value="Operation Management">Operation Management</option>
+                                </select>
+                            </div>
+
 
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Detailed Description</label>

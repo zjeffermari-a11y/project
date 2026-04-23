@@ -49,7 +49,7 @@ export default function EngagementTable({
                                             {eng.title}
                                         </div>
                                         <div className="text-[10px] font-bold text-slate-400 mt-1 truncate max-w-xs">
-                                            {eng.ae_number || 'DO-2026-XXX'} • {eng.description || 'No description'}
+                                            {eng.ae_number || 'DO-2026-XXX'} • {eng.type_of_audit || 'Compliance Management'} • {eng.description || 'No description'}
                                         </div>
                                     </td>
                                     <td className="p-5 text-xs font-bold text-slate-600 whitespace-nowrap">
@@ -63,7 +63,7 @@ export default function EngagementTable({
                                             eng.status === 'execution' ? 'bg-amber-50 text-amber-600 border-amber-200' :
                                             'bg-indigo-50 text-indigo-600 border-indigo-200'
                                         }`}>
-                                            {(eng.status || 'planning').replace('_', ' ')}
+                                            {eng.status === 'follow_up' ? 'Concluded Phase' : (eng.status || 'planning').replace('_', ' ')}
                                         </span>
                                     </td>
                                     <td className="py-5 text-xs font-black text-slate-700 tracking-widest">

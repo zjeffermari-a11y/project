@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class Engagement extends Model
 {
     use HasFactory;
-    protected $fillable = ['ae_number', 'title', 'description', 'status', 'start_date', 'end_date'];
+    protected $fillable = ['ae_number', 'title', 'description', 'status', 'start_date', 'end_date', 'type_of_audit'];
 
     public function movs() { return $this->hasMany(Mov::class); }
     public function documents() { return $this->hasMany(Document::class); }

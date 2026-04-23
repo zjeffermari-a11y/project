@@ -6,7 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use App\Models\User;
+use App\Mail\WelcomeEmail;
 
 class AuthController extends Controller
 {
@@ -22,7 +24,7 @@ class AuthController extends Controller
 
         $role = $validated['designation'] === 'auditee' ? 'auditee' : 'auditor';
 
-        User::create([
+        $user = User::create([
             'name' => $validated['name'],
             'email' => $validated['email'],
             'password' => Hash::make($validated['password']),
@@ -31,6 +33,12 @@ class AuthController extends Controller
             'agency_name' => $validated['agency_name'] ?? 'DILG Compliance Office',
             'approval_status' => 'pending',
         ]);
+
+        try {
+            Mail::to($user->email)->send(new WelcomeEmail($user));
+        } catch (\Exception $e) {
+            \Log::error('Registration email failed to send: ' . $e->getMessage());
+        }
 
         return response()->json(['message' => 'Registration successful. Waiting for Director approval.'], 201);
     }

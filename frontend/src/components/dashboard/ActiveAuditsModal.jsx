@@ -15,7 +15,7 @@ export default function ActiveAuditsModal({
     if (!isOpen) return null;
 
     const filtered = engagements.filter(e => {
-        const ongoingOnly = e.status !== 'completed' && e.status !== 'follow_up';
+        const ongoingOnly = e.status !== 'completed';
         if (!ongoingOnly) return false;
         if (activeTab !== 'all' && e.status !== activeTab) return false;
 
@@ -44,7 +44,7 @@ export default function ActiveAuditsModal({
                             <h1 className="text-3xl font-black text-slate-800 uppercase tracking-tight flex items-center gap-4">
                                 Ongoing Audits
                                 <span className="px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full text-xs font-bold border border-indigo-100">
-                                    {engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length} Active
+                                    {engagements.filter(e => e.status !== 'completed').length} Active
                                 </span>
                             </h1>
                         </div>
@@ -58,10 +58,13 @@ export default function ActiveAuditsModal({
 
                     {/* Tabs Row */}
                     <div className="flex gap-2 mb-8">
-                        {['all', 'planning', 'execution', 'reporting'].map(tab => {
+                        {['all', 'planning', 'execution', 'reporting', 'follow_up'].map(tab => {
                             const count = tab === 'all'
-                                ? engagements.filter(e => e.status !== 'completed' && e.status !== 'follow_up').length
+                                ? engagements.filter(e => e.status !== 'completed').length
                                 : engagements.filter(e => e.status === tab).length;
+                            
+                            const label = tab === 'follow_up' ? 'Concluded Phase' : tab.replace('_', '-');
+
                             return (
                                 <button
                                     key={tab}
@@ -71,7 +74,7 @@ export default function ActiveAuditsModal({
                                             : 'bg-white text-slate-500 border-slate-200 hover:border-slate-300 hover:bg-slate-50'
                                         }`}
                                 >
-                                    {tab.replace('_', '-')} ({count})
+                                    {label} ({count})
                                 </button>
                             );
                         })}
@@ -147,7 +150,7 @@ export default function ActiveAuditsModal({
                                                                 </span>
                                                             )}
                                                             <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest bg-indigo-600 text-white shadow-lg shadow-indigo-100`}>
-                                                                {eng.status || 'PLANNING'}
+                                                                {eng.status === 'follow_up' ? 'CONCLUDED PHASE' : (eng.status || 'PLANNING')}
                                                             </span>
                                                         </div>
                                                     </div>

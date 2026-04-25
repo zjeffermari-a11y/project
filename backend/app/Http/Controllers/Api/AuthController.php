@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Auth\Events\Registered; // ← Added
 use App\Models\User;
 use App\Mail\WelcomeEmail;
 
@@ -34,13 +35,18 @@ class AuthController extends Controller
             'approval_status' => 'pending',
         ]);
 
+        // Triggers Laravel's built-in verification email
+        event(new Registered($user)); // ← Added
+
         try {
             Mail::to($user->email)->send(new WelcomeEmail($user));
         } catch (\Exception $e) {
             \Log::error('Registration email failed to send: ' . $e->getMessage());
         }
 
-        return response()->json(['message' => 'Registration successful. Waiting for Director approval.'], 201);
+        return response()->json([
+            'message' => 'Registration successful. Please verify your email, then wait for Director approval.'
+        ], 201);
     }
 
     public function login(Request $request)
@@ -53,9 +59,20 @@ class AuthController extends Controller
         if (Auth::attempt($credentials)) {
             $user = Auth::user();
 
+            // Check email verification first
+            if (!$user->hasVerifiedEmail()) {
+                Auth::guard('web')->logout();
+                return response()->json([
+                    'message' => 'Please verify your email address before logging in.'
+                ], 403);
+            }
+
+            // Then check approval
             if ($user->approval_status !== 'approved') {
                 Auth::guard('web')->logout();
-                return response()->json(['message' => 'Your account is currently pending Director approval.'], 403);
+                return response()->json([
+                    'message' => 'Your account is currently pending Director approval.'
+                ], 403);
             }
 
             $token = $user->createToken('auth_token')->plainTextToken;

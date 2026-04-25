@@ -10,7 +10,7 @@ class EnsureUserIsApproved
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user()?->approval_status === 'approved') {
+        if ($request->user()?->approval_status !== 'approved') {
             return redirect('/waiting-approval');
         }
 

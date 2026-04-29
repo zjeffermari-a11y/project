@@ -117,6 +117,11 @@ export default function Login() {
                                         {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                     </button>
                                 </div>
+                                <div className="flex justify-end mt-1">
+                                    <Link to="/forgot-password" title="Recover lost account" className="text-[10px] font-black text-blue-500 hover:text-blue-600 uppercase tracking-widest transition-colors">
+                                        Forgot Password?
+                                    </Link>
+                                </div>
                             </div>
 
                             <button

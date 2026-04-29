@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Users, Plus, TrendingUp, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Users, Plus, TrendingUp, ChevronRight, Shield } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import api from '../api';
 
@@ -15,6 +15,7 @@ import EngagementTable from '../components/dashboard/EngagementTable';
 import ActiveAuditsModal from '../components/dashboard/ActiveAuditsModal';
 import HistoryModal from '../components/dashboard/HistoryModal';
 import NewAuditModal from '../components/dashboard/NewAuditModal';
+import SecuritySettingsModal from '../components/dashboard/SecuritySettingsModal';
 
 export default function DirectorDashboard() {
     const { 
@@ -33,6 +34,7 @@ export default function DirectorDashboard() {
     const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
     const [isActiveAuditsModalOpen, setIsActiveAuditsModalOpen] = useState(false);
     const [isNewAuditModalOpen, setIsNewAuditModalOpen] = useState(false);
+    const [isSecurityModalOpen, setIsSecurityModalOpen] = useState(false);
 
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const { stats, recentActivities, getFilteredEngagements, allActivities } = useDashboardData(engagements, user);
@@ -71,7 +73,8 @@ export default function DirectorDashboard() {
     };
 
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} }
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
+        { icon: <Shield className="h-5 w-5" />, title: 'Security', active: false, onClick: () => setIsSecurityModalOpen(true) }
     ];
 
     if (initialLoad && engagements.length === 0) {
@@ -253,6 +256,11 @@ export default function DirectorDashboard() {
                 availableAuditors={availableAuditors}
                 engagements={engagements}
                 onSubmit={handleCreateAudit}
+            />
+            <SecuritySettingsModal 
+                isOpen={isSecurityModalOpen}
+                onClose={() => setIsSecurityModalOpen(false)}
+                user={user}
             />
         </DashboardLayout>
     );

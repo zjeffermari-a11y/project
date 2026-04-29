@@ -11,6 +11,7 @@ export default function GenerateDocument() {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [submitted, setSubmitted] = useState(false);
+    const user = JSON.parse(localStorage.getItem('user')) || {};
 
     const handleSubmitForReview = async () => {
         if (!engagement) return;
@@ -418,7 +419,7 @@ export default function GenerateDocument() {
             <table className="text-xs font-bold items-center max-w-4xl mt-4 mb-8 text-left">
                 <tbody>
                     <tr><td className="w-[180px] py-1">Audit Objective</td><td className="w-4 py-1">:</td><td><input type="text" defaultValue={`DO Number: DO-${engagement.ae_number?.replace('AE-', '')} ${engagement.description || "To evaluate protocols."}`} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
-                    <tr><td className="w-[180px] pt-4">Team Leader</td><td className="w-4 pt-4">:</td><td className="pt-4"><input type="text" defaultValue="Lead Auditor" className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
+                    <tr><td className="w-[180px] pt-4">Team Leader</td><td className="w-4 pt-4">:</td><td className="pt-4"><input type="text" defaultValue={user.designation === 'assistant_leader' ? 'Assistant Leader' : 'Lead Auditor'} className="bg-transparent border-none outline-none w-full font-bold text-black" /></td></tr>
                 </tbody>
             </table>
 
@@ -508,7 +509,7 @@ export default function GenerateDocument() {
                     <tr>
                         <td className="w-1/3 px-10 align-top">
                             <p className="mb-6 italic text-left">Prepared by:</p>
-                            <input type="text" defaultValue="Lead Auditor Name" className="w-full bg-transparent outline-none border-b border-black text-center font-bold" />
+                            <input type="text" defaultValue={user.name || "Auditor Name"} className="w-full bg-transparent outline-none border-b border-black text-center font-bold" />
                             <p className="text-[10px] font-normal italic mt-0.5">Auditor's Name over Signature/Date</p>
                         </td>
                         <td className="w-1/3 px-10 align-top">

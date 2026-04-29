@@ -76,7 +76,17 @@ export default function AuditorDashboard() {
             header={
                 <DashboardHeader 
                     user={user} 
-                    roleLabel="Lead Auditor" 
+                    roleLabel={(() => {
+                        switch(user.designation) {
+                            case 'lead_auditor': return 'Lead Auditor';
+                            case 'auditor': return 'Auditor';
+                            case 'auditee': return 'Auditee';
+                            case 'assistant_division_chief': return 'Assistant Division Chief';
+                            case 'division_chief': return 'Division Chief';
+                            case 'director': return 'Director';
+                            default: return user.designation?.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || 'Auditor';
+                        }
+                    })()} 
                     title={`Welcome back, ${user?.name || ''}`}
                     subtitle="Auditor Operations Center"
                     isInitialLoad={initialLoad}

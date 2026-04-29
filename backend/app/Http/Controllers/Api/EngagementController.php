@@ -72,6 +72,8 @@ class EngagementController extends Controller
             'offices.*' => 'exists:users,id',
             'leadAuditors' => 'nullable|array',
             'leadAuditors.*' => 'exists:users,id',
+            'assistantLeaders' => 'nullable|array',
+            'assistantLeaders.*' => 'exists:users,id',
             'members' => 'nullable|array',
             'members.*' => 'exists:users,id'
         ]);
@@ -86,7 +88,12 @@ class EngagementController extends Controller
 
         if (!empty($validated['leadAuditors'])) {
             foreach ($validated['leadAuditors'] as $userId) {
-                $engagement->users()->attach($userId, ['role_in_engagement' => 'lead_auditor']);
+                $engagement->users()->attach($userId, ['role_in_engagement' => 'team_leader']);
+            }
+        }
+        if (!empty($validated['assistantLeaders'])) {
+            foreach ($validated['assistantLeaders'] as $userId) {
+                $engagement->users()->attach($userId, ['role_in_engagement' => 'assistant_leader']);
             }
         }
         if (!empty($validated['members'])) {
@@ -131,22 +138,32 @@ class EngagementController extends Controller
             'end_date' => 'nullable|date',
             'leadAuditors' => 'nullable|array',
             'leadAuditors.*' => 'exists:users,id',
+            'assistantLeaders' => 'nullable|array',
+            'assistantLeaders.*' => 'exists:users,id',
             'members' => 'nullable|array',
             'members.*' => 'exists:users,id'
         ]);
 
         $engagement->update($request->only(['title', 'description', 'status', 'start_date', 'end_date']));
 
-        if ($request->has('leadAuditors') || $request->has('members')) {
+        if ($request->has('leadAuditors') || $request->has('assistantLeaders') || $request->has('members')) {
             $syncData = [];
             if ($request->has('leadAuditors')) {
                 foreach ($request->input('leadAuditors') as $userId) {
-                    $syncData[$userId] = ['role_in_engagement' => 'lead_auditor'];
+                    $syncData[$userId] = ['role_in_engagement' => 'team_leader'];
+                }
+            }
+            if ($request->has('assistantLeaders')) {
+                foreach ($request->input('assistantLeaders') as $userId) {
+                    // Only add if not already a team leader
+                    if (!isset($syncData[$userId])) {
+                        $syncData[$userId] = ['role_in_engagement' => 'assistant_leader'];
+                    }
                 }
             }
             if ($request->has('members')) {
                 foreach ($request->input('members') as $userId) {
-                    // Only add if not already a lead
+                    // Only add if not already a leader
                     if (!isset($syncData[$userId])) {
                         $syncData[$userId] = ['role_in_engagement' => 'member'];
                     }

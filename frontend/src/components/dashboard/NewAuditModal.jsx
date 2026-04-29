@@ -26,6 +26,11 @@ export default function NewAuditModal({
     const [newLeadAuditor, setNewLeadAuditor] = useState('');
     const [newMember, setNewMember] = useState('');
 
+    const [assistantLeaders, setAssistantLeaders] = useState([]);
+    const [newAssistantLeader, setNewAssistantLeader] = useState('');
+    const [uploadedFiles, setUploadedFiles] = useState([]);
+    const [fileTypeSelect, setFileTypeSelect] = useState('Flowchart');
+
     useEffect(() => {
         if (isOpen) {
             const currentYear = new Date().getFullYear();
@@ -57,7 +62,9 @@ export default function NewAuditModal({
             description: combinedDescription,
             offices: offices.map(o => o.id),
             leadAuditors: leadAuditors.map(l => l.id),
-            members: members.map(m => m.id)
+            assistantLeaders: assistantLeaders.map(a => a.id),
+            members: members.map(m => m.id),
+            files: uploadedFiles
         });
     };
 
@@ -86,6 +93,29 @@ export default function NewAuditModal({
             setMembers([...members, exists]);
         }
         setNewMember('');
+    };
+
+    const addAssistantLeader = () => {
+        if (!newAssistantLeader) return;
+        const exists = availableAuditors.find(a => a.id.toString() === newAssistantLeader);
+        if (exists && !assistantLeaders.find(m => m.id === exists.id)) {
+            setAssistantLeaders([...assistantLeaders, exists]);
+        }
+        setNewAssistantLeader('');
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setUploadedFiles([...uploadedFiles, { type: fileTypeSelect, file, name: file.name }]);
+        }
+        e.target.value = '';
+    };
+
+    const removeFile = (index) => {
+        const newFiles = [...uploadedFiles];
+        newFiles.splice(index, 1);
+        setUploadedFiles(newFiles);
     };
 
     return (
@@ -244,6 +274,32 @@ export default function NewAuditModal({
                                 </div>
                             </div>
 
+                            {/* Assistant Leader Selection */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Assistant Leader(s)</label>
+                                <div className="flex gap-2 mb-3">
+                                    <select 
+                                        className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-xs font-bold outline-none"
+                                        value={newAssistantLeader}
+                                        onChange={(e) => setNewAssistantLeader(e.target.value)}
+                                    >
+                                        <option value="">Select Assistant Leader...</option>
+                                        {availableAuditors.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
+                                    </select>
+                                    <button type="button" onClick={addAssistantLeader} className="p-3 bg-indigo-600 text-white rounded-xl hover:bg-slate-900 transition-colors">
+                                        <Plus className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {assistantLeaders.map(m => (
+                                        <span key={m.id} className="inline-flex items-center gap-2 px-3 py-1.5 bg-indigo-100 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                            {m.name}
+                                            <button type="button" onClick={() => setAssistantLeaders(assistantLeaders.filter(item => item.id !== m.id))}><X className="w-3 h-3" /></button>
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
+
                             {/* Members Selection */}
                             <div>
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Engagement Members</label>
@@ -266,6 +322,47 @@ export default function NewAuditModal({
                                             {m.name}
                                             <button type="button" onClick={() => setMembers(members.filter(item => item.id !== m.id))}><X className="w-3 h-3" /></button>
                                         </span>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* File Uploads */}
+                            <div>
+                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Attached Documents</label>
+                                <div className="flex gap-2 mb-3">
+                                    <select 
+                                        className="w-1/3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold outline-none"
+                                        value={fileTypeSelect}
+                                        onChange={(e) => setFileTypeSelect(e.target.value)}
+                                    >
+                                        <option value="Flowchart">Flowchart</option>
+                                        <option value="Audit Feedback Survey Form">Audit Feedback Survey Form</option>
+                                        <option value="Other">Other</option>
+                                    </select>
+                                    <div className="flex-1 relative">
+                                        <input 
+                                            type="file" 
+                                            id="fileUpload" 
+                                            className="hidden" 
+                                            onChange={handleFileUpload} 
+                                        />
+                                        <label 
+                                            htmlFor="fileUpload" 
+                                            className="flex items-center justify-center gap-2 w-full h-full bg-slate-100 hover:bg-slate-200 border border-slate-300 border-dashed rounded-xl cursor-pointer text-xs font-bold text-slate-600 transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" /> Add File
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    {uploadedFiles.map((f, i) => (
+                                        <div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-[10px] font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{f.type}</span>
+                                                <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{f.name}</span>
+                                            </div>
+                                            <button type="button" onClick={() => removeFile(i)} className="text-slate-400 hover:text-rose-500 p-1"><Trash2 className="w-4 h-4" /></button>
+                                        </div>
                                     ))}
                                 </div>
                             </div>

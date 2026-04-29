@@ -3,7 +3,7 @@ import { Save, Printer, Download, Plus, Trash2, Loader2, CheckCircle2, ArrowLeft
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
 
-export default function AuditWorkProgram({ engagementId, engagement, onClose }) {
+export default function AuditWorkProgram({ engagementId, engagement, onClose, user }) {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -17,10 +17,10 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose }) 
     const [agency, setAgency] = useState('');
     const [auditType, setAuditType] = useState('Operations');
     const [objective, setObjective] = useState('');
-    const [teamLeader, setTeamLeader] = useState('Lead Auditor');
+    const [teamLeader, setTeamLeader] = useState(user?.designation === 'assistant_leader' ? 'Assistant Leader' : 'Lead Auditor');
 
     // Signatories
-    const [preparedBy, setPreparedBy] = useState('');
+    const [preparedBy, setPreparedBy] = useState(user?.name || '');
     const [reviewedBy, setReviewedBy] = useState('');
     const [approvedBy, setApprovedBy] = useState('');
 

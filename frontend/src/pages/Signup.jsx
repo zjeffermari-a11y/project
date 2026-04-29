@@ -68,9 +68,9 @@ function Signup() {
                     <div className="w-16 h-16 bg-emerald-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
                         <svg className="w-8 h-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
                     </div>
-                    <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Registration Complete</h2>
+                    <h2 className="text-2xl font-black text-slate-800 tracking-tight mb-2">Registration Submitted</h2>
                     <p className="text-sm font-medium text-slate-500 mb-8 leading-relaxed">
-                        Your account has been successfully created. However, you must wait for the <span className="font-bold text-slate-700">System Director</span> to approve your account before you can log in.
+                        Your account has been created. Please check your <span className="font-bold text-indigo-600">email (including .gov.ph inbox)</span> for a verification link. Once verified, the <span className="font-bold text-slate-700">System Director</span> must approve your account before you can log in.
                     </p>
                     <button onClick={() => navigate('/login')} className="w-full bg-indigo-600 text-white font-black uppercase tracking-widest text-xs py-4 rounded-xl shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:translate-y-[-2px] transition-all">
                         Return to Login
@@ -125,6 +125,7 @@ function Signup() {
                                 placeholder="name@agency.gov.ph"
                             />
                         </div>
+                        <p className="text-[9px] font-bold text-rose-500 mt-1 pl-1 uppercase tracking-tighter">Mandatory: Registration requires a valid government (.gov.ph) email address</p>
                     </div>
 
                     <div className="space-y-1">
@@ -164,8 +165,7 @@ function Signup() {
                                 <option value="director">Director</option>
                                 <option value="division_chief">Division Chief</option>
                                 <option value="assistant_division_chief">Assistant Division Chief</option>
-                                <option value="assistant_leader">Assistant Leader</option>
-                                <option value="assistant_auditor">Assistant Auditor</option>
+                                <option value="lead_auditor">Lead Auditor</option>
                                 <option value="auditor">Auditor</option>
                                 <option value="auditee">Auditee</option>
                             </select>

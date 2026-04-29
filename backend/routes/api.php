@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Artisan;
 
 Route::post('/login', [AuthController::class , 'login']);
 Route::post('/register', [AuthController::class , 'register']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Fallback for unauthenticated API requests to prevent "Route [login] not defined" 500 errors
 Route::get('/login', function () {
@@ -63,6 +65,7 @@ Route::middleware('auth:sanctum')->group(function () {
         }
         );
         Route::post('/logout', [AuthController::class , 'logout']);
+        Route::post('/change-password', [AuthController::class, 'changePassword']);
 
         // Engagements
         Route::apiResource('engagements', App\Http\Controllers\Api\EngagementController::class);

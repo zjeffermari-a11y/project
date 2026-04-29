@@ -99,6 +99,7 @@ export default function AuditTool() {
         <ToolComponent
             engagement={engagement}
             engagementId={id}
+            user={user}
             readOnly={isAuditee}
         />
     );

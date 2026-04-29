@@ -10,6 +10,8 @@ import AuditTool from './pages/AuditTool';
 import ProtectedRoute from './components/ProtectedRoute';
 import DirectorDashboard from './pages/DirectorDashboard';
 import DivisionChiefDashboard from './pages/DivisionChiefDashboard';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import { DataProvider } from './context/DataContext';
 
 function AnimatedRoutes({ user, DefaultRouteComponent }) {
@@ -20,6 +22,8 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
       <Routes location={location} key={location.pathname}>
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route path="/director/*" element={
           <ProtectedRoute designation="director">
@@ -40,23 +44,23 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
         } />
 
         <Route path="/auditor" element={
-          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor']}>
             <AuditorDashboard />
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id" element={
-          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor', 'division_chief', 'director', 'auditee']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor', 'division_chief', 'director', 'auditee']}>
             <AuditWorkspace />
           </ProtectedRoute>
         } />
         <Route path="/auditor/workspace/:id/generate/:doc" element={
-          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor', 'division_chief', 'director']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor', 'division_chief', 'director']}>
             <GenerateDocument />
           </ProtectedRoute>
         } />
         {/* Interactive Audit Planning Tools — auditees get read-only access */}
         <Route path="/auditor/workspace/:id/tool/:toolKey" element={
-          <ProtectedRoute designations={['lead_auditor', 'assistant_leader', 'auditor', 'assistant_auditor', 'division_chief', 'assistant_division_chief', 'director', 'auditee']}>
+          <ProtectedRoute designations={['lead_auditor', 'auditor', 'assistant_auditor', 'division_chief', 'assistant_division_chief', 'director', 'auditee']}>
             <AuditTool />
           </ProtectedRoute>
         } />
@@ -90,7 +94,7 @@ function App() {
     if (user.designation === 'director') return <Navigate to="/director" replace />;
     if (user.designation === 'division_chief') return <Navigate to="/division-chief" replace />;
     if (user.designation === 'assistant_division_chief') return <Navigate to="/assistant-division-chief" replace />;
-    if (user.designation === 'lead_auditor' || user.designation === 'assistant_leader' || user.designation === 'auditor' || user.designation === 'assistant_auditor') return <Navigate to="/auditor" replace />;
+    if (user.designation === 'lead_auditor' || user.designation === 'auditor' || user.designation === 'assistant_auditor') return <Navigate to="/auditor" replace />;
     return <Navigate to="/auditee" replace />;
   };
 

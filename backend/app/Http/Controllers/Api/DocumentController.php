@@ -65,7 +65,9 @@ class DocumentController extends Controller
 
     public function sign(Request $request, Document $document)
     {
-        if (Auth::user()->role !== 'auditor') {
+        $user = Auth::user();
+        $allowedDesignations = ['director', 'division_chief', 'assistant_division_chief', 'lead_auditor'];
+        if ($user->role !== 'auditor' && !in_array($user->designation, $allowedDesignations)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -83,9 +85,68 @@ class DocumentController extends Controller
         return response()->json($document);
     }
 
+    /**
+     * Record an AWP sign-off at a specific stage.
+     * stage: prepared_by | reviewed_by | approved_by
+     * This captures the signer's designation and name at the time of signing.
+     */
+    public function signOff(Request $request, Document $document)
+    {
+        $user = Auth::user();
+
+        $request->validate([
+            'stage' => 'required|in:prepared_by,reviewed_by,approved_by',
+        ]);
+
+        $stage = $request->stage;
+
+        // Enforce role hierarchy: only approved designations can sign at each stage
+        $stagePermissions = [
+            'prepared_by'  => ['auditor', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'reviewed_by'  => ['lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'approved_by'  => ['division_chief', 'assistant_division_chief', 'director'],
+        ];
+
+        $allowed = $stagePermissions[$stage];
+        $userDesignationOrRole = $user->designation ?? $user->role;
+        if (!in_array($userDesignationOrRole, $allowed)) {
+            return response()->json([
+                'message' => 'Your designation is not authorized to sign at the "' . str_replace('_', ' ', $stage) . '" stage.',
+            ], 403);
+        }
+
+        // Determine the new document status based on stage
+        $statusMap = [
+            'prepared_by'  => 'prepared',
+            'reviewed_by'  => 'reviewed',
+            'approved_by'  => 'approved',
+        ];
+
+        $document->update(['status' => $statusMap[$stage]]);
+
+        // Record the sign-off with designation snapshot
+        $historyEntry = $document->history()->create([
+            'performed_by'  => $user->id,
+            'action'        => 'signed_off',
+            'stage'         => $stage,
+            'designation'   => $user->designation ?? $user->role,
+            'signer_name'   => $user->name,
+            'notes'         => 'AWP sign-off recorded at stage: ' . str_replace('_', ' ', $stage),
+        ]);
+
+        return response()->json([
+            'message'  => 'Sign-off recorded successfully.',
+            'stage'    => $stage,
+            'document' => $document->load(['uploader', 'history.performer']),
+            'history'  => $historyEntry,
+        ]);
+    }
+
     public function assignReviewer(Request $request, Document $document)
     {
-        if (Auth::user()->role !== 'auditor') {
+        $user = Auth::user();
+        $allowedDesignations = ['director', 'division_chief', 'assistant_division_chief', 'lead_auditor'];
+        if ($user->role !== 'auditor' && !in_array($user->designation, $allowedDesignations)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

@@ -2,12 +2,15 @@ import React, { useState, useEffect } from 'react';
 import { Save, Printer, Download, Plus, Trash2, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import api from '../../api';
+import SignOffButton from './SignOffButton';
 
 export default function AuditWorkProgram({ engagementId, engagement, onClose, user }) {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [saved, setSaved] = useState(false);
+    const [documentId, setDocumentId] = useState(null); // Backend Document ID for sign-off
+    const [signOffHistory, setSignOffHistory] = useState({}); // { prepared_by: entry, reviewed_by: entry, approved_by: entry }
     
     // Header Info
     const [awpRef, setAwpRef] = useState('');
@@ -71,6 +74,16 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose, us
                     setApprovedBy(data.approvedBy);
                     if (data.phases) setPhases(data.phases);
                 }
+                // Capture the document ID and build the sign-off history map
+                if (res.data.document?.id) {
+                    setDocumentId(res.data.document.id);
+                    const historyEntries = res.data.document?.history || [];
+                    const signOffMap = {};
+                    historyEntries
+                        .filter(h => h.action === 'signed_off' && h.stage)
+                        .forEach(h => { signOffMap[h.stage] = h; });
+                    setSignOffHistory(signOffMap);
+                }
             } catch (err) {
                 console.error("No previous tool data found.");
             } finally {
@@ -122,11 +135,13 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose, us
                 preparedBy, reviewedBy, approvedBy,
                 phases
             };
-            await api.post(`/engagements/${engagementId}/tools/awp`, {
+            const res = await api.post(`/engagements/${engagementId}/tools/awp`, {
                 form_data: formData,
                 document_type: 'Audit Work Program (AWP)',
                 phase: 'planning'
             });
+            // Capture the returned document ID so sign-offs can reference it
+            if (res.data?.id) setDocumentId(res.data.id);
             setSaved(true);
             setTimeout(() => setSaved(false), 3000);
         } catch (err) {
@@ -324,20 +339,67 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose, us
 
                 {/* Signatories Section */}
                 <div className="mt-20 flex justify-between gap-12 text-[12px] font-serif">
+                    {/* Prepared By */}
                     <div className="flex-1 flex flex-col items-center">
-                        <p className="mb-10 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Prepared by:</p>
-                        <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Auditor Name" />
-                        <p className="text-[10px] italic mt-1 text-slate-500 uppercase font-black">Auditor's Name over Signature / Date</p>
+                        <p className="mb-8 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Prepared by:</p>
+                        {!documentId ? (
+                            <>
+                                <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Auditor Name" />
+                                <p className="text-[9px] text-amber-500 font-bold mt-1 italic text-center hide-on-print">Save the AWP first to enable digital sign-off.</p>
+                            </>
+                        ) : (
+                            <SignOffButton
+                                documentId={documentId}
+                                stage="prepared_by"
+                                label="Prepared By"
+                                user={user}
+                                existingEntry={signOffHistory['prepared_by']}
+                                onSuccess={entry => setSignOffHistory(prev => ({ ...prev, prepared_by: entry }))}
+                            />
+                        )}
+                        <p className="text-[10px] italic mt-2 text-slate-500 uppercase font-black">Auditor's Name over Signature / Date</p>
                     </div>
+
+                    {/* Reviewed By */}
                     <div className="flex-1 flex flex-col items-center">
-                        <p className="mb-10 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Reviewed by:</p>
-                        <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={reviewedBy} onChange={e => setReviewedBy(e.target.value)} placeholder="Team Leader / ATL" />
-                        <p className="text-[10px] italic mt-1 text-slate-500 uppercase font-black">Team Leader's Name over Signature / Date</p>
+                        <p className="mb-8 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Reviewed by:</p>
+                        {!documentId ? (
+                            <>
+                                <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={reviewedBy} onChange={e => setReviewedBy(e.target.value)} placeholder="Team Leader / ATL" />
+                                <p className="text-[9px] text-amber-500 font-bold mt-1 italic text-center hide-on-print">Save the AWP first to enable digital sign-off.</p>
+                            </>
+                        ) : (
+                            <SignOffButton
+                                documentId={documentId}
+                                stage="reviewed_by"
+                                label="Reviewed By"
+                                user={user}
+                                existingEntry={signOffHistory['reviewed_by']}
+                                onSuccess={entry => setSignOffHistory(prev => ({ ...prev, reviewed_by: entry }))}
+                            />
+                        )}
+                        <p className="text-[10px] italic mt-2 text-slate-500 uppercase font-black">Team Leader's Name over Signature / Date</p>
                     </div>
+
+                    {/* Approved By */}
                     <div className="flex-1 flex flex-col items-center">
-                        <p className="mb-10 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Approved by:</p>
-                        <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} placeholder="The Director" />
-                        <p className="text-[10px] italic mt-1 text-slate-500 uppercase font-black">Director's Name over Signature / Date</p>
+                        <p className="mb-8 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Approved by:</p>
+                        {!documentId ? (
+                            <>
+                                <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} placeholder="The Director" />
+                                <p className="text-[9px] text-amber-500 font-bold mt-1 italic text-center hide-on-print">Save the AWP first to enable digital sign-off.</p>
+                            </>
+                        ) : (
+                            <SignOffButton
+                                documentId={documentId}
+                                stage="approved_by"
+                                label="Approved By"
+                                user={user}
+                                existingEntry={signOffHistory['approved_by']}
+                                onSuccess={entry => setSignOffHistory(prev => ({ ...prev, approved_by: entry }))}
+                            />
+                        )}
+                        <p className="text-[10px] italic mt-2 text-slate-500 uppercase font-black">Director's Name over Signature / Date</p>
                     </div>
                 </div>
 

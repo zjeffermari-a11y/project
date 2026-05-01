@@ -79,6 +79,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/documents/{document}/download', [App\Http\Controllers\Api\DocumentController::class , 'download']);
         Route::post('/documents/upload', [App\Http\Controllers\Api\DocumentController::class , 'upload']);
         Route::post('/documents/{document}/sign', [App\Http\Controllers\Api\DocumentController::class , 'sign']);
+        Route::post('/documents/{document}/sign-off', [App\Http\Controllers\Api\DocumentController::class , 'signOff']);
         Route::patch('/documents/{document}/assign', [App\Http\Controllers\Api\DocumentController::class , 'assignReviewer']);
 
         // Audit Tool Data (JSON form data)

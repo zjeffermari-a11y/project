@@ -30,18 +30,25 @@ class EngagementController extends Controller
                 return response()->json([]);
             }
 
-            if ($user->role === 'auditor') {
+            $executiveRoles = ['director', 'division_chief', 'assistant_division_chief'];
+
+            if ($user->role === 'auditor' || in_array($user->designation, $executiveRoles)) {
+                // Auditors and executives see all engagements
                 return response()->json(Engagement::with(['movs.auditee', 'documents.uploader', 'users'])->get());
             } else {
-                // Auditees only see engagements they are involved in (via MOVs)
-                $engagements = Engagement::whereHas('movs', function ($q) use ($user) {
-                    $q->where('auditee_id', $user->id);
+                // Auditees only see engagements they are involved in (via MOVs or enrollment)
+                $engagements = Engagement::where(function ($q) use ($user) {
+                    $q->whereHas('movs', function ($mq) use ($user) {
+                        $mq->where('auditee_id', $user->id);
+                    })->orWhereHas('users', function ($uq) use ($user) {
+                        $uq->where('users.id', $user->id);
+                    });
                 })->with([
-                            'movs' => function ($q) use ($user) {
-                                $q->where('auditee_id', $user->id);
-                            },
-                            'users'
-                        ])->get();
+                    'movs' => function ($q) use ($user) {
+                        $q->where('auditee_id', $user->id);
+                    },
+                    'users'
+                ])->get();
                 return response()->json($engagements);
             }
         } catch (\Throwable $e) {
@@ -58,9 +65,11 @@ class EngagementController extends Controller
 
     public function store(Request $request)
     {
-        // Only auditors can create
-        if (Auth::user()->role !== 'auditor') {
-            return response()->json(['message' => 'Unauthorized'], 403);
+        // Executives (director, division_chief, assistant_division_chief) and lead auditors can create engagements
+        $user = Auth::user();
+        $allowedDesignations = ['director', 'division_chief', 'assistant_division_chief', 'lead_auditor'];
+        if ($user->role !== 'auditor' && !in_array($user->designation, $allowedDesignations)) {
+            return response()->json(['message' => 'Unauthorized. Only Directors, Division Chiefs, and Lead Auditors may register audit engagements.'], 403);
         }
 
         $validated = $request->validate([
@@ -124,7 +133,9 @@ class EngagementController extends Controller
 
     public function update(Request $request, $id)
     {
-        if (Auth::user()->role !== 'auditor') {
+        $user = Auth::user();
+        $allowedDesignations = ['director', 'division_chief', 'assistant_division_chief', 'lead_auditor'];
+        if ($user->role !== 'auditor' && !in_array($user->designation, $allowedDesignations)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
@@ -177,7 +188,9 @@ class EngagementController extends Controller
 
     public function destroy($id)
     {
-        if (Auth::user()->role !== 'auditor') {
+        $user = Auth::user();
+        $allowedDesignations = ['director', 'division_chief', 'assistant_division_chief', 'lead_auditor'];
+        if ($user->role !== 'auditor' && !in_array($user->designation, $allowedDesignations)) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 

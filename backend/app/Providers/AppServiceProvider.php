@@ -29,5 +29,12 @@ class AppServiceProvider extends ServiceProvider
         Document::observe(DocumentObserver::class);
         Engagement::observe(EngagementObserver::class);
         Mov::observe(MovObserver::class);
+
+        // Register the Microsoft Azure Socialite provider for Microsoft 365 SSO.
+        // The Google provider ships with laravel/socialite and needs no registration.
+        $this->app['events']->listen(
+            \SocialiteProviders\Manager\SocialiteWasCalled::class,
+            \SocialiteProviders\Azure\AzureExtendSocialite::class . '@handle'
+        );
     }
 }

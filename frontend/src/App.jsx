@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import IasCares from './pages/IasCares';
 import Aapes from './pages/Aapes';
+import SsoCallback from './pages/SsoCallback';
 import { DataProvider } from './context/DataContext';
 
 function AnimatedRoutes({ user, DefaultRouteComponent }) {
@@ -26,6 +27,7 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />
+        <Route path="/sso-callback" element={<SsoCallback />} />
 
         <Route path="/director/*" element={
           <ProtectedRoute designation="director">

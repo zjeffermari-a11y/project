@@ -12,6 +12,14 @@ Route::post('/register', [AuthController::class, 'register']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
+// SSO Routes — Google Workspace for Government + Microsoft 365
+// These are public (no auth:sanctum) because the user is not yet authenticated.
+Route::get('/auth/{provider}/redirect', [App\Http\Controllers\Api\SocialAuthController::class, 'redirect'])
+    ->where('provider', 'google|azure');
+Route::get('/auth/{provider}/callback', [App\Http\Controllers\Api\SocialAuthController::class, 'callback'])
+    ->where('provider', 'google|azure');
+
+
 // Fallback for unauthenticated API requests to prevent "Route [login] not defined" 500 errors
 Route::get('/login', function () {
     return response()->json(['message' => 'Unauthenticated.'], 401);

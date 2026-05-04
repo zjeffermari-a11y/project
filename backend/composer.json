@@ -8,8 +8,10 @@
         "php": "^8.2",
         "laravel/framework": "^11.0",
         "laravel/sanctum": "^4.0",
+        "laravel/socialite": "*",
         "laravel/tinker": "^2.9",
-        "league/flysystem-aws-s3-v3": "3.0"
+        "league/flysystem-aws-s3-v3": "3.0",
+        "socialiteproviders/microsoft-azure": "*"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -42,16 +42,15 @@ return [
     'google' => [
         'client_id'     => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect'      => env('GOOGLE_REDIRECT_URI'),
+        'redirect'      => env('GOOGLE_REDIRECT_URI', env('APP_URL', 'http://localhost:8000') . '/api/auth/google/callback'),
     ],
 
     // Microsoft 365 / Outlook (via SocialiteProviders/MicrosoftAzure)
     // Set AZURE_TENANT_ID to your agency's Microsoft tenant ID (or 'organizations' for multi-tenant)
-    // Set AZURE_REDIRECT_URI to: https://<your-backend>/api/auth/azure/callback
     'azure' => [
         'client_id'     => env('AZURE_CLIENT_ID'),
         'client_secret' => env('AZURE_CLIENT_SECRET'),
-        'redirect'      => env('AZURE_REDIRECT_URI'),
+        'redirect'      => env('AZURE_REDIRECT_URI', env('APP_URL', 'http://localhost:8000') . '/api/auth/azure/callback'),
         'tenant'        => env('AZURE_TENANT_ID', 'organizations'),
     ],
 

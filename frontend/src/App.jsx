@@ -12,6 +12,8 @@ import DirectorDashboard from './pages/DirectorDashboard';
 import DivisionChiefDashboard from './pages/DivisionChiefDashboard';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
+import IasCares from './pages/IasCares';
+import Aapes from './pages/Aapes';
 import { DataProvider } from './context/DataContext';
 
 function AnimatedRoutes({ user, DefaultRouteComponent }) {
@@ -64,6 +66,19 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
             <AuditTool />
           </ProtectedRoute>
         } />
+        
+        <Route path="/ias-cares" element={
+          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
+            <IasCares />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/aapes" element={
+          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
+            <Aapes />
+          </ProtectedRoute>
+        } />
+
         <Route path="/auditor/*" element={<Navigate to="/auditor" replace />} />
 
 

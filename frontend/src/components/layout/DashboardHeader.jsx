@@ -1,6 +1,7 @@
 import React from 'react';
 import { RefreshCw, Bell } from 'lucide-react';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent } from '@/components/ui/dropdown-menu';
+import Clock from '@/components/ui/Clock';
 
 export default function DashboardHeader({ 
     user, 
@@ -48,6 +49,10 @@ export default function DashboardHeader({
                         </div>
                     )}
                     
+                    <div className="mr-4 border-r border-slate-200 pr-6 hidden md:block">
+                        <Clock />
+                    </div>
+
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button className="p-3 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 outline-none rounded-full transition-colors relative border border-indigo-100 cursor-pointer">

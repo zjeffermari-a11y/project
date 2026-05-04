@@ -10,19 +10,34 @@ use Illuminate\Support\Facades\Auth;
 
 class MovController extends Controller
 {
+    public function index(Engagement $engagement)
+    {
+        $user = Auth::user();
+        $movs = $engagement->movs()->with('auditee')->get();
+
+        if ($user->role === 'auditee') {
+            $movs = $movs->where('auditee_id', $user->id)->values();
+        }
+
+        return response()->json($movs);
+    }
+
     public function store(Request $request, Engagement $engagement)
     {
-        if (Auth::user()->role !== 'auditor') {
+        // Both auditors and executives can add MOVs (though usually auditors)
+        if (!in_array(Auth::user()->role, ['auditor', 'team_leader', 'division_chief', 'director'])) {
             return response()->json(['message' => 'Unauthorized'], 403);
         }
 
         $validated = $request->validate([
             'requirement_name' => 'required|string|max:255',
+            'drive_link' => 'nullable|url',
             'auditee_id' => 'required|exists:users,id',
         ]);
 
         $mov = $engagement->movs()->create([
             'requirement_name' => $validated['requirement_name'],
+            'drive_link' => $validated['drive_link'] ?? null,
             'auditee_id' => $validated['auditee_id'],
             'status' => 'pending'
         ]);
@@ -30,35 +45,54 @@ class MovController extends Controller
         return response()->json($mov, 201);
     }
 
+    public function update(Request $request, Mov $mov)
+    {
+        $user = Auth::user();
+        
+        $rules = [
+            'status' => 'nullable|in:pending,submitted,approved,returned',
+            'management_comment' => 'nullable|string|max:2000',
+        ];
+
+        // Role-based rules
+        if (in_array($user->role, ['auditor', 'team_leader', 'division_chief', 'director'])) {
+            $rules['requirement_name'] = 'nullable|string|max:255';
+            $rules['drive_link'] = 'nullable|url';
+            $rules['auditee_id'] = 'nullable|exists:users,id';
+        }
+
+        if ($user->role === 'auditee') {
+            $rules['auditee_response_1'] = 'nullable|string|max:255';
+            $rules['auditee_response_2'] = 'nullable|string|max:255';
+            $rules['auditee_response_3'] = 'nullable|string|max:255';
+        }
+
+        $validated = $request->validate($rules);
+
+        // Security Check
+        if ($user->role === 'auditee') {
+            if ($mov->auditee_id !== $user->id) {
+                return response()->json(['message' => 'Unauthorized'], 403);
+            }
+            // Auditees cannot change auditor fields
+            unset($validated['requirement_name'], $validated['drive_link'], $validated['auditee_id']);
+        }
+
+        $mov->update($validated);
+
+        // Auto-update engagement status logic (same as before)
+        $this->syncEngagementStatus($mov->engagement);
+
+        return response()->json($mov->fresh());
+    }
+
     public function updateStatus(Request $request, Mov $mov)
     {
-        $validated = $request->validate([
-            'status' => 'required|in:pending,submitted,approved,returned',
-            'management_comment' => 'nullable|string|max:2000',
-        ]);
+        return $this->update($request, $mov);
+    }
 
-        $user = Auth::user();
-
-        // Auditees can only mark as submitted and add management comments
-        if ($user->role === 'auditee') {
-            if ($mov->auditee_id !== $user->id)
-                return response()->json(['message' => 'Unauthorized'], 403);
-            if ($validated['status'] !== 'submitted')
-                return response()->json(['message' => 'Auditees can only submit.'], 403);
-        }
-        elseif (!in_array($user->role, ['auditor', 'division_chief', 'director'])) {
-            return response()->json(['message' => 'Unauthorized'], 403);
-        }
-
-        $updateData = ['status' => $validated['status']];
-        if (isset($validated['management_comment'])) {
-            $updateData['management_comment'] = $validated['management_comment'];
-        }
-
-        $mov->update($updateData);
-
-        // Auto-update engagement status based on MOV states
-        $engagement = $mov->engagement;
+    private function syncEngagementStatus(Engagement $engagement)
+    {
         $allMovs = $engagement->movs()->get();
         $total = $allMovs->count();
 
@@ -80,7 +114,18 @@ class MovController extends Controller
                 $engagement->update(['status' => 'planning']);
             }
         }
+    }
 
-        return response()->json($mov->fresh());
+    public function destroy(Mov $mov)
+    {
+        if (!in_array(Auth::user()->role, ['auditor', 'team_leader', 'division_chief', 'director'])) {
+            return response()->json(['message' => 'Unauthorized'], 403);
+        }
+
+        $engagement = $mov->engagement;
+        $mov->delete();
+        $this->syncEngagementStatus($engagement);
+
+        return response()->json(['message' => 'Deleted successfully']);
     }
 }

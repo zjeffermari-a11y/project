@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Plus } from 'lucide-react';
+import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Plus, Heart, BarChart2 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 
 // Shared Components & Hooks
@@ -13,6 +13,7 @@ import ActivityFeed from '../components/dashboard/ActivityFeed';
 import EngagementTable from '../components/dashboard/EngagementTable';
 import ActiveAuditsModal from '../components/dashboard/ActiveAuditsModal';
 import HistoryModal from '../components/dashboard/HistoryModal';
+import MovProgressPanel from '../components/dashboard/MovProgressPanel';
 
 export default function AuditorDashboard() {
     const { 
@@ -50,7 +51,9 @@ export default function AuditorDashboard() {
 
     // Nav Items for Sidebar
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} }
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
+        { icon: <Heart className="h-5 w-5" />, title: 'IAS Cares', active: false, onClick: () => window.location.href = '/ias-cares' },
+        { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPES', active: false, onClick: () => window.location.href = '/aapes' }
     ];
 
     if (initialLoad && engagements.length === 0) {
@@ -130,6 +133,11 @@ export default function AuditorDashboard() {
                     />
                 </div>
             </section>
+
+            {/* MOV Progress Panel */}
+            <div className="mb-6">
+                <MovProgressPanel engagements={engagements} />
+            </div>
 
             {/* Table & Activity */}
             <div className="flex flex-col xl:flex-row gap-6 items-start">

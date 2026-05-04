@@ -74,8 +74,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('engagements', App\Http\Controllers\Api\EngagementController::class);
 
     // MOVs
+    Route::get('/engagements/{engagement}/movs', [App\Http\Controllers\Api\MovController::class, 'index']);
     Route::post('/engagements/{engagement}/movs', [App\Http\Controllers\Api\MovController::class, 'store']);
+    Route::patch('/movs/{mov}', [App\Http\Controllers\Api\MovController::class, 'update']);
     Route::patch('/movs/{mov}/status', [App\Http\Controllers\Api\MovController::class, 'updateStatus']);
+    Route::delete('/movs/{mov}', [App\Http\Controllers\Api\MovController::class, 'destroy']);
 
     // Documents
     Route::get('/engagements/{engagement}/documents', [App\Http\Controllers\Api\DocumentController::class, 'index']);
@@ -92,10 +95,4 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Audit Trail
     Route::get('/engagements/{engagement}/activity-logs', [App\Http\Controllers\Api\EngagementController::class, 'activityLogs']);
-});
-
-Route::middleware(['auth:sanctum'])->group(function () {
-    Route::get('/engagements/{id}/tools', [ToolController::class, 'index']);
-    Route::get('/engagements/{id}/tools/{type}', [ToolController::class, 'show']);
-    Route::post('/engagements/{id}/tools', [ToolController::class, 'store']);
 });

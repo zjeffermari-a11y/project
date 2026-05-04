@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink } from 'lucide-react';
 import api from '../api';
+import MovTable from '../components/dashboard/MovTable';
 
 
 const DOCUMENTS = {
@@ -210,12 +211,41 @@ export default function AuditWorkspace() {
         }
     }, [engagements, id]);
 
-    const handleMovAction = async (movId, status) => {
+    const currentUser = JSON.parse(localStorage.getItem('user'));
+    const engagementUser = engagement?.users?.find(u => u.id === currentUser?.id);
+    const userRoleInEngagement = engagementUser?.pivot?.role_in_engagement;
+
+    const isAuditor = ['Lead Auditor', 'Auditor', 'Director'].includes(userRoleInEngagement);
+    const isAuditee = userRoleInEngagement === 'Auditee';
+
+    const handleAddMov = async (data) => {
         try {
-            await updateMovStatusOptimistic(movId, status);
-            fetchWorkspaceData();
+            await api.post(`/engagements/${id}/movs`, data);
+            const res = await api.get(`/engagements/${id}`);
+            setEngagement(res.data);
         } catch (err) {
-            alert('Action failed: ' + (err.response?.data?.message || err.message));
+            console.error('Failed to add MOV:', err);
+        }
+    };
+
+    const handleUpdateMov = async (movId, data) => {
+        try {
+            await api.patch(`/engagements/${id}/movs/${movId}`, data);
+            const res = await api.get(`/engagements/${id}`);
+            setEngagement(res.data);
+        } catch (err) {
+            console.error('Failed to update MOV:', err);
+        }
+    };
+
+    const handleDeleteMov = async (movId) => {
+        if (!window.confirm('Are you sure you want to delete this requirement?')) return;
+        try {
+            await api.delete(`/engagements/${id}/movs/${movId}`);
+            const res = await api.get(`/engagements/${id}`);
+            setEngagement(res.data);
+        } catch (err) {
+            console.error('Failed to delete MOV:', err);
         }
     };
 

@@ -3,7 +3,8 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import { formatRef } from '../../utils/formatters';
 import MultiFileAttach from './MultiFileAttach';
-import SignOffButton from '../common/SignOffButton';
+import StandardAuditFooter from '../common/StandardAuditFooter';
+
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
@@ -36,7 +37,7 @@ export default function AuditAreaProfile({ engagement, user, readOnly = false })
         commRows: Array(4).fill(null).map(() => ['', '']),
         ongoingMonRows: Array(3).fill(null).map(() => ['', '']),
         sepMonRows: Array(3).fill(null).map(() => ['', '']),
-        supporting_documents: []
+        attachments: []
     });
 
     useEffect(() => {
@@ -333,53 +334,23 @@ export default function AuditAreaProfile({ engagement, user, readOnly = false })
                     />
                 </div>
 
-                {/* Signature section */}
-                <div className="grid grid-cols-3 gap-8 mt-12 text-[12px] font-bold mb-10">
-                    {['Prepared by:','Reviewed by:','Noted by:'].map((lbl, i) => {
-                        const stepNames = ['Prepared','Reviewed','Noted'];
-                        const keys = ['preparedBy','reviewedBy','notedBy'];
-                        const roles = ['Team Members','Team Leader','IAS Director'];
-                        return (
-                            <div key={i}>
-                                <p className="mb-4">{lbl}</p>
-                                <div className="mb-4">
-                                    <SignOffButton 
-                                        documentId={selectedVersionId}
-                                        stage={stepNames[i]}
-                                        history={signOffHistory}
-                                        onSuccess={handleSignOffSuccess}
-                                        disabled={readOnly}
-                                        className="no-print"
-                                    />
-                                </div>
-                                <I val={formData[keys[i]]} onChange={v=>set(keys[i],v)} placeholder="Name of Signatory" />
-                                <p className="mt-1 font-normal">{roles[i]}</p>
-                            </div>
-                        );
-                    })}
-                </div>
-
-                {/* Supporting Documents Section (Standardized Footer) */}
-                <div className="mt-16 pt-8 border-t-2 border-slate-100 no-print font-sans">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Supporting Evidence</h4>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Upload relevant annexes or profile documentation</p>
-                        </div>
-                    </div>
-                    <MultiFileAttach
-                        files={formData.supporting_documents || []}
-                        onUpload={(newFiles) => set('supporting_documents', [...(formData.supporting_documents || []), ...newFiles])}
-                        onRemove={(index) => set('supporting_documents', formData.supporting_documents.filter((_, i) => i !== index))}
-                        readOnly={readOnly}
-                    />
-                </div>
+                {/* Standard Audit Footer: Signatures and Supporting Documents */}
+                <StandardAuditFooter 
+                    documentId={selectedVersionId}
+                    history={signOffHistory}
+                    onSigned={handleSignOffSuccess}
+                    readOnly={readOnly}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16 pt-12 border-t-2 border-slate-100"
+                    signatories={[
+                        { label: 'Prepared by', stage: 'prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+                        { label: 'Reviewed by', stage: 'reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
+                        { label: 'Noted by', stage: 'noted', nameField: 'notedBy', titleField: 'notedTitle' }
+                    ]}
+                />
             </div>
         </AuditToolWrapper>
+
     );
 }

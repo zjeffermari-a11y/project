@@ -3,12 +3,16 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import { formatRef } from '../../utils/formatters';
 import MultiFileAttach from './MultiFileAttach';
+import StandardAuditFooter from '../common/StandardAuditFooter';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
 export default function EntryConferenceBriefer({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signOffHistory, setSignOffHistory] = useState([]);
     const [formData, setFormData] = useState({
         ecbRef: formatRef('ECB', engagement.ae_number),
         date: '',
@@ -26,35 +30,68 @@ export default function EntryConferenceBriefer({ engagement, readOnly = false })
         contactPerson: '',
         preparedBy: '', preparedTitle: '',
         notedBy: '', notedTitle: '',
-        supporting_documents: []
+        attachments: []
     });
 
     useEffect(() => {
         if (engagement.ae_number) {
             set('ecbRef', formatRef('ECB', engagement.ae_number));
         }
-        const load = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagement.id}/tools/ecb`);
-                if (res.data?.form_data) setFormData(fd => ({ ...fd, ...res.data.form_data }));
-            } catch (_) {}
-        };
-        load();
+        fetchVersions();
+        loadLatest();
     }, [engagement.id]);
+
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/ecb/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/ecb`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignOffHistory(res.data.sign_off_history || []);
+                setSelectedVersionId(res.data.id);
+            }
+        } catch (_) {}
+    };
+
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSignOffHistory(target.sign_off_history || []);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/engagements/${engagement.id}/tools/ecb`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/ecb`, {
                 form_data: formData,
                 document_type: 'Entry Conference Briefer (ECB)',
                 phase: 'execution',
             });
             setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions();
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
+    };
+
+    const handleSignOffSuccess = (data) => {
+        setSignOffHistory(data.document?.history || []);
+        if (data.document?.id) setSelectedVersionId(data.document.id);
+        fetchVersions();
     };
 
     const handleExportWord = () => {
@@ -86,6 +123,9 @@ export default function EntryConferenceBriefer({ engagement, readOnly = false })
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
         >
             <div id="ecb-document" className="audit-tool-paper bg-white shadow-2xl w-[850px] mx-auto my-6 px-16 py-12 font-serif min-h-[1123px]">
                 {/* Header */}
@@ -149,40 +189,21 @@ export default function EntryConferenceBriefer({ engagement, readOnly = false })
 
                 <hr className="border-black border mt-6 mb-6" />
 
-                <div className="grid grid-cols-2 gap-12 text-[12px] font-serif mt-8">
-                    <div>
-                        <p className="font-bold mb-10">Prepared by:</p>
-                        <I field="preparedBy" cls="font-bold text-center" />
-                        <I field="preparedTitle" cls="italic text-[11px] mt-1" placeholder="Title / Designation" />
-                    </div>
-                    <div>
-                        <p className="font-bold mb-10">Noted by:</p>
-                        <I field="notedBy" cls="font-bold text-center" />
-                        <I field="notedTitle" cls="italic text-[11px] mt-1" placeholder="Title / Designation" />
-                    </div>
-                </div>
-
-                {/* Supporting Documents Section (Standardized Footer) */}
-                <div className="mt-16 pt-8 border-t-2 border-slate-100 no-print font-sans">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Supporting Evidence</h4>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Upload relevant annexes or briefing materials</p>
-                        </div>
-                    </div>
-                    <MultiFileAttach
-                        files={formData.supporting_documents || []}
-                        onUpload={(newFiles) => set('supporting_documents', [...(formData.supporting_documents || []), ...newFiles])}
-                        onRemove={(index) => set('supporting_documents', formData.supporting_documents.filter((_, i) => i !== index))}
-                        readOnly={readOnly}
-                    />
-                </div>
+                <StandardAuditFooter
+                    documentId={selectedVersionId}
+                    history={signOffHistory}
+                    onSigned={handleSignOffSuccess}
+                    readOnly={readOnly}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16"
+                    signatories={[
+                        { label: 'Prepared by', stage: 'Prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+                        { label: 'Noted by', stage: 'Noted', nameField: 'notedBy', titleField: 'notedTitle' }
+                    ]}
+                />
             </div>
         </AuditToolWrapper>
     );
 }
+

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink } from 'lucide-react';
 import api from '../api';
 import MovTable from '../components/dashboard/MovTable';
-import SignOffButton from '../components/audit-tools/SignOffButton';
+import SignOffButton from '../components/common/SignOffButton';
 
 
 const DOCUMENTS = {

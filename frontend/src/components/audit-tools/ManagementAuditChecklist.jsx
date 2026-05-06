@@ -3,6 +3,7 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import MultiFileAttach from './MultiFileAttach';
 import { formatRef } from '../../utils/formatters';
+import StandardAuditFooter from '../common/StandardAuditFooter';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
@@ -43,9 +44,12 @@ const CATEGORIES_MAC = [
     { label: '5. PROPERTY CUSTODIANSHIP', count: 5 },
 ];
 
-export default function ManagementAuditChecklist({ engagement, readOnly = false }) {
+export default function ManagementAuditChecklist({ engagement, user, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signOffHistory, setSignOffHistory] = useState([]);
 
     const initRows = () => {
         const obj = {};
@@ -56,21 +60,48 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
     const [formData, setFormData] = useState({
         macRef: formatRef('MAC', engagement.ae_number),
         preparedBy: '', reviewedBy: '', approvedBy: '',
+        preparedTitle: '', reviewedTitle: 'Team Leader', approvedTitle: 'IAS Director',
         rows: initRows(),
+        attachments: [],
     });
 
     useEffect(() => {
         if (engagement.ae_number) {
             set('macRef', formatRef('MAC', engagement.ae_number));
         }
-        const load = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagement.id}/tools/mac`);
-                if (res.data?.form_data) setFormData(fd => ({ ...fd, ...res.data.form_data }));
-            } catch (_) {}
-        };
-        load();
+        fetchVersions();
+        loadLatest();
     }, [engagement.id, engagement.ae_number]);
+
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/mac/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/mac`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignOffHistory(res.data.document?.history || []);
+                setSelectedVersionId(res.data.document?.id);
+            }
+        } catch (_) {}
+    };
+
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSignOffHistory(target.history || []);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
     const setRow = (cat, ri, field, val) => setFormData(fd => ({
@@ -85,14 +116,22 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/engagements/${engagement.id}/tools/mac`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/mac`, {
                 form_data: formData,
                 document_type: 'Management Audit Checklist (MAC)',
                 phase: 'execution',
             });
             setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions();
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
+    };
+
+    const handleSignOffSuccess = (data) => {
+        setSignOffHistory(data.document?.history || []);
+        if (data.document?.id) setSelectedVersionId(data.document.id);
+        fetchVersions();
     };
 
     const handleExportWord = () => {
@@ -124,6 +163,8 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
         a.click();
     };
 
+
+
     let itemNo = 0;
 
     return (
@@ -138,18 +179,21 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
         >
-            <div id="mac-document" className="audit-tool-paper bg-white shadow-2xl w-[1300px] mx-auto my-6 px-12 py-12 font-serif">
-                <div className="flex items-center gap-4 mb-6">
-                    <img src={DILG_SEAL} className="h-16 w-16" alt="DILG Seal" />
+            <div id="mac-document" className="audit-tool-paper bg-white shadow-2xl w-[1300px] mx-auto my-6 px-12 py-12 font-serif min-h-[1123px]">
+                <div className="flex items-center gap-4 mb-8">
+                    <img src={DILG_SEAL} className="h-20 w-20" alt="DILG Seal" />
                     <div>
-                        <p className="text-[11px] text-gray-800">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
-                        <h1 className="text-xl font-black tracking-wide">MANAGEMENT AUDIT CHECKLIST</h1>
+                        <p className="text-[11px] text-gray-800 uppercase font-bold">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                        <h1 className="text-2xl font-black tracking-wide uppercase">MANAGEMENT AUDIT CHECKLIST</h1>
                         <p className="text-[9px] text-gray-500 italic">FM-QP-DILG-IAS-33-07A | Rev01 | 09.16.22</p>
                     </div>
                 </div>
 
-                <div className="grid grid-cols-[180px_10px_400px] gap-y-1 mb-8 text-xs font-bold items-center">
+                <div className="grid grid-cols-[180px_10px_1fr] gap-y-2 mb-8 text-xs font-bold items-center max-w-3xl">
                     {[
                         ['MAC Reference No.', 'macRef', false],
                         ['Audit Engagement No.', 'ae_number', true],
@@ -170,59 +214,65 @@ export default function ManagementAuditChecklist({ engagement, readOnly = false 
                     ))}
                 </div>
 
-                <div className="overflow-x-auto">
-                    <table className="oac-table">
-                        <thead className="bg-slate-50/50">
+                <div className="overflow-x-auto mb-8">
+                    <table className="oac-table w-full border-collapse border border-black text-[11px]">
+                        <thead className="bg-slate-50">
                             <tr>
-                                <th rowSpan="3" className="w-8">Item<br/>No.</th>
-                                <th colSpan="3">AUDIT PLANNING STAGE*</th>
-                                <th colSpan="4">AUDIT EXECUTION STAGE</th>
+                                <th rowSpan="3" className="w-10 border border-black bg-slate-100 font-black">Item<br/>No.</th>
+                                <th colSpan="3" className="border border-black bg-slate-100 uppercase font-black">AUDIT PLANNING STAGE*</th>
+                                <th colSpan="4" className="border border-black bg-slate-100 uppercase font-black">AUDIT EXECUTION STAGE</th>
                             </tr>
                             <tr>
-                                <th colSpan="2">Criteria</th>
-                                <th rowSpan="2" className="w-56">MOVs / Remarks</th>
-                                <th rowSpan="2" className="w-8">Yes</th>
-                                <th rowSpan="2" className="w-8">No</th>
-                                <th rowSpan="2" className="w-10">N/A</th>
-                                <th rowSpan="2" className="w-64">Audit Notes</th>
+                                <th colSpan="2" className="border border-black font-black">Criteria</th>
+                                <th rowSpan="2" className="w-64 border border-black font-black">MOVs / Remarks</th>
+                                <th rowSpan="2" className="w-8 border border-black font-black bg-indigo-50/10">Yes</th>
+                                <th rowSpan="2" className="w-8 border border-black font-black bg-indigo-50/10">No</th>
+                                <th rowSpan="2" className="w-10 border border-black font-black bg-indigo-50/10">N/A</th>
+                                <th rowSpan="2" className="w-72 border border-black font-black bg-amber-50/10">Audit Notes</th>
                             </tr>
                             <tr>
-                                <th className="w-72">Specific Laws/Policy/Guidelines/Standards</th>
-                                <th className="w-64">Requirements</th>
+                                <th className="w-64 border border-black font-black">Specific Laws/Policy/Guidelines/Standards</th>
+                                <th className="w-64 border border-black font-black">Requirements</th>
                             </tr>
                         </thead>
                         <tbody>
                             {CATEGORIES_MAC.map(cat => (
-                                <>
-                                    <tr key={cat.label} className="cat-header">
-                                        <td></td>
-                                        <td colSpan="7">{cat.label}</td>
+                                <Fragment key={cat.label}>
+                                    <tr className="bg-slate-50">
+                                        <td className="border border-black"></td>
+                                        <td colSpan="7" className="px-3 py-1.5 font-black uppercase tracking-wider border border-black bg-slate-200/50">{cat.label}</td>
                                     </tr>
                                     {formData.rows[cat.label]?.map((row, ri) => (
                                         <CheckRow key={ri} num={itemNo++} row={row} onChange={(f,v)=>setRow(cat.label,ri,f,v)} readOnly={readOnly} engagementId={engagement.id} />
                                     ))}
                                     {!readOnly && (
                                         <tr className="hide-on-print">
-                                            <td colSpan="8" className="p-1">
-                                                <button onClick={() => addRow(cat.label)} className="text-indigo-600 text-[10px] hover:underline font-sans font-bold pl-2">+ Add Row</button>
+                                            <td colSpan="8" className="p-1 border border-black bg-slate-50/30">
+                                                <button onClick={() => addRow(cat.label)} className="text-indigo-600 text-[10px] hover:underline font-sans font-black uppercase tracking-widest pl-2">+ Add Row to {cat.label}</button>
                                             </td>
                                         </tr>
                                     )}
-                                </>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
                 </div>
 
-                <div className="mt-12 text-[12px] font-serif space-y-10 w-1/3 min-w-[300px]">
-                    {[['Prepared by:','preparedBy',"Auditor's Name Over Signature/Date"],['Reviewed by:','reviewedBy','Team Leader Over Signature/Date'],['Approved by:','approvedBy','IAS Director Over Signature/Date']].map(([lbl,key,role]) => (
-                        <div key={key}>
-                            <p className="font-bold mb-8">{lbl}</p>
-                            <input type="text" className="w-full bg-transparent outline-none border-b border-black font-bold" value={formData[key]} onChange={e=>set(key,e.target.value)} disabled={readOnly} />
-                            <p className="mt-1 italic">{role}</p>
-                        </div>
-                    ))}
-                </div>
+                <StandardAuditFooter
+                    documentId={selectedVersionId}
+                    history={signOffHistory}
+                    onSigned={handleSignOffSuccess}
+                    readOnly={readOnly}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16"
+                    signatories={[
+                        { label: 'Prepared by', stage: 'prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+                        { label: 'Reviewed by', stage: 'reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
+                        { label: 'Approved by', stage: 'approved', nameField: 'approvedBy', titleField: 'approvedTitle' }
+                    ]}
+                />
+
             </div>
         </AuditToolWrapper>
     );

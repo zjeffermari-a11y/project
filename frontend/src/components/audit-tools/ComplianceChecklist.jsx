@@ -3,6 +3,7 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import MultiFileAttach from './MultiFileAttach';
 import { formatRef } from '../../utils/formatters';
+import StandardAuditFooter from '../common/StandardAuditFooter';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
@@ -12,36 +13,65 @@ const emptyRow = () => ({
     auditorYes:false, auditorNo:false, auditorNA:false, auditorNotes:'',
 });
 
-export default function ComplianceChecklist({ engagement, readOnly = false }) {
+export default function ComplianceChecklist({ engagement, user, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signOffHistory, setSignOffHistory] = useState([]);
     const [formData, setFormData] = useState({
         ccRef: formatRef('CC', engagement.ae_number),
         auditDuration: '',
         auditObjectives: '',
         rows: Array(5).fill(null).map(emptyRow),
-        // Signature fields (3 columns)
+        // Names for display/export
         preparedBy:'', preparedTitle:'',
         reviewedBy:'', reviewedTitle:'',
-        approvedBy:'',
+        approvedBy:'', approvedTitle:'IAS Director',
         accomplishedBy:'', accomplishedTitle:'',
         conformedBy:'', conformedTitle:'',
         evaluatedBy:'', evaluatedTitle:'',
         evalReviewedBy:'', evalReviewedTitle:'',
+        attachments: []
     });
 
     useEffect(() => {
         if (engagement.ae_number) {
             set('ccRef', formatRef('CC', engagement.ae_number));
         }
-        const load = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagement.id}/tools/ccl`);
-                if (res.data?.form_data) setFormData(fd => ({ ...fd, ...res.data.form_data }));
-            } catch (_) {}
-        };
-        load();
-    }, [engagement.id]);
+        fetchVersions();
+        loadLatest();
+    }, [engagement.id, engagement.ae_number]);
+
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/ccl/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/ccl`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignOffHistory(res.data.document?.history || []);
+                setSelectedVersionId(res.data.document?.id);
+            }
+        } catch (_) {}
+    };
+
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSignOffHistory(target.history || []);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
     const setRow = (ri, field, val) => setFormData(fd => ({
@@ -53,14 +83,22 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/engagements/${engagement.id}/tools/ccl`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/ccl`, {
                 form_data: formData,
                 document_type: 'Compliance Checklist (CC)',
                 phase: 'execution',
             });
             setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions();
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
+    };
+
+    const handleSignOffSuccess = (data) => {
+        setSignOffHistory(data.document?.history || []);
+        if (data.document?.id) setSelectedVersionId(data.document.id);
+        fetchVersions();
     };
 
     const handleExportWord = () => {
@@ -91,14 +129,7 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
         a.click();
     };
 
-    const SigBlock = ({ label, nameKey, titleKey, note }) => (
-        <div className="mb-5">
-            <p className="font-bold mb-5 text-[11px]">{label}</p>
-            <input type="text" className="w-full bg-transparent outline-none border-b border-black font-bold text-[12px]" value={formData[nameKey]} onChange={e=>set(nameKey,e.target.value)} disabled={readOnly} />
-            <p className="text-[9px] font-normal italic mt-0.5">{note}</p>
-            <input type="text" className="w-full bg-transparent outline-none text-[10px] mt-0.5" value={formData[titleKey]} onChange={e=>set(titleKey,e.target.value)} disabled={readOnly} placeholder="Position" />
-        </div>
-    );
+
 
     return (
         <AuditToolWrapper
@@ -112,13 +143,16 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
         >
             <div id="ccl-document" className="audit-tool-paper bg-white shadow-2xl w-[1400px] mx-auto my-6 px-12 py-12 font-serif min-h-[1123px]">
                 <div className="flex items-center gap-4 mb-8">
                     <img src={DILG_SEAL} className="h-20 w-20" alt="DILG Seal" />
                     <div>
                         <p className="text-xs text-gray-700">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
-                        <h1 className="text-2xl font-black tracking-wide">COMPLIANCE CHECKLIST</h1>
+                        <h1 className="text-2xl font-black tracking-wide uppercase">COMPLIANCE CHECKLIST</h1>
                         <p className="text-[10px] text-gray-500 italic">FM-QP-DILG-IAS-33-02 | Rev01 | 09.16.22</p>
                     </div>
                 </div>
@@ -148,17 +182,17 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
 
                 <div className="mb-4 overflow-x-auto">
                     <table id="ccl-table" className="cc-table w-full text-center text-[11px]" style={{borderCollapse:'collapse'}}>
-                        <thead className="bg-amber-50/30">
+                        <thead className="bg-slate-50">
                             <tr>
                                 <th rowSpan="3" className="w-10 py-2 border border-black">Item<br/>No.</th>
-                                <th colSpan="3" className="py-1 border border-black">AUDIT PLANNING STAGE</th>
-                                <th colSpan="9" className="py-1 border border-black">AUDIT EXECUTION STAGE</th>
+                                <th colSpan="3" className="py-1 border border-black uppercase font-black bg-slate-100">AUDIT PLANNING STAGE</th>
+                                <th colSpan="9" className="py-1 border border-black uppercase font-black bg-slate-100">AUDIT EXECUTION STAGE</th>
                             </tr>
                             <tr>
-                                <th colSpan="2" className="py-1 border border-black">CRITERIA</th>
-                                <th rowSpan="2" className="w-28 px-1 border border-black">Sample MOVs<br/><span className="text-[8px] font-normal">(Evidence)</span></th>
-                                <th colSpan="5" className="py-1 border border-black">Auditee's Self Assessment</th>
-                                <th colSpan="4" className="py-1 border border-black">Auditor's Evaluation</th>
+                                <th colSpan="2" className="py-1 border border-black font-black">CRITERIA</th>
+                                <th rowSpan="2" className="w-28 px-1 border border-black font-black">Sample MOVs<br/><span className="text-[8px] font-normal">(Evidence)</span></th>
+                                <th colSpan="5" className="py-1 border border-black font-black bg-amber-50">Auditee's Self Assessment</th>
+                                <th colSpan="4" className="py-1 border border-black font-black bg-indigo-50">Auditor's Evaluation</th>
                             </tr>
                             <tr>
                                 <th className="w-48 px-2 py-1 border border-black">Specific Laws/Policy/Guidelines/Standards<br/><span className="text-[8px] font-normal">(hierarchy of laws)</span></th>
@@ -177,12 +211,12 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                         <tbody>
                             {formData.rows.map((row, ri) => (
                                 <tr key={ri}>
-                                    <td className="font-bold align-middle border border-black">{ri}</td>
+                                    <td className="font-bold align-middle border border-black">{ri + 1}</td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.policy} onChange={e=>setRow(ri,'policy',e.target.value)} disabled={readOnly} /></td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.requirement} onChange={e=>setRow(ri,'requirement',e.target.value)} disabled={readOnly} /></td>
                                     <td className="border border-black"><textarea className="tbl-input" value={row.movs} onChange={e=>setRow(ri,'movs',e.target.value)} disabled={readOnly} /></td>
                                     {['selfYes','selfNo','selfNA'].map(f=><td key={f} className="align-middle border border-black"><input type="checkbox" className="doc-checkbox mx-auto" checked={row[f]} onChange={e=>setRow(ri,f,e.target.checked)} disabled={readOnly}/></td>)}
-                                    <td className="border border-black p-1 space-y-1">
+                                    <td className="border border-black p-1 space-y-1 bg-amber-50/20">
                                         <textarea 
                                             className="tbl-input min-h-[60px]" 
                                             value={row.selfDocs} 
@@ -190,22 +224,24 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                                             disabled={readOnly} 
                                             placeholder="Description/Remarks..."
                                         />
-                                        <MultiFileAttach 
-                                            files={row.selfAttachments} 
-                                            onUpdate={(files) => setRow(ri, 'selfAttachments', files)}
-                                            engagementId={engagement.id}
-                                            readOnly={readOnly}
-                                        />
+                                        <div className="no-print">
+                                            <MultiFileAttach 
+                                                files={row.selfAttachments} 
+                                                onUpdate={(files) => setRow(ri, 'selfAttachments', files)}
+                                                engagementId={engagement.id}
+                                                readOnly={readOnly}
+                                            />
+                                        </div>
                                     </td>
-                                    <td className="border border-black"><textarea className="tbl-input" value={row.selfRemarks} onChange={e=>setRow(ri,'selfRemarks',e.target.value)} disabled={readOnly} /></td>
-                                    {['auditorYes','auditorNo','auditorNA'].map(f=><td key={f} className="align-middle border border-black"><input type="checkbox" className="doc-checkbox mx-auto" checked={row[f]} onChange={e=>setRow(ri,f,e.target.checked)} disabled={readOnly}/></td>)}
-                                    <td className="border border-black"><textarea className="tbl-input" value={row.auditorNotes} onChange={e=>setRow(ri,'auditorNotes',e.target.value)} disabled={readOnly} /></td>
+                                    <td className="border border-black bg-amber-50/20"><textarea className="tbl-input" value={row.selfRemarks} onChange={e=>setRow(ri,'selfRemarks',e.target.value)} disabled={readOnly} /></td>
+                                    {['auditorYes','auditorNo','auditorNA'].map(f=><td key={f} className="align-middle border border-black bg-indigo-50/10"><input type="checkbox" className="doc-checkbox mx-auto" checked={row[f]} onChange={e=>setRow(ri,f,e.target.checked)} disabled={readOnly}/></td>)}
+                                    <td className="border border-black bg-indigo-50/10"><textarea className="tbl-input" value={row.auditorNotes} onChange={e=>setRow(ri,'auditorNotes',e.target.value)} disabled={readOnly} /></td>
                                 </tr>
                             ))}
                             {!readOnly && (
                                 <tr className="hide-on-print">
-                                    <td colSpan="13" className="text-left font-bold py-1 px-2 bg-amber-50/30 border border-black">
-                                        <button onClick={addRow} className="text-indigo-600 text-[10px] hover:underline font-sans font-bold">+ Add Row</button>
+                                    <td colSpan="13" className="text-left font-bold py-1 px-2 bg-slate-50 border border-black">
+                                        <button onClick={addRow} className="text-indigo-600 text-[10px] hover:underline font-sans font-black uppercase tracking-widest">+ Add Criteria Row</button>
                                     </td>
                                 </tr>
                             )}
@@ -213,31 +249,43 @@ export default function ComplianceChecklist({ engagement, readOnly = false }) {
                     </table>
                 </div>
 
-                <div className="grid grid-cols-3 gap-8 mt-8 text-xs font-bold text-black border-t border-black pt-5">
-                    {/* Col 1: CC Preparation */}
-                    <div>
-                        <p className="mb-4 italic text-[11px]">For CC Preparation</p>
-                        <SigBlock label="Prepared by" nameKey="preparedBy" titleKey="preparedTitle" note="Auditor's Name over Signature/Date" />
-                        <SigBlock label="Reviewed by" nameKey="reviewedBy" titleKey="reviewedTitle" note="Team Leader's Name over Signature/Date" />
-                        <div className="mb-5">
-                            <p className="font-bold mb-5 text-[11px]">Approved by</p>
-                            <input type="text" className="w-full bg-transparent outline-none border-b border-black font-bold text-[12px]" value={formData.approvedBy} onChange={e=>set('approvedBy',e.target.value)} disabled={readOnly} />
-                            <p className="text-[9px] font-normal italic mt-0.5">Head of Internal Audit Service/Date</p>
-                        </div>
-                    </div>
-                    {/* Col 2: Self-Assessment */}
-                    <div>
-                        <p className="mb-4 italic text-[11px]">For CC Self-Assessment</p>
-                        <SigBlock label="Accomplished by" nameKey="accomplishedBy" titleKey="accomplishedTitle" note="Auditee's Representative Name over Signature/Date" />
-                        <SigBlock label="Conformed by" nameKey="conformedBy" titleKey="conformedTitle" note="Auditee's Immediate Supervisor Name over Signature/Date" />
-                    </div>
-                    {/* Col 3: Evaluation */}
-                    <div>
-                        <p className="mb-4 italic text-[11px]">For CC Evaluation</p>
-                        <SigBlock label="Evaluated by" nameKey="evaluatedBy" titleKey="evaluatedTitle" note="Auditor's Name over Signature/Date" />
-                        <SigBlock label="Reviewed by" nameKey="evalReviewedBy" titleKey="evalReviewedTitle" note="Team Leader's Name over Signature/Date" />
-                    </div>
-                </div>
+                <StandardAuditFooter 
+                    documentId={selectedVersionId}
+                    history={signOffHistory}
+                    onSigned={handleSignOffSuccess}
+                    readOnly={readOnly}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16 pt-12 border-t-2 border-slate-100"
+                    sections={[
+                        {
+                            label: 'Preparation Stage',
+                            labelClass: 'bg-indigo-900',
+                            signatories: [
+                                { label: 'Prepared by', stage: 'prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+                                { label: 'Reviewed by', stage: 'reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
+                                { label: 'Approved by', stage: 'approved', nameField: 'approvedBy', titleField: 'approvedTitle' }
+                            ]
+                        },
+                        {
+                            label: 'Self-Assessment Stage',
+                            labelClass: 'bg-amber-600',
+                            signatories: [
+                                { label: 'Accomplished by', stage: 'accomplished', nameField: 'accomplishedBy', titleField: 'accomplishedTitle' },
+                                { label: 'Conformed by', stage: 'conformed', nameField: 'conformedBy', titleField: 'conformedTitle' }
+                            ]
+                        },
+                        {
+                            label: 'Evaluation Stage',
+                            labelClass: 'bg-emerald-700',
+                            signatories: [
+                                { label: 'Evaluated by', stage: 'evaluated', nameField: 'evaluatedBy', titleField: 'evaluatedTitle' },
+                                { label: 'Reviewed by', stage: 'evalReviewed', nameField: 'evalReviewedBy', titleField: 'evalReviewedTitle' }
+                            ]
+                        }
+                    ]}
+                />
+
             </div>
         </AuditToolWrapper>
     );

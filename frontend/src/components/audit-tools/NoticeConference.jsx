@@ -2,11 +2,14 @@ import { useState, useEffect } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import { formatRef } from '../../utils/formatters';
-import MultiFileAttach from './MultiFileAttach';
+import StandardAuditFooter from '../common/StandardAuditFooter';
 
 export default function NoticeConference({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signOffHistory, setSignOffHistory] = useState([]);
     const [formData, setFormData] = useState({
         // Memo header
         recipient: '',
@@ -21,32 +24,66 @@ export default function NoticeConference({ engagement, readOnly = false }) {
         // Signatories
         preparedBy: '', reviewedBy: '', approvedBy: '',
         preparedRole: 'Process Owner', reviewedRole: 'Division Chiefs', approvedRole: 'IAS Deputy QMR',
-        supporting_documents: []
+        attachments: []
     });
 
     useEffect(() => {
-        const load = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagement.id}/tools/neecm`);
-                if (res.data?.form_data) setFormData(fd => ({ ...fd, ...res.data.form_data }));
-            } catch (_) {}
-        };
-        load();
+        fetchVersions();
+        loadLatest();
     }, [engagement.id]);
+
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/neecm/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/neecm`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignOffHistory(res.data.sign_off_history || []);
+                setSelectedVersionId(res.data.id);
+            }
+        } catch (_) {}
+    };
+
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSignOffHistory(target.sign_off_history || []);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            await api.post(`/engagements/${engagement.id}/tools/neecm`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/neecm`, {
                 form_data: formData,
                 document_type: 'Notice of Entry/Exit Conference (NEECM)',
                 phase: 'execution',
+                sign_off_history: signOffHistory,
             });
             setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions();
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
+    };
+
+    const handleSignOffSuccess = (data) => {
+        setSignOffHistory(data.document?.history || []);
+        if (data.document?.id) setSelectedVersionId(data.document.id);
+        fetchVersions();
     };
 
     const handleExportWord = () => {
@@ -72,6 +109,10 @@ export default function NoticeConference({ engagement, readOnly = false }) {
         <input type="text" className={`doc-input font-bold ${cls}`} value={formData[field]} onChange={e=>set(field,e.target.value)} disabled={readOnly} placeholder={placeholder} />
     );
 
+    const Field = ({ field, placeholder='', cls='' }) => (
+        <input type="text" className={`doc-input font-bold ${cls}`} value={formData[field]} onChange={e=>set(field,e.target.value)} disabled={readOnly} placeholder={placeholder} />
+    );
+
     return (
         <AuditToolWrapper
             toolTitle="Notice of Entry/Exit Conference"
@@ -83,6 +124,9 @@ export default function NoticeConference({ engagement, readOnly = false }) {
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
         >
             <div id="neecm-document" className="audit-tool-paper bg-white shadow-2xl w-[794px] mx-auto my-6 px-16 py-12 font-serif min-h-[1123px] text-[12px] leading-relaxed">
                 {/* Letterhead */}
@@ -147,70 +191,30 @@ export default function NoticeConference({ engagement, readOnly = false }) {
 
                     <p className="mt-6">Thank you for your usual support and cooperation.</p>
 
-                    <div className="mt-8">
-                        <Field field="preparedBy" placeholder="[Enter Name]" cls="w-64 font-bold text-[13px]" />
-                        <p className="text-[12px]">IAS Head/Team Leader</p>
+                    <div className="mt-8 mb-12">
+                        <Field field="preparedBy" placeholder="[Enter Name]" cls="w-64 font-bold text-[13px] border-none" />
+                        <p className="text-[12px] uppercase font-bold text-slate-500">IAS Head/Team Leader</p>
                     </div>
                 </div>
 
-                {/* Footer */}
-                <div className="text-center text-[9px] text-gray-600 mt-12 mb-6 leading-tight">
-                    <p>DILG Internal Audit Service</p>
-                    <p>DILG NAPOLCOM Center, EDSA Corner Quezon Avenue, QC</p>
-                    <p className="text-blue-600 font-bold underline">ias.dilg@gmail.com</p>
-                    <p>02-82865952 / 02-876-3454 Local 5302/5305</p>
-                </div>
+                <hr className="border-t border-black mb-10" />
 
-                <hr className="border-t border-black mb-6" />
-
-                {/* Signature table */}
-                <table className="w-full border-collapse text-center text-[10px] font-serif" style={{border:'1px solid #000'}}>
-                    <thead>
-                        <tr>
-                            {['Prepared by','Reviewed by','Approved by'].map(h=>(
-                                <th key={h} className="bg-black text-white border border-black px-4 py-2 font-bold">{h}</th>
-                            ))}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            {[['preparedBy',[]], ['reviewedBy',[]], ['approvedBy',[]]].map(([field])=>(
-                                <td key={field} className="pt-10 pb-2 border border-black">
-                                    <input type="text" className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" value={formData[field]} onChange={e=>set(field,e.target.value)} disabled={readOnly} />
-                                </td>
-                            ))}
-                        </tr>
-                        <tr className="font-bold">
-                            {[['preparedRole'],['reviewedRole'],['approvedRole']].map(([field])=>(
-                                <td key={field} className="border border-black py-1">
-                                    <input type="text" className="w-full text-center font-bold bg-transparent outline-none text-[10px]" value={formData[field]} onChange={e=>set(field,e.target.value)} disabled={readOnly} />
-                                </td>
-                            ))}
-                        </tr>
-                    </tbody>
-                </table>
-
-                {/* Supporting Documents Section (Standardized Footer) */}
-                <div className="mt-16 pt-8 border-t-2 border-slate-100 no-print">
-                    <div className="flex items-center gap-3 mb-6">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-                            <svg className="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                            </svg>
-                        </div>
-                        <div>
-                            <h4 className="text-[11px] font-black text-slate-800 uppercase tracking-widest">Supporting Evidence</h4>
-                            <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Upload relevant annexes or conference photos</p>
-                        </div>
-                    </div>
-                    <MultiFileAttach
-                        files={formData.supporting_documents || []}
-                        onUpload={(newFiles) => set('supporting_documents', [...(formData.supporting_documents || []), ...newFiles])}
-                        onRemove={(index) => set('supporting_documents', formData.supporting_documents.filter((_, i) => i !== index))}
-                        readOnly={readOnly}
-                    />
-                </div>
+                <StandardAuditFooter 
+                    documentId={selectedVersionId}
+                    history={signOffHistory}
+                    onSigned={handleSignOffSuccess}
+                    readOnly={readOnly || !!selectedVersionId}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16 pt-12 border-t-2 border-slate-100"
+                    signatories={[
+                        { label: 'Prepared by', stage: 'Prepared', nameField: 'preparedBy', titleField: 'preparedRole' },
+                        { label: 'Reviewed by', stage: 'Reviewed', nameField: 'reviewedBy', titleField: 'reviewedRole' },
+                        { label: 'Approved by', stage: 'Approved', nameField: 'approvedBy', titleField: 'approvedRole' }
+                    ]}
+                />
             </div>
         </AuditToolWrapper>
     );
 }
+

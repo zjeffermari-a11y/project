@@ -1,249 +1,228 @@
-import React, { useState, useEffect } from 'react';
-import { Save, Printer, Download, Plus, Trash2, Loader2, CheckCircle2, ArrowLeft } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Plus, Trash2 } from 'lucide-react';
 import api from '../../api';
-import SignOffButton from './SignOffButton';
+import AuditToolWrapper from './AuditToolWrapper';
+import StandardAuditFooter from '../common/StandardAuditFooter';
 
-export default function AuditWorkProgram({ engagementId, engagement, onClose, user }) {
-    const navigate = useNavigate();
-    const [loading, setLoading] = useState(true);
+
+const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
+
+export default function AuditWorkProgram({ engagement, user, readOnly = false }) {
     const [saving, setSaving] = useState(false);
-    const [saved, setSaved] = useState(false);
-    const [documentId, setDocumentId] = useState(null); // Backend Document ID for sign-off
-    const [signOffHistory, setSignOffHistory] = useState({}); // { prepared_by: entry, reviewed_by: entry, approved_by: entry }
+    const [lastSaved, setLastSaved] = useState(null);
+    const [versions, setVersions] = useState([]);
+    const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signOffHistory, setSignOffHistory] = useState([]);
     
-    // Header Info
-    const [awpRef, setAwpRef] = useState('');
-    const [aeNumber, setAeNumber] = useState('');
-    const [title, setTitle] = useState('');
-    const [duration, setDuration] = useState('');
-    const [agency, setAgency] = useState('');
-    const [auditType, setAuditType] = useState('Operations');
-    const [objective, setObjective] = useState('');
-    const [teamLeader, setTeamLeader] = useState(user?.designation === 'assistant_leader' ? 'Assistant Leader' : 'Lead Auditor');
-
-    // Signatories
-    const [preparedBy, setPreparedBy] = useState(user?.name || '');
-    const [reviewedBy, setReviewedBy] = useState('');
-    const [approvedBy, setApprovedBy] = useState('');
-
-    // Table Data
-    const [phases, setPhases] = useState([
-        { id: 'planning', label: 'Audit Planning', rows: [{ id: 1, itemNo: '1', activity: 'Determine Scope and Materiality', days: '', targetOutput: '', targetDate: '', personnel: '', actualOutput: '', actualDate: '', accomplishedBy: '', remarks: '' }] },
-        { id: 'execution', label: 'Audit Execution', rows: [{ id: 2, itemNo: '2', activity: 'Conduct Fieldwork and Testing', days: '', targetOutput: '', targetDate: '', personnel: '', actualOutput: '', actualDate: '', accomplishedBy: '', remarks: '' }] },
-        { id: 'reporting', label: 'Audit Reporting', rows: [{ id: 3, itemNo: '3', activity: 'Draft and Finalize Audit Report', days: '', targetOutput: '', targetDate: '', personnel: '', actualOutput: '', actualDate: '', accomplishedBy: '', remarks: '' }] },
-        { id: 'followup', label: 'Audit Follow-up', rows: [{ id: 4, itemNo: '4', activity: 'Monitor Implementation of Recommendations', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }] }
-    ]);
+    const [formData, setFormData] = useState({
+        awpRef: '',
+        auditDuration: '',
+        agency: '',
+        auditType: 'Operations',
+        objective: '',
+        teamLeader: '',
+        phases: [
+            { id: 'planning', label: 'Audit Planning', rows: [{ id: 1, itemNo: '1', activity: 'Determine Scope and Materiality', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }] },
+            { id: 'execution', label: 'Audit Execution', rows: [{ id: 2, itemNo: '2', activity: 'Conduct Fieldwork and Testing', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }] },
+            { id: 'reporting', label: 'Audit Reporting', rows: [{ id: 3, itemNo: '3', activity: 'Draft and Finalize Audit Report', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }] },
+            { id: 'followup', label: 'Audit Follow-up', rows: [{ id: 4, itemNo: '4', activity: 'Monitor Implementation of Recommendations', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }] }
+        ],
+        // Names for display/export
+        preparedBy: '', preparedTitle: 'Auditor',
+        reviewedBy: '', reviewedTitle: 'Assistant Team Leader',
+        approvedBy: '', approvedTitle: 'IAS Director',
+    });
 
     useEffect(() => {
         if (engagement) {
-            setAeNumber(engagement.ae_number || '');
-            setTitle(engagement.title || '');
-            setDuration(`${engagement.start_date || 'TBD'} - ${engagement.end_date || 'TBD'}`);
-            setAgency(engagement.movs?.[0]?.auditee?.agency_name || 'Assigned Office');
-            setAuditType(engagement.audit_type || 'Operations');
-            setObjective(`DO Number: DO-${engagement.ae_number?.replace('AE-', '')} ${engagement.description || "To evaluate protocols."}`);
+            const tl = engagement.users?.find(u => u.pivot?.role_in_engagement === 'lead_auditor')?.name || '';
+            const director = engagement.users?.find(u => u.pivot?.role_in_engagement === 'Director')?.name || 'Lyra Zel';
+            const atl = engagement.users?.find(u => u.pivot?.role_in_engagement === 'Assistant Team Leader')?.name || '';
             
-            // Set Signatories from Engagement users if available
-            const tl = engagement.users?.find(u => u.pivot?.role_in_engagement === 'lead_auditor');
-            if (tl) setTeamLeader(tl.name);
-            
-            const director = engagement.users?.find(u => u.pivot?.role_in_engagement === 'Director');
-            if (director) setApprovedBy(director.name);
-            else setApprovedBy('Lyra Zel'); // Default as requested
-
-            const atl = engagement.users?.find(u => u.pivot?.role_in_engagement === 'Assistant Team Leader');
-            const engagementTl = engagement.users?.find(u => u.pivot?.role_in_engagement === 'Team Leader');
-            if (atl) setReviewedBy(atl.name);
-            else if (engagementTl) setReviewedBy(engagementTl.name);
+            setFormData(fd => ({
+                ...fd,
+                awpRef: fd.awpRef || `AWP-${engagement.ae_number?.replace('AE-', '')}`,
+                auditDuration: fd.auditDuration || `${engagement.start_date || ''} - ${engagement.end_date || ''}`,
+                agency: fd.agency || engagement.movs?.[0]?.auditee?.agency_name || 'Assigned Office',
+                auditType: fd.auditType || engagement.audit_type || 'Operations',
+                objective: fd.objective || `DO Number: DO-${engagement.ae_number?.replace('AE-', '')} ${engagement.description || ""}`,
+                teamLeader: fd.teamLeader || tl,
+                preparedBy: fd.preparedBy || user?.name || '',
+                reviewedBy: fd.reviewedBy || atl,
+                approvedBy: fd.approvedBy || director
+            }));
         }
-    }, [engagement]);
+        fetchVersions();
+        loadLatest();
+    }, [engagement.id, engagement.ae_number]);
 
-    useEffect(() => {
-        const fetchData = async () => {
-            try {
-                const res = await api.get(`/engagements/${engagementId}/tools/awp`);
-                if (res.data.form_data) {
-                    const data = res.data.form_data;
-                    setAwpRef(data.awpRef);
-                    setAuditType(data.auditType);
-                    setObjective(data.objective);
-                    setTeamLeader(data.teamLeader);
-                    setPreparedBy(data.preparedBy);
-                    setReviewedBy(data.reviewedBy);
-                    setApprovedBy(data.approvedBy);
-                    if (data.phases) setPhases(data.phases);
-                }
-                // Capture the document ID and build the sign-off history map
-                if (res.data.document?.id) {
-                    setDocumentId(res.data.document.id);
-                    const historyEntries = res.data.document?.history || [];
-                    const signOffMap = {};
-                    historyEntries
-                        .filter(h => h.action === 'signed_off' && h.stage)
-                        .forEach(h => { signOffMap[h.stage] = h; });
-                    setSignOffHistory(signOffMap);
-                }
-            } catch (err) {
-                console.error("No previous tool data found.");
-            } finally {
-                setLoading(false);
+    const fetchVersions = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/awp/versions`);
+            setVersions(res.data);
+        } catch (_) {}
+    };
+
+    const loadLatest = async () => {
+        try {
+            const res = await api.get(`/engagements/${engagement.id}/tools/awp`);
+            if (res.data?.form_data) {
+                setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignOffHistory(res.data.document?.history || []);
+                setSelectedVersionId(res.data.document?.id);
             }
-        };
-        fetchData();
-    }, [engagementId]);
+        } catch (_) {}
+    };
 
+    const handleVersionSelect = async (versionId) => {
+        try {
+            const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+            const target = docRes.data.find(d => d.id === parseInt(versionId));
+            if (target && target.form_data) {
+                setFormData(target.form_data);
+                setSignOffHistory(target.history || []);
+                setSelectedVersionId(versionId);
+            }
+        } catch (e) { alert('Failed to load version: ' + e.message); }
+    };
+
+    const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
+    
     const updateRow = (phaseId, rowId, field, value) => {
-        setPhases(prev => prev.map(p => {
-            if (p.id === phaseId) {
-                return {
-                    ...p,
-                    rows: p.rows.map(r => r.id === rowId ? { ...r, [field]: value } : r)
-                };
-            }
-            return p;
+        setFormData(fd => ({
+            ...fd,
+            phases: fd.phases.map(p => p.id === phaseId ? {
+                ...p,
+                rows: p.rows.map(r => r.id === rowId ? { ...r, [field]: value } : r)
+            } : p)
         }));
     };
 
     const addRow = (phaseId) => {
-        setPhases(prev => prev.map(p => {
-            if (p.id === phaseId) {
-                const newId = Date.now();
-                return {
-                    ...p,
-                    rows: [...p.rows, { id: newId, itemNo: '', activity: '', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }]
-                };
-            }
-            return p;
+        setFormData(fd => ({
+            ...fd,
+            phases: fd.phases.map(p => p.id === phaseId ? {
+                ...p,
+                rows: [...p.rows, { id: Date.now(), itemNo: '', activity: '', days: '', targetOutput: '', targetDate: '', personnel: '', accomplishedBy: '', remarks: '' }]
+            } : p)
         }));
     };
 
     const removeRow = (phaseId, rowId) => {
-        setPhases(prev => prev.map(p => {
-            if (p.id === phaseId) {
-                return { ...p, rows: p.rows.filter(r => r.id !== rowId) };
-            }
-            return p;
+        setFormData(fd => ({
+            ...fd,
+            phases: fd.phases.map(p => p.id === phaseId ? {
+                ...p,
+                rows: p.rows.filter(r => r.id !== rowId)
+            } : p)
         }));
     };
 
     const handleSave = async () => {
         setSaving(true);
         try {
-            const formData = {
-                awpRef, aeNumber, title, duration, agency, auditType, objective, teamLeader,
-                preparedBy, reviewedBy, approvedBy,
-                phases
-            };
-            const res = await api.post(`/engagements/${engagementId}/tools/awp`, {
+            const res = await api.post(`/engagements/${engagement.id}/tools/awp`, {
                 form_data: formData,
                 document_type: 'Audit Work Program (AWP)',
                 phase: 'planning'
             });
-            // Capture the returned document ID so sign-offs can reference it
-            if (res.data?.id) setDocumentId(res.data.id);
-            setSaved(true);
-            setTimeout(() => setSaved(false), 3000);
-        } catch (err) {
-            alert('Failed to save AWP data.');
-        } finally {
-            setSaving(false);
-        }
+            setLastSaved(new Date().toLocaleTimeString());
+            fetchVersions();
+            if (res.data.document) setSelectedVersionId(res.data.document.id);
+        } catch (e) { alert('Save failed: ' + e.message); }
+        finally { setSaving(false); }
     };
 
-    const handlePrint = () => {
-        window.print();
+    const handleSignOffSuccess = (data) => {
+        setSignOffHistory(data.document?.history || []);
+        if (data.document?.id) setSelectedVersionId(data.document.id);
+        fetchVersions();
     };
 
-    if (loading) return (
-        <div className="flex flex-col items-center justify-center p-20 text-slate-400">
-            <Loader2 className="w-10 h-10 animate-spin mb-4 text-indigo-500" />
-            <p className="font-bold tracking-widest uppercase text-xs">Loading Work Program...</p>
-        </div>
-    );
+
+
+    const handleExportWord = () => {
+        const doc = document.getElementById('awp-document');
+        const clone = doc.cloneNode(true);
+        clone.querySelectorAll('textarea, input[type="text"]').forEach(el => {
+            const t = document.createTextNode(el.value || ''); el.parentNode.replaceChild(t, el);
+        });
+        clone.querySelectorAll('.hide-on-print').forEach(el => el.remove());
+        const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${clone.innerHTML}</body></html>`;
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `AWP_${engagement.title?.replace(/ /g,'_')}.doc`; a.click();
+    };
+
+    const handleExportExcel = () => {
+        const table = document.getElementById('awp-table');
+        const clone = table.cloneNode(true);
+        clone.querySelectorAll('textarea, input[type="text"]').forEach(el => { const t=document.createTextNode(el.value||''); el.parentNode.replaceChild(t, el); });
+        clone.querySelectorAll('.hide-on-print').forEach(el=>el.remove());
+        const html = `<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>${clone.outerHTML}</body></html>`;
+        const a = document.createElement('a');
+        a.href = 'data:application/vnd.ms-excel,' + encodeURIComponent(html);
+        a.download = `AWP_${engagement.title?.replace(/ /g,'_')}.xls`;
+        a.click();
+    };
+
+
 
     return (
-        <div className="bg-slate-900 h-full overflow-y-auto flex flex-col p-8 custom-scrollbar">
-            <style>{`
-                @media print { 
-                    @page { margin: 1cm; size: auto; }
-                    body { background: white !important; }
-                    .hide-on-print { display: none !important; }
-                    .print-container { width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; color: black !important; }
-                    input, textarea { border-color: black !important; color: black !important; }
-                    .awp-tbl { border: 1px solid black !important; color: black !important; }
-                    .awp-tbl th, .awp-tbl td { border: 1px solid black !important; color: black !important; }
-                }
-            `}</style>
-
-            <div className="max-w-[1200px] mx-auto w-full flex justify-between items-center mb-6 hide-on-print">
-                <div className="flex items-center gap-3">
-                    <button onClick={() => navigate(-1)} className="text-slate-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-slate-800">
-                        <ArrowLeft className="w-5 h-5" />
-                    </button>
-                    <div className="p-2 bg-indigo-500/10 rounded-lg">
-                        <Loader2 className="w-5 h-5 text-indigo-400" />
-                    </div>
+        <AuditToolWrapper
+            toolTitle="Audit Work Program"
+            toolCode="AWP"
+            phase="Audit Planning"
+            engagementTitle={engagement.title}
+            onSave={handleSave}
+            onExportWord={handleExportWord}
+            onExportExcel={handleExportExcel}
+            isSaving={saving}
+            lastSaved={lastSaved}
+            readOnly={readOnly}
+            versions={versions}
+            selectedVersionId={selectedVersionId}
+            onVersionSelect={handleVersionSelect}
+        >
+            <div id="awp-document" className="audit-tool-paper bg-white shadow-2xl w-[1200px] mx-auto my-6 px-12 py-12 font-serif min-h-[1123px]">
+                <div className="flex items-center gap-6 mb-10">
+                    <img src={DILG_SEAL} className="h-24 w-24" alt="DILG Seal" />
                     <div>
-                        <h2 className="text-white font-black tracking-tight text-xl uppercase">Interactive Work Program</h2>
-                        <p className="text-slate-500 text-xs font-bold tracking-widest uppercase">Planning Tool / Excel Mapping</p>
-                    </div>
-                </div>
-                <div className="flex gap-3">
-                    <button onClick={handlePrint} className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all border border-slate-700">
-                        <Printer className="w-4 h-4" /> Print PDF
-                    </button>
-                    <button onClick={handleSave} disabled={saving} className={`px-6 py-2 rounded-lg text-[10px] font-black uppercase tracking-widest flex items-center gap-2 transition-all shadow-lg shadow-indigo-500/10 ${saved ? 'bg-emerald-600 text-white' : 'bg-indigo-600 hover:bg-indigo-500 hover:scale-105 active:scale-95 text-white'}`}>
-                        {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : saved ? <CheckCircle2 className="w-4 h-4" /> : <Save className="w-4 h-4" />}
-                        {saving ? 'Saving...' : saved ? 'Changes Saved' : 'Save Program'}
-                    </button>
-                </div>
-            </div>
-
-            <div className="print-container bg-white shadow-2xl w-full max-w-[1200px] mx-auto min-h-[1400px] px-12 py-16 relative flex flex-col font-serif text-slate-800 rounded-xl overflow-hidden">
-                {/* Header */}
-                <div className="flex justify-between items-start mb-10">
-                    <div className="flex items-center gap-6">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" className="h-20 w-20" alt="Seal" />
-                        <div>
-                            <p className="text-[10px] font-serif uppercase text-slate-500 tracking-wider">Department of the Interior and Local Government</p>
-                            <h1 className="text-3xl font-black font-serif tracking-tight text-slate-900 leading-none mb-1 uppercase">Audit Work Program</h1>
-                            <p className="text-[9px] font-serif text-slate-400 italic">FM-QP-DILG-IAS-33-05 | Rev01 | 10.10.22</p>
-                        </div>
+                        <p className="text-xs text-gray-700">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                        <h1 className="text-3xl font-black tracking-tight text-slate-900 leading-none mb-1 uppercase">AUDIT WORK PROGRAM</h1>
+                        <p className="text-[10px] text-gray-500 italic">FM-QP-DILG-IAS-33-05 | Rev01 | 10.10.22</p>
                     </div>
                 </div>
 
-                {/* Info Grid */}
-                <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-8 text-[13px]">
-                    <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-x-12 gap-y-4 mb-8 text-[13px] font-bold">
+                    <div className="space-y-2">
                         <div className="flex border-b border-slate-200 pb-1">
-                            <span className="w-44 font-bold uppercase text-[11px] text-slate-400">AWP Reference No.</span>
-                            <input className="flex-1 bg-transparent outline-none font-bold text-slate-900" value={awpRef} onChange={e => setAwpRef(e.target.value)} placeholder="TBD" />
+                            <span className="w-44 uppercase text-[11px] text-slate-400">AWP Reference No.</span>
+                            <input className="flex-1 bg-transparent outline-none font-bold text-slate-900" value={formData.awpRef} onChange={e => set('awpRef', e.target.value)} placeholder="TBD" disabled={readOnly} />
                         </div>
                         <div className="flex border-b border-slate-200 pb-1">
-                            <span className="w-44 font-bold uppercase text-[11px] text-slate-400">Engagement No.</span>
-                            <span className="flex-1 font-bold text-slate-900">{aeNumber}</span>
+                            <span className="w-44 uppercase text-[11px] text-slate-400">Engagement No.</span>
+                            <span className="flex-1 text-slate-900">{engagement.ae_number}</span>
                         </div>
                         <div className="flex border-b border-slate-200 pb-1">
-                            <span className="w-44 font-bold uppercase text-[11px] text-slate-400">Engagement Title</span>
-                            <span className="flex-1 font-bold text-slate-900 uppercase">{title}</span>
+                            <span className="w-44 uppercase text-[11px] text-slate-400">Engagement Title</span>
+                            <span className="flex-1 text-slate-900 uppercase">{engagement.title}</span>
                         </div>
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                         <div className="flex border-b border-slate-200 pb-1">
-                            <span className="w-44 font-bold uppercase text-[11px] text-slate-400">Audit Duration</span>
-                            <span className="flex-1 font-bold text-slate-900">{duration}</span>
+                            <span className="w-44 uppercase text-[11px] text-slate-400">Audit Duration</span>
+                            <input className="flex-1 bg-transparent outline-none font-bold text-slate-900" value={formData.auditDuration} onChange={e => set('auditDuration', e.target.value)} disabled={readOnly} />
                         </div>
                         <div className="flex border-b border-slate-200 pb-1">
-                            <span className="w-44 font-bold uppercase text-[11px] text-slate-400">Agency / Office</span>
-                            <span className="flex-1 font-bold text-slate-900">{agency}</span>
+                            <span className="w-44 uppercase text-[11px] text-slate-400">Agency / Office</span>
+                            <input className="flex-1 bg-transparent outline-none font-bold text-slate-900" value={formData.agency} onChange={e => set('agency', e.target.value)} disabled={readOnly} />
                         </div>
                         <div className="flex border-b border-slate-200 pb-1">
-                            <span className="w-44 font-bold uppercase text-[11px] text-slate-400">Engagement Type</span>
-                            <div className="flex-1 flex gap-4 font-bold text-[11px]">
+                            <span className="w-44 uppercase text-[11px] text-slate-400">Engagement Type</span>
+                            <div className="flex-1 flex gap-4 text-[11px]">
                                 {['Compliance', 'Management', 'Operations', 'Follow-up'].map(t => (
                                     <label key={t} className="flex items-center gap-1.5 cursor-pointer">
-                                        <input type="radio" name="auditType" checked={auditType === t} onChange={() => setAuditType(t)} className="accent-indigo-600 w-3 h-3" />
+                                        <input type="radio" name="auditType" checked={formData.auditType === t} onChange={() => set('auditType', t)} className="accent-indigo-600 w-3 h-3" disabled={readOnly} />
                                         <span>{t}</span>
                                     </label>
                                 ))}
@@ -255,163 +234,94 @@ export default function AuditWorkProgram({ engagementId, engagement, onClose, us
                 <div className="border-l-4 border-slate-900 pl-4 py-2 mb-8 bg-slate-50/50">
                     <div className="flex gap-4">
                         <span className="font-bold uppercase text-[11px] text-slate-400 whitespace-nowrap">Audit Objective:</span>
-                        <textarea className="flex-1 bg-transparent outline-none font-bold text-slate-900 h-16 resize-none" value={objective} onChange={e => setObjective(e.target.value)} />
+                        <textarea className="flex-1 bg-transparent outline-none font-bold text-slate-900 h-16 resize-none" value={formData.objective} onChange={e => set('objective', e.target.value)} disabled={readOnly} />
                     </div>
                     <div className="flex gap-4 mt-2">
                         <span className="font-bold uppercase text-[11px] text-slate-400 whitespace-nowrap">Team Leader:</span>
-                        <input className="flex-1 bg-transparent outline-none font-bold text-slate-900" value={teamLeader} onChange={e => setTeamLeader(e.target.value)} />
+                        <input className="flex-1 bg-transparent outline-none font-bold text-slate-900" value={formData.teamLeader} onChange={e => set('teamLeader', e.target.value)} disabled={readOnly} />
                     </div>
                 </div>
 
-                {/* Main Table */}
-                <div className="flex-1 overflow-x-auto min-h-[400px]">
-                    <table className="awp-tbl w-full text-left border-collapse border border-slate-900">
-                        <thead className="bg-slate-900 text-white text-[10px] uppercase tracking-wider font-bold">
-                            <tr>
-                                <th rowSpan={2} className="p-3 border border-slate-700 w-12 text-center">Item</th>
-                                <th rowSpan={2} className="p-3 border border-slate-700 min-w-[200px]">Activities / Procedures</th>
-                                <th rowSpan={2} className="p-3 border border-slate-700 w-16 text-center">Days</th>
-                                <th colSpan={2} className="p-2 border border-slate-700 text-center">Target</th>
-                                <th rowSpan={2} className="p-3 border border-slate-700 min-w-[150px]">Responsible Personnel</th>
-                                <th rowSpan={2} className="p-3 border border-slate-700 min-w-[120px]">Accomplished By</th>
-                                <th rowSpan={2} className="p-3 border border-slate-700 min-w-[150px]">Remarks</th>
-                                <th rowSpan={2} className="p-3 border border-slate-700 w-10 hide-on-print"></th>
+                <div className="overflow-x-auto mb-12">
+                    <table id="awp-table" className="iom-table w-full">
+                        <thead>
+                            <tr className="bg-slate-900 text-white text-[10px] uppercase tracking-wider font-bold">
+                                <th rowSpan={2} className="w-12 text-center">Item</th>
+                                <th rowSpan={2} className="min-w-[200px]">Activities / Procedures</th>
+                                <th rowSpan={2} className="w-16 text-center">Days</th>
+                                <th colSpan={2} className="text-center">Target</th>
+                                <th rowSpan={2} className="min-w-[150px]">Responsible Personnel</th>
+                                <th rowSpan={2} className="min-w-[120px]">Accomplished By</th>
+                                <th rowSpan={2} className="min-w-[150px]">Remarks</th>
+                                <th rowSpan={2} className="w-10 hide-on-print"></th>
                             </tr>
-                            <tr>
-                                <th className="p-2 border border-slate-700 text-center w-24">Output</th>
-                                <th className="p-2 border border-slate-700 text-center w-24">Date</th>
+                            <tr className="bg-slate-800 text-white text-[10px]">
+                                <th className="text-center w-24">Output</th>
+                                <th className="text-center w-24">Date</th>
                             </tr>
                         </thead>
                         <tbody className="text-[11px]">
-                            {phases.map(phase => (
-                                <React.Fragment key={phase.id}>
+                            {formData.phases.map(phase => (
+                                <Fragment key={phase.id}>
                                     <tr className="bg-slate-100 font-black uppercase text-slate-900">
-                                        <td colSpan={8} className="p-3 border border-slate-400">
+                                        <td colSpan={9} className="p-3 border border-black">
                                             <div className="flex justify-between items-center group">
                                                 <span>{phase.label}</span>
-                                                <button onClick={() => addRow(phase.id)} className="hide-on-print opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-white rounded text-indigo-600 flex items-center gap-1 text-[10px]">
-                                                    <Plus className="w-3 h-3" /> Add Row
-                                                </button>
+                                                {!readOnly && (
+                                                    <button onClick={() => addRow(phase.id)} className="hide-on-print opacity-0 group-hover:opacity-100 transition-all p-1 hover:bg-white rounded text-indigo-600 flex items-center gap-1 text-[10px] no-print">
+                                                        <Plus className="w-3 h-3" /> Add Row
+                                                    </button>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
                                     {phase.rows.map(row => (
-                                        <tr key={row.id} className="hover:bg-slate-50/50">
-                                            <td className="border border-slate-300 p-0">
-                                                <input className="w-full h-full p-2 bg-transparent text-center outline-none" value={row.itemNo} onChange={e => updateRow(phase.id, row.id, 'itemNo', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-0">
-                                                <textarea className="w-full h-full p-2 bg-transparent outline-none resize-none min-h-[40px]" value={row.activity} onChange={e => updateRow(phase.id, row.id, 'activity', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-0 text-center font-bold">
-                                                <input className="w-full h-full p-2 bg-transparent text-center outline-none" value={row.days} onChange={e => updateRow(phase.id, row.id, 'days', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-0">
-                                                <input className="w-full h-full p-2 bg-transparent outline-none" value={row.targetOutput} onChange={e => updateRow(phase.id, row.id, 'targetOutput', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-0">
-                                                <input className="w-full h-full p-2 bg-transparent outline-none" value={row.targetDate} onChange={e => updateRow(phase.id, row.id, 'targetDate', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-0">
-                                                <input className="w-full h-full p-2 bg-transparent outline-none font-bold text-slate-900" value={row.personnel} onChange={e => updateRow(phase.id, row.id, 'personnel', e.target.value)} placeholder="Assign Auditor" />
-                                            </td>
-                                            <td className="border border-slate-300 p-0">
-                                                <input className="w-full h-full p-2 bg-transparent outline-none font-bold text-slate-900" value={row.accomplishedBy} onChange={e => updateRow(phase.id, row.id, 'accomplishedBy', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-0">
-                                                <input className="w-full h-full p-2 bg-transparent outline-none italic text-blue-600 underline" value={row.remarks} onChange={e => updateRow(phase.id, row.id, 'remarks', e.target.value)} />
-                                            </td>
-                                            <td className="border border-slate-300 p-2 text-center hide-on-print">
-                                                <button onClick={() => removeRow(phase.id, row.id)} className="text-slate-300 hover:text-rose-500 transition-colors p-1">
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </button>
+                                        <tr key={row.id}>
+                                            <td className="text-center"><input className="tbl-input text-center" value={row.itemNo} onChange={e => updateRow(phase.id, row.id, 'itemNo', e.target.value)} disabled={readOnly} /></td>
+                                            <td><textarea className="tbl-input min-h-[40px]" value={row.activity} onChange={e => updateRow(phase.id, row.id, 'activity', e.target.value)} disabled={readOnly} /></td>
+                                            <td className="text-center font-bold"><input className="tbl-input text-center" value={row.days} onChange={e => updateRow(phase.id, row.id, 'days', e.target.value)} disabled={readOnly} /></td>
+                                            <td><input className="tbl-input" value={row.targetOutput} onChange={e => updateRow(phase.id, row.id, 'targetOutput', e.target.value)} disabled={readOnly} /></td>
+                                            <td><input className="tbl-input" value={row.targetDate} onChange={e => updateRow(phase.id, row.id, 'targetDate', e.target.value)} disabled={readOnly} /></td>
+                                            <td><input className="tbl-input font-bold" value={row.personnel} onChange={e => updateRow(phase.id, row.id, 'personnel', e.target.value)} placeholder="Assign Auditor" disabled={readOnly} /></td>
+                                            <td><input className="tbl-input" value={row.accomplishedBy} onChange={e => updateRow(phase.id, row.id, 'accomplishedBy', e.target.value)} disabled={readOnly} /></td>
+                                            <td><input className="tbl-input italic text-blue-700 underline" value={row.remarks} onChange={e => updateRow(phase.id, row.id, 'remarks', e.target.value)} disabled={readOnly} /></td>
+                                            <td className="text-center hide-on-print no-print">
+                                                {!readOnly && (
+                                                    <button onClick={() => removeRow(phase.id, row.id)} className="text-slate-300 hover:text-rose-500 transition-colors p-1">
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                )}
                                             </td>
                                         </tr>
                                     ))}
-                                </React.Fragment>
+                                </Fragment>
                             ))}
                         </tbody>
                     </table>
-                    <p className="text-[10px] font-bold italic mt-3 text-slate-500 bg-slate-50 p-2 border-l-2 border-slate-300">
-                        Notes: Personnel mapped directly to Audit Workspace "Prepared By" status. Use exact Document Name in 'Activities' for auto-mapping.
-                    </p>
                 </div>
 
-                {/* Signatories Section */}
-                <div className="mt-20 flex justify-between gap-12 text-[12px] font-serif">
-                    {/* Prepared By */}
-                    <div className="flex-1 flex flex-col items-center">
-                        <p className="mb-8 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Prepared by:</p>
-                        {!documentId ? (
-                            <>
-                                <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={preparedBy} onChange={e => setPreparedBy(e.target.value)} placeholder="Auditor Name" />
-                                <p className="text-[9px] text-amber-500 font-bold mt-1 italic text-center hide-on-print">Save the AWP first to enable digital sign-off.</p>
-                            </>
-                        ) : (
-                            <SignOffButton
-                                documentId={documentId}
-                                stage="prepared_by"
-                                label="Prepared By"
-                                user={user}
-                                existingEntry={signOffHistory['prepared_by']}
-                                onSuccess={entry => setSignOffHistory(prev => ({ ...prev, prepared_by: entry }))}
-                            />
-                        )}
-                        <p className="text-[10px] italic mt-2 text-slate-500 uppercase font-black">Auditor's Name over Signature / Date</p>
-                    </div>
+                <StandardAuditFooter 
+                    documentId={selectedVersionId}
+                    history={signOffHistory}
+                    onSigned={handleSignOffSuccess}
+                    readOnly={readOnly || !!selectedVersionId}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16"
+                    signatories={[
+                        { label: 'Prepared by', stage: 'Prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+                        { label: 'Reviewed by', stage: 'Reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
+                        { label: 'Approved by', stage: 'Approved', nameField: 'approvedBy', titleField: 'approvedTitle' }
+                    ]}
+                />
 
-                    {/* Reviewed By */}
-                    <div className="flex-1 flex flex-col items-center">
-                        <p className="mb-8 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Reviewed by:</p>
-                        {!documentId ? (
-                            <>
-                                <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={reviewedBy} onChange={e => setReviewedBy(e.target.value)} placeholder="Team Leader / ATL" />
-                                <p className="text-[9px] text-amber-500 font-bold mt-1 italic text-center hide-on-print">Save the AWP first to enable digital sign-off.</p>
-                            </>
-                        ) : (
-                            <SignOffButton
-                                documentId={documentId}
-                                stage="reviewed_by"
-                                label="Reviewed By"
-                                user={user}
-                                existingEntry={signOffHistory['reviewed_by']}
-                                onSuccess={entry => setSignOffHistory(prev => ({ ...prev, reviewed_by: entry }))}
-                            />
-                        )}
-                        <p className="text-[10px] italic mt-2 text-slate-500 uppercase font-black">Team Leader's Name over Signature / Date</p>
-                    </div>
 
-                    {/* Approved By */}
-                    <div className="flex-1 flex flex-col items-center">
-                        <p className="mb-8 w-full italic text-left text-slate-400 font-bold uppercase text-[10px]">Approved by:</p>
-                        {!documentId ? (
-                            <>
-                                <input className="w-full bg-transparent border-b border-slate-900 text-center font-bold px-2 py-1 uppercase text-[14px] outline-none" value={approvedBy} onChange={e => setApprovedBy(e.target.value)} placeholder="The Director" />
-                                <p className="text-[9px] text-amber-500 font-bold mt-1 italic text-center hide-on-print">Save the AWP first to enable digital sign-off.</p>
-                            </>
-                        ) : (
-                            <SignOffButton
-                                documentId={documentId}
-                                stage="approved_by"
-                                label="Approved By"
-                                user={user}
-                                existingEntry={signOffHistory['approved_by']}
-                                onSuccess={entry => setSignOffHistory(prev => ({ ...prev, approved_by: entry }))}
-                            />
-                        )}
-                        <p className="text-[10px] italic mt-2 text-slate-500 uppercase font-black">Director's Name over Signature / Date</p>
-                    </div>
-                </div>
 
-                {/* Footer Quote */}
-                <div className="mt-auto pt-12 flex flex-col items-center hide-on-print">
-                    <p className="text-rose-600 font-black text-[13px] tracking-[0.2em] uppercase italic">"Matino, Mahusay at Maaasahan"</p>
-                    <div className="h-0.5 w-16 bg-slate-900 my-2" />
-                    <p className="text-slate-400 text-[9px] uppercase font-bold tracking-widest">Department of the Interior and Local Government | Internal Audit Service</p>
+                <div className="mt-20 pt-12 flex flex-col items-center border-t border-slate-100">
+                    <p className="text-rose-600 font-black text-[14px] tracking-[0.3em] uppercase italic mb-2">"Matino, Mahusay at Maaasahan"</p>
+                    <p className="text-slate-400 text-[9px] uppercase font-bold tracking-[0.1em]">Department of the Interior and Local Government | Internal Audit Service</p>
                 </div>
             </div>
-            
-            <div className="h-20 hide-on-print"></div>
-        </div>
+        </AuditToolWrapper>
     );
 }

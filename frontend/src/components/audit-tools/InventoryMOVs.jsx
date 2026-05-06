@@ -3,14 +3,18 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import MultiFileAttach from './MultiFileAttach';
 import { formatRef } from '../../utils/formatters';
+import StandardAuditFooter from '../common/StandardAuditFooter';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
+
+
 
 export default function InventoryMOVs({ engagement, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [versions, setVersions] = useState([]);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signatureHistory, setSignatureHistory] = useState([]);
     const [formData, setFormData] = useState({
         iomRef: formatRef('IOM', engagement.ae_number),
         auditArea: '',
@@ -19,6 +23,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
         additionalDate: '',
         initialRows: Array(5).fill(null).map(() => ['', '', '', '', []]),
         additionalRows: Array(4).fill(null).map(() => ['', '', '', '', []]),
+        attachments: []
     });
 
     useEffect(() => {
@@ -49,6 +54,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
             const res = await api.get(`/engagements/${engagement.id}/tools/iom`);
             if (res.data?.form_data) {
                 setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignatureHistory(res.data.signatures || []);
                 setSelectedVersionId(res.data.id);
             }
         } catch (_) { /* no saved data yet */ }
@@ -60,6 +66,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
             const target = docRes.data.find(d => d.id === parseInt(versionId));
             if (target && target.form_data) {
                 setFormData(target.form_data);
+                setSignatureHistory(target.signatures || []);
                 setSelectedVersionId(versionId);
             }
         } catch (e) { alert('Failed to load version: ' + e.message); }
@@ -82,7 +89,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
             });
             setLastSaved(new Date().toLocaleTimeString());
             fetchVersions();
-            if (res.data.document) setSelectedVersionId(res.data.document.id);
+            if (res.data.tool) setSelectedVersionId(res.data.tool.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
     };
@@ -137,7 +144,7 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
             onExportExcel={handleExportExcel}
             isSaving={saving}
             lastSaved={lastSaved}
-            readOnly={readOnly}
+            readOnly={readOnly || !!selectedVersionId}
             versions={versions}
             selectedVersionId={selectedVersionId}
             onVersionSelect={handleVersionSelect}
@@ -251,6 +258,22 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                         )}
                     </tbody>
                 </table>
+
+                <StandardAuditFooter 
+                    documentId={selectedVersionId}
+                    history={signatureHistory}
+                    onSigned={loadLatest}
+                    readOnly={readOnly || !!selectedVersionId}
+                    formData={formData}
+                    setFormData={set}
+                    className="mt-16 pt-12 border-t-2 border-slate-100"
+                    signatories={[
+                        { label: 'Prepared by', stage: 'Prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+                        { label: 'Reviewed by', stage: 'Reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
+                        { label: 'Approved by', stage: 'Approved', nameField: 'approvedBy', titleField: 'approvedTitle' }
+                    ]}
+                />
+
             </div>
         </AuditToolWrapper>
     );

@@ -8,12 +8,15 @@ import {
   Controls,
   MiniMap,
   Background,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from '@xyflow/react';
+
 import '@xyflow/react/dist/style.css';
 import { Save, Plus, Trash2, Layout } from 'lucide-react';
 import api from '../../api';
-import AuditToolWrapper from './AuditToolWrapper';
-import SignOffButton from '../common/SignOffButton';
+import StandardAuditFooter from '../common/StandardAuditFooter';
+
 
 const initialNodes = [
   {
@@ -29,8 +32,6 @@ const getId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
 const FlowchartEditor = ({ engagement, user, readOnly }) => {
   const reactFlowWrapper = useRef(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [saving, setSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState(null);
@@ -38,10 +39,38 @@ const FlowchartEditor = ({ engagement, user, readOnly }) => {
   const [selectedVersionId, setSelectedVersionId] = useState(null);
   const [signOffHistory, setSignOffHistory] = useState([]);
 
+  const [formData, setFormData] = useState({
+    nodes: initialNodes,
+    edges: [],
+    preparedBy: '', preparedTitle: 'Auditor',
+    reviewedBy: '', reviewedTitle: 'Assistant Team Leader',
+    approvedBy: '', approvedTitle: 'IAS Director',
+    attachments: []
+  });
+
+  const nodes = formData.nodes;
+  const edges = formData.edges;
+
+  const setNodes = (nds) => setFormData(fd => ({ ...fd, nodes: typeof nds === 'function' ? nds(fd.nodes) : nds }));
+  const setEdges = (eds) => setFormData(fd => ({ ...fd, edges: typeof eds === 'function' ? eds(fd.edges) : eds }));
+
+  const onNodesChange = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    [setNodes]
+  );
+  const onEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [setEdges]
+  );
+
+  const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
+
+
   useEffect(() => {
     fetchVersions();
     loadLatest();
   }, [engagement.id]);
+
 
   const fetchVersions = async () => {
     try {
@@ -54,26 +83,26 @@ const FlowchartEditor = ({ engagement, user, readOnly }) => {
     try {
       const res = await api.get(`/engagements/${engagement.id}/tools/flowchart`);
       if (res.data?.form_data) {
-        setNodes(res.data.form_data.nodes || initialNodes);
-        setEdges(res.data.form_data.edges || []);
-        setSignOffHistory(res.data.sign_off_history || []);
-        setSelectedVersionId(res.data.id);
+        setFormData(fd => ({ ...fd, ...res.data.form_data }));
+        setSignOffHistory(res.data.document?.history || res.data.sign_off_history || []);
+        setSelectedVersionId(res.data.document?.id || res.data.id);
       }
     } catch (_) {}
   };
+
 
   const handleVersionSelect = async (versionId) => {
     try {
       const docRes = await api.get(`/engagements/${engagement.id}/documents`);
       const target = docRes.data.find(d => d.id === parseInt(versionId));
       if (target && target.form_data) {
-        setNodes(target.form_data.nodes);
-        setEdges(target.form_data.edges);
-        setSignOffHistory(target.sign_off_history || []);
+        setFormData(fd => ({ ...fd, ...target.form_data }));
+        setSignOffHistory(target.history || target.sign_off_history || []);
         setSelectedVersionId(versionId);
       }
     } catch (e) { alert('Failed to load version: ' + e.message); }
   };
+
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
@@ -114,10 +143,9 @@ const FlowchartEditor = ({ engagement, user, readOnly }) => {
     try {
       const flow = reactFlowInstance.toObject();
       const res = await api.post(`/engagements/${engagement.id}/tools/flowchart`, {
-        form_data: flow,
+        form_data: { ...formData, nodes: flow.nodes, edges: flow.edges },
         document_type: 'Process Flowchart',
-        phase: 'planning',
-        sign_off_history: signOffHistory,
+        phase: 'planning'
       });
       setLastSaved(new Date().toLocaleTimeString());
       fetchVersions();
@@ -128,6 +156,7 @@ const FlowchartEditor = ({ engagement, user, readOnly }) => {
       setSaving(false);
     }
   };
+
 
   const handleSignOffSuccess = (data) => {
     setSignOffHistory(data.document?.history || []);
@@ -180,17 +209,9 @@ const FlowchartEditor = ({ engagement, user, readOnly }) => {
                 </div>
               </div>
             </div>
-
-            <div className="mt-auto pt-6 border-t border-slate-700 space-y-4">
-               <h3 className="font-black text-[10px] text-slate-500 uppercase tracking-[0.2em]">Digital Sign-off</h3>
-               <div className="space-y-3">
-                  <SignOffButton stage="Prepared" documentId={selectedVersionId} history={signOffHistory} onSuccess={handleSignOffSuccess} className="w-full" />
-                  <SignOffButton stage="Reviewed" documentId={selectedVersionId} history={signOffHistory} onSuccess={handleSignOffSuccess} className="w-full" />
-                  <SignOffButton stage="Approved" documentId={selectedVersionId} history={signOffHistory} onSuccess={handleSignOffSuccess} className="w-full" />
-               </div>
-            </div>
           </div>
         )}
+
 
         <div className="flex-1 relative bg-[#0f172a]" ref={reactFlowWrapper}>
           <ReactFlow
@@ -226,7 +247,22 @@ const FlowchartEditor = ({ engagement, user, readOnly }) => {
           </ReactFlow>
         </div>
       </div>
+      <StandardAuditFooter 
+        documentId={selectedVersionId}
+        history={signOffHistory}
+        onSigned={handleSignOffSuccess}
+        readOnly={readOnly}
+        formData={formData}
+        setFormData={set}
+        className="bg-white p-12 mt-12 border-t-2 border-slate-100 rounded-b-2xl shadow-inner"
+        signatories={[
+          { label: 'Prepared by', stage: 'prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
+          { label: 'Reviewed by', stage: 'reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
+          { label: 'Approved by', stage: 'approved', nameField: 'approvedBy', titleField: 'approvedTitle' }
+        ]}
+      />
     </AuditToolWrapper>
+
   );
 };
 

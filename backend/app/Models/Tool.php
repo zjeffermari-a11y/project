@@ -6,7 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 class Tool extends Model
 {
-    protected $fillable = ['engagement_id', 'tool_type', 'created_by'];
+    protected $fillable = ['engagement_id', 'tool_type', 'data', 'created_by'];
+
+    protected $casts = [
+        'data' => 'array',
+    ];
 
     public function engagement()
     {

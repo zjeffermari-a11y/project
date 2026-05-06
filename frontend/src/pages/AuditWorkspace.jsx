@@ -7,6 +7,7 @@ import MovTable from '../components/dashboard/MovTable';
 
 const DOCUMENTS = {
     planning: { title: 'Audit Planning Documents', theme: 'indigo', items: [
+        { label: 'Interactive Flowchart', toolKey: 'flowchart' },
         { label: 'Audit Notification Memorandum (ANM)', toolKey: null, generateKey: 'anm' },
         { label: 'Inventory of MOVs (IM)', toolKey: 'iom' },
         { label: 'Audit Area Profile (AAP)', toolKey: 'aap' },

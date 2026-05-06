@@ -12,6 +12,7 @@ import WalkthroughTest from '../components/audit-tools/WalkthroughTest';
 import EntryConferenceBriefer from '../components/audit-tools/EntryConferenceBriefer';
 import NoticeConference from '../components/audit-tools/NoticeConference';
 import AuditWorkProgram from '../components/audit-tools/AuditWorkProgram';
+import InteractiveFlowchart from '../components/audit-tools/InteractiveFlowchart';
 
 /**
  * Maps the URL "tool key" to the corresponding tool component.
@@ -27,6 +28,7 @@ const TOOL_MAP = {
     ecb:   EntryConferenceBriefer,
     neecm: NoticeConference,
     awp:   AuditWorkProgram,
+    flowchart: InteractiveFlowchart,
 };
 
 /**

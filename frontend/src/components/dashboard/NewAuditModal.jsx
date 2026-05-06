@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Trash2 } from 'lucide-react';
+import { X, Plus } from 'lucide-react';
 
 export default function NewAuditModal({ 
     isOpen, 
@@ -28,8 +28,7 @@ export default function NewAuditModal({
 
     const [assistantLeaders, setAssistantLeaders] = useState([]);
     const [newAssistantLeader, setNewAssistantLeader] = useState('');
-    const [uploadedFiles, setUploadedFiles] = useState([]);
-    const [fileTypeSelect, setFileTypeSelect] = useState('Flowchart');
+
 
     useEffect(() => {
         if (isOpen) {
@@ -63,8 +62,7 @@ export default function NewAuditModal({
             offices: offices.map(o => o.id),
             leadAuditors: leadAuditors.map(l => l.id),
             assistantLeaders: assistantLeaders.map(a => a.id),
-            members: members.map(m => m.id),
-            files: uploadedFiles
+            members: members.map(m => m.id)
         });
     };
 
@@ -104,19 +102,7 @@ export default function NewAuditModal({
         setNewAssistantLeader('');
     };
 
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setUploadedFiles([...uploadedFiles, { type: fileTypeSelect, file, name: file.name }]);
-        }
-        e.target.value = '';
-    };
 
-    const removeFile = (index) => {
-        const newFiles = [...uploadedFiles];
-        newFiles.splice(index, 1);
-        setUploadedFiles(newFiles);
-    };
 
     return (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm overflow-y-auto">
@@ -326,46 +312,7 @@ export default function NewAuditModal({
                                 </div>
                             </div>
 
-                            {/* File Uploads */}
-                            <div>
-                                <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Attached Documents</label>
-                                <div className="flex gap-2 mb-3">
-                                    <select 
-                                        className="w-1/3 bg-slate-50 border border-slate-200 rounded-xl px-3 py-3 text-xs font-bold outline-none"
-                                        value={fileTypeSelect}
-                                        onChange={(e) => setFileTypeSelect(e.target.value)}
-                                    >
-                                        <option value="Flowchart">Flowchart</option>
-                                        <option value="Audit Feedback Survey Form">Audit Feedback Survey Form</option>
-                                        <option value="Other">Other</option>
-                                    </select>
-                                    <div className="flex-1 relative">
-                                        <input 
-                                            type="file" 
-                                            id="fileUpload" 
-                                            className="hidden" 
-                                            onChange={handleFileUpload} 
-                                        />
-                                        <label 
-                                            htmlFor="fileUpload" 
-                                            className="flex items-center justify-center gap-2 w-full h-full bg-slate-100 hover:bg-slate-200 border border-slate-300 border-dashed rounded-xl cursor-pointer text-xs font-bold text-slate-600 transition-colors"
-                                        >
-                                            <Plus className="w-4 h-4" /> Add File
-                                        </label>
-                                    </div>
-                                </div>
-                                <div className="flex flex-col gap-2">
-                                    {uploadedFiles.map((f, i) => (
-                                        <div key={i} className="flex items-center justify-between bg-slate-50 border border-slate-200 px-4 py-2 rounded-xl">
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-[10px] font-black uppercase text-indigo-500 bg-indigo-50 px-2 py-0.5 rounded-md">{f.type}</span>
-                                                <span className="text-xs font-bold text-slate-700 truncate max-w-[200px]">{f.name}</span>
-                                            </div>
-                                            <button type="button" onClick={() => removeFile(i)} className="text-slate-400 hover:text-rose-500 p-1"><Trash2 className="w-4 h-4" /></button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
+
                         </div>
                     </div>
 

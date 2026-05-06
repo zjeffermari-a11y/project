@@ -95,19 +95,24 @@ class DocumentController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'stage' => 'required|in:prepared_by,reviewed_by,approved_by',
+            'stage' => 'required|string|max:50',
         ]);
 
         $stage = $request->stage;
 
         // Enforce role hierarchy: only approved designations can sign at each stage
         $stagePermissions = [
-            'prepared_by'  => ['auditor', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
-            'reviewed_by'  => ['lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
-            'approved_by'  => ['division_chief', 'assistant_division_chief', 'director'],
+            'prepared_by'       => ['auditor', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'reviewed_by'       => ['lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'approved_by'       => ['division_chief', 'assistant_division_chief', 'director'],
+            'noted_by'          => ['division_chief', 'assistant_division_chief', 'director'],
+            'conformed_by'      => ['auditee', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'evaluated_by'      => ['auditor', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'accomplished_by'   => ['auditee', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
+            'eval_reviewed_by'  => ['lead_auditor', 'assistant_division_chief', 'division_chief', 'director'],
         ];
 
-        $allowed = $stagePermissions[$stage];
+        $allowed = $stagePermissions[$stage] ?? ['auditor', 'lead_auditor', 'assistant_division_chief', 'division_chief', 'director'];
         $userDesignationOrRole = $user->designation ?? $user->role;
         if (!in_array($userDesignationOrRole, $allowed)) {
             return response()->json([
@@ -117,12 +122,17 @@ class DocumentController extends Controller
 
         // Determine the new document status based on stage
         $statusMap = [
-            'prepared_by'  => 'prepared',
-            'reviewed_by'  => 'reviewed',
-            'approved_by'  => 'approved',
+            'prepared_by'       => 'prepared',
+            'reviewed_by'       => 'reviewed',
+            'approved_by'       => 'approved',
+            'noted_by'          => 'noted',
+            'conformed_by'      => 'conformed',
+            'evaluated_by'      => 'evaluated',
+            'accomplished_by'   => 'accomplished',
+            'eval_reviewed_by'  => 'eval_reviewed',
         ];
 
-        $document->update(['status' => $statusMap[$stage]]);
+        $document->update(['status' => $statusMap[$stage] ?? 'signed']);
 
         // Record the sign-off with designation snapshot
         $historyEntry = $document->history()->create([

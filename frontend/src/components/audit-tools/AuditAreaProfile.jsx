@@ -3,14 +3,16 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import { formatRef } from '../../utils/formatters';
 import MultiFileAttach from './MultiFileAttach';
+import SignOffButton from '../common/SignOffButton';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
-export default function AuditAreaProfile({ engagement, readOnly = false }) {
+export default function AuditAreaProfile({ engagement, user, readOnly = false }) {
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState(null);
     const [versions, setVersions] = useState([]);
     const [selectedVersionId, setSelectedVersionId] = useState(null);
+    const [signOffHistory, setSignOffHistory] = useState([]);
     const [formData, setFormData] = useState({
         aapRef: formatRef('AAP', engagement.ae_number),
         auditArea: '',
@@ -62,6 +64,7 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
             const res = await api.get(`/engagements/${engagement.id}/tools/aap`);
             if (res.data?.form_data) {
                 setFormData(fd => ({ ...fd, ...res.data.form_data }));
+                setSignOffHistory(res.data.sign_off_history || []);
                 setSelectedVersionId(res.data.id);
             }
         } catch (_) { /* no saved data yet */ }
@@ -73,6 +76,7 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
             const target = docRes.data.find(d => d.id === parseInt(versionId));
             if (target && target.form_data) {
                 setFormData(target.form_data);
+                setSignOffHistory(target.sign_off_history || []);
                 setSelectedVersionId(versionId);
             }
         } catch (e) { alert('Failed to load version: ' + e.message); }
@@ -85,12 +89,19 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
                 form_data: formData,
                 document_type: 'Audit Area Profile (AAP)',
                 phase: 'planning',
+                sign_off_history: signOffHistory,
             });
             setLastSaved(new Date().toLocaleTimeString());
             fetchVersions(); // Refresh history
             if (res.data.document) setSelectedVersionId(res.data.document.id);
         } catch (e) { alert('Save failed: ' + e.message); }
         finally { setSaving(false); }
+    };
+
+    const handleSignOffSuccess = (data) => {
+        setSignOffHistory(data.document?.history || []);
+        if (data.document?.id) setSelectedVersionId(data.document.id);
+        fetchVersions();
     };
 
     const handleExportWord = () => {
@@ -325,12 +336,23 @@ export default function AuditAreaProfile({ engagement, readOnly = false }) {
                 {/* Signature section */}
                 <div className="grid grid-cols-3 gap-8 mt-12 text-[12px] font-bold mb-10">
                     {['Prepared by:','Reviewed by:','Noted by:'].map((lbl, i) => {
+                        const stepNames = ['Prepared','Reviewed','Noted'];
                         const keys = ['preparedBy','reviewedBy','notedBy'];
                         const roles = ['Team Members','Team Leader','IAS Director'];
                         return (
                             <div key={i}>
-                                <p className="mb-8">{lbl}</p>
-                                <I val={formData[keys[i]]} onChange={v=>set(keys[i],v)} />
+                                <p className="mb-4">{lbl}</p>
+                                <div className="mb-4">
+                                    <SignOffButton 
+                                        documentId={selectedVersionId}
+                                        stage={stepNames[i]}
+                                        history={signOffHistory}
+                                        onSuccess={handleSignOffSuccess}
+                                        disabled={readOnly}
+                                        className="no-print"
+                                    />
+                                </div>
+                                <I val={formData[keys[i]]} onChange={v=>set(keys[i],v)} placeholder="Name of Signatory" />
                                 <p className="mt-1 font-normal">{roles[i]}</p>
                             </div>
                         );

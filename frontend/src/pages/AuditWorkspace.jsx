@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink } from 'lucide-react';
 import api from '../api';
 import MovTable from '../components/dashboard/MovTable';
+import SignOffButton from '../components/audit-tools/SignOffButton';
 
 
 const DOCUMENTS = {
@@ -250,6 +251,15 @@ export default function AuditWorkspace() {
         }
     };
 
+    const handleDownload = async (docId, fileName) => {
+        try {
+            const res = await api.get(`/documents/${docId}/download`, { responseType: 'blob' });
+            const url = window.URL.createObjectURL(new Blob([res.data]));
+            const link = document.createElement('a'); link.href = url; link.setAttribute('download', fileName);
+            document.body.appendChild(link); link.click(); link.parentNode.removeChild(link);
+        } catch (err) { alert('Download failed'); }
+    };
+
     const handleAssign = async (docId, roleField, userId) => {
         try {
             await api.patch(`/documents/${docId}/assign`, { [roleField]: userId || null });
@@ -361,8 +371,10 @@ export default function AuditWorkspace() {
                                             </thead>
                                             <tbody className="divide-y divide-slate-100">
                                                 {DOCUMENTS[selectedPhase].items.map((doc, idx) => {
-                                                    const relatedDocs = documents.filter(d => d.phase === selectedPhase && d.document_type === doc.label);
-                                                    const latestDoc = relatedDocs.length > 0 ? relatedDocs[relatedDocs.length - 1] : null;
+                                                    const relatedDocs = documents
+                                                        .filter(d => d.phase === selectedPhase && d.document_type === doc.label)
+                                                        .sort((a, b) => b.id - a.id);
+                                                    const latestDoc = relatedDocs.length > 0 ? relatedDocs[0] : null;
 
                                                     // 1. Prepared By: From AWP "Responsible Personnel" for matching labels
                                                     let awpPersonnelMatched = null;
@@ -433,21 +445,24 @@ export default function AuditWorkspace() {
                                                             </td>
                                                             
                                                             {/* Prepared By cell */}
-                                                            <td className="py-4 px-4 font-bold text-sm text-slate-800 whitespace-nowrap">
-                                                                {preparedBy ? (
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-indigo-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-indigo-100">{preparedInitials}</div>
-                                                                        <div>
-                                                                            <div className="text-xs">{preparedBy}</div>
-                                                                            {latestDoc && <div className="text-[10px] text-slate-400 font-bold">{new Date(latestDoc.created_at).toLocaleDateString()}</div>}
-                                                                        </div>
-                                                                    </div>
+                                                            <td className="py-4 px-4 whitespace-nowrap">
+                                                                {latestDoc ? (
+                                                                    <SignOffButton
+                                                                        documentId={latestDoc.id}
+                                                                        stage="prepared_by"
+                                                                        label="Preparer"
+                                                                        user={currentUser}
+                                                                        existingEntry={latestDoc.history?.find(h => h.action === 'signed_off' && h.stage === 'prepared_by')}
+                                                                        onSuccess={() => {
+                                                                            const updatedEng = { ...engagement };
+                                                                            setEngagement(updatedEng);
+                                                                        }}
+                                                                    />
                                                                 ) : (
-                                                                    <div className="flex items-center gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
-                                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black border border-slate-300 shadow-sm">{leadInitials}</div>
-                                                                        <div>
-                                                                            <div className="text-xs font-bold text-slate-500">{leadName}</div>
-                                                                            <div className="text-[9px] text-slate-400 font-black uppercase tracking-widest">Awaiting Prep</div>
+                                                                    <div className="flex flex-col items-center w-full">
+                                                                        <div className="w-full border-b border-dashed border-slate-700/30 mb-2 mt-1" />
+                                                                        <div className="w-full py-1.5 px-3 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-600 text-[10px] font-bold uppercase tracking-widest text-center cursor-not-allowed">
+                                                                            Awaiting Prep
                                                                         </div>
                                                                     </div>
                                                                 )}
@@ -455,64 +470,55 @@ export default function AuditWorkspace() {
 
                                                             {/* Reviewed By cell */}
                                                             <td className="py-4 px-4 whitespace-nowrap">
-                                                                {latestDoc?.reviewed_by?.name ? (
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-emerald-100">{latestDoc.reviewed_by.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
-                                                                        <div>
-                                                                            <div className="text-xs font-bold text-slate-800">{latestDoc.reviewed_by.name}</div>
-                                                                            <div className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 mt-0.5"><CheckCircle className="w-3 h-3" /> Reviewed</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : reviewedBy ? (
-                                                                    <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black border border-slate-300 shadow-sm">{reviewedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
-                                                                        <div>
-                                                                            <div className="text-xs font-bold text-slate-500">{reviewedBy}</div>
-                                                                            <div className="text-[9px] text-amber-500 font-black uppercase tracking-widest mt-0.5">{reviewStatus}</div>
-                                                                        </div>
-                                                                    </div>
+                                                                {latestDoc ? (
+                                                                    <SignOffButton
+                                                                        documentId={latestDoc.id}
+                                                                        stage="reviewed_by"
+                                                                        label="Reviewer"
+                                                                        user={currentUser}
+                                                                        existingEntry={latestDoc.history?.find(h => h.action === 'signed_off' && h.stage === 'reviewed_by')}
+                                                                        onSuccess={() => {}}
+                                                                    />
                                                                 ) : (
-                                                                    <span className={`px-3 py-1.5 flex items-center w-fit gap-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border border-dashed ${preparedBy ? 'bg-amber-50 text-amber-500 border-amber-200' : 'bg-slate-50 text-slate-300 border-slate-200'}`}>
-                                                                        <span className={`w-1.5 h-1.5 rounded-full ${preparedBy ? 'bg-amber-400 animate-pulse shrink-0' : 'bg-slate-300 shrink-0'}`}></span>
-                                                                        {reviewStatus}
-                                                                    </span>
+                                                                    <div className="flex flex-col items-center w-full">
+                                                                        <div className="w-full border-b border-dashed border-slate-700/30 mb-2 mt-1" />
+                                                                        <div className="w-full py-1.5 px-3 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-600 text-[10px] font-bold uppercase tracking-widest text-center cursor-not-allowed">
+                                                                            Awaiting Review
+                                                                        </div>
+                                                                    </div>
                                                                 )}
                                                             </td>
 
                                                             {/* Approved By cell */}
                                                             <td className="py-4 px-4 whitespace-nowrap">
-                                                                {latestDoc?.approved_by?.name ? (
-                                                                    <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-amber-500 text-white flex items-center justify-center text-[10px] font-black shadow-sm ring-2 ring-amber-100">{latestDoc.approved_by.name.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
-                                                                        <div>
-                                                                            <div className="text-xs font-bold text-slate-800">{latestDoc.approved_by.name}</div>
-                                                                            <div className="text-[10px] text-emerald-500 font-bold flex items-center gap-1 mt-0.5"><CheckCircle className="w-3 h-3" /> Approved</div>
-                                                                        </div>
-                                                                    </div>
-                                                                ) : approvedBy ? (
-                                                                    <div className="flex items-center gap-3 opacity-60 group-hover:opacity-100 transition-opacity">
-                                                                        <div className="w-8 h-8 rounded-full bg-slate-200 text-slate-500 flex items-center justify-center text-[10px] font-black border border-slate-300 shadow-sm">{approvedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}</div>
-                                                                        <div>
-                                                                            <div className="text-xs font-bold text-slate-500">{approvedBy}</div>
-                                                                            <div className="text-[9px] text-amber-500 font-black uppercase tracking-widest mt-0.5">{aprvStatus}</div>
-                                                                        </div>
-                                                                    </div>
+                                                                {latestDoc ? (
+                                                                    <SignOffButton
+                                                                        documentId={latestDoc.id}
+                                                                        stage="approved_by"
+                                                                        label="Approver"
+                                                                        user={currentUser}
+                                                                        existingEntry={latestDoc.history?.find(h => h.action === 'signed_off' && h.stage === 'approved_by')}
+                                                                        onSuccess={() => {}}
+                                                                    />
                                                                 ) : (
-                                                                    <span className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg border border-dashed bg-slate-50 text-slate-300 border-slate-200`}>
-                                                                        {aprvStatus}
-                                                                    </span>
+                                                                    <div className="flex flex-col items-center w-full">
+                                                                        <div className="w-full border-b border-dashed border-slate-700/30 mb-2 mt-1" />
+                                                                        <div className="w-full py-1.5 px-3 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-600 text-[10px] font-bold uppercase tracking-widest text-center cursor-not-allowed">
+                                                                            Awaiting Approval
+                                                                        </div>
+                                                                    </div>
                                                                 )}
                                                             </td>
 
                                                             <td className="py-4 pr-6 text-right">
                                                                 {latestDoc ? (
-                                                                    <button onClick={() => {}} className="p-2 border border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all shadow-sm" title="Download Final PDF">
+                                                                    <button onClick={() => handleDownload(latestDoc.id, latestDoc.file_name)} className="p-2 border border-rose-200 bg-rose-50 text-rose-500 hover:bg-rose-500 hover:text-white rounded-xl transition-all shadow-sm" title="Download Latest Version">
                                                                         <Download className="w-4 h-4" />
                                                                     </button>
                                                                 ) : (
-                                                                    <button disabled className="p-2 border border-slate-200 bg-slate-100 rounded-xl text-slate-300 cursor-not-allowed">
+                                                                    <div className="text-slate-200 p-2 border border-dashed border-slate-100 rounded-xl">
                                                                         <Download className="w-4 h-4" />
-                                                                    </button>
+                                                                    </div>
                                                                 )}
                                                             </td>
                                                         </tr>

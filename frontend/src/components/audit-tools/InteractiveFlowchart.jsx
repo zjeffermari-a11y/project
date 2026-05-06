@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -10,7 +10,10 @@ import {
   Background,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Save } from 'lucide-react';
+import { Save, Plus, Trash2, Layout } from 'lucide-react';
+import api from '../../api';
+import AuditToolWrapper from './AuditToolWrapper';
+import SignOffButton from '../common/SignOffButton';
 
 const initialNodes = [
   {
@@ -22,13 +25,55 @@ const initialNodes = [
 ];
 
 let id = 1;
-const getId = () => `${++id}`;
+const getId = () => `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-const FlowchartEditor = ({ engagementId }) => {
+const FlowchartEditor = ({ engagement, user, readOnly }) => {
   const reactFlowWrapper = useRef(null);
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
+  const [versions, setVersions] = useState([]);
+  const [selectedVersionId, setSelectedVersionId] = useState(null);
+  const [signOffHistory, setSignOffHistory] = useState([]);
+
+  useEffect(() => {
+    fetchVersions();
+    loadLatest();
+  }, [engagement.id]);
+
+  const fetchVersions = async () => {
+    try {
+      const res = await api.get(`/engagements/${engagement.id}/tools/flowchart/versions`);
+      setVersions(res.data);
+    } catch (_) {}
+  };
+
+  const loadLatest = async () => {
+    try {
+      const res = await api.get(`/engagements/${engagement.id}/tools/flowchart`);
+      if (res.data?.form_data) {
+        setNodes(res.data.form_data.nodes || initialNodes);
+        setEdges(res.data.form_data.edges || []);
+        setSignOffHistory(res.data.sign_off_history || []);
+        setSelectedVersionId(res.data.id);
+      }
+    } catch (_) {}
+  };
+
+  const handleVersionSelect = async (versionId) => {
+    try {
+      const docRes = await api.get(`/engagements/${engagement.id}/documents`);
+      const target = docRes.data.find(d => d.id === parseInt(versionId));
+      if (target && target.form_data) {
+        setNodes(target.form_data.nodes);
+        setEdges(target.form_data.edges);
+        setSignOffHistory(target.sign_off_history || []);
+        setSelectedVersionId(versionId);
+      }
+    } catch (e) { alert('Failed to load version: ' + e.message); }
+  };
 
   const onConnect = useCallback(
     (params) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
@@ -43,12 +88,8 @@ const FlowchartEditor = ({ engagementId }) => {
   const onDrop = useCallback(
     (event) => {
       event.preventDefault();
-
       const type = event.dataTransfer.getData('application/reactflow');
-
-      if (typeof type === 'undefined' || !type) {
-        return;
-      }
+      if (!type || !reactFlowInstance) return;
 
       const position = reactFlowInstance.screenToFlowPosition({
         x: event.clientX,
@@ -67,91 +108,132 @@ const FlowchartEditor = ({ engagementId }) => {
     [reactFlowInstance, setNodes],
   );
 
-  const handleSave = () => {
-    if (reactFlowInstance) {
+  const handleSave = async () => {
+    if (!reactFlowInstance) return;
+    setSaving(true);
+    try {
       const flow = reactFlowInstance.toObject();
-      // TODO: Save to backend
-      console.log('Saved Flow:', flow);
-      alert('Flowchart saved locally! (Backend integration pending)');
+      const res = await api.post(`/engagements/${engagement.id}/tools/flowchart`, {
+        form_data: flow,
+        document_type: 'Process Flowchart',
+        phase: 'planning',
+        sign_off_history: signOffHistory,
+      });
+      setLastSaved(new Date().toLocaleTimeString());
+      fetchVersions();
+      if (res.data.document) setSelectedVersionId(res.data.document.id);
+    } catch (e) {
+      alert('Save failed: ' + e.message);
+    } finally {
+      setSaving(false);
     }
   };
 
+  const handleSignOffSuccess = (data) => {
+    setSignOffHistory(data.document?.history || []);
+    if (data.document?.id) setSelectedVersionId(data.document.id);
+    fetchVersions();
+  };
+
   return (
-    <div className="flex h-[700px] w-full border border-slate-300 rounded-xl overflow-hidden bg-white shadow-sm font-sans">
-      <div className="w-64 bg-slate-50 border-r border-slate-200 p-5 flex flex-col gap-4">
-        <h3 className="font-bold text-xs text-slate-800 uppercase tracking-widest mb-1">Flowchart Elements</h3>
-        <p className="text-[11px] text-slate-500 mb-4 leading-tight">Drag and drop nodes to the canvas.</p>
-        
-        <div 
-          className="bg-white border-2 border-emerald-400 p-3 rounded-full text-center text-xs cursor-grab shadow-sm font-bold text-emerald-700 hover:bg-emerald-50 transition-colors" 
-          onDragStart={(event) => event.dataTransfer.setData('application/reactflow', 'input')} 
-          draggable
-        >
-          Start Node
-        </div>
-        
-        <div 
-          className="bg-white border-2 border-indigo-400 p-3 rounded text-center text-xs cursor-grab shadow-sm font-bold text-indigo-700 hover:bg-indigo-50 transition-colors" 
-          onDragStart={(event) => event.dataTransfer.setData('application/reactflow', 'default')} 
-          draggable
-        >
-          Process Step
-        </div>
-        
-        <div 
-          className="bg-white border-2 border-rose-400 p-3 rounded-full text-center text-xs cursor-grab shadow-sm font-bold text-rose-700 hover:bg-rose-50 transition-colors" 
-          onDragStart={(event) => event.dataTransfer.setData('application/reactflow', 'output')} 
-          draggable
-        >
-          End Node
-        </div>
+    <AuditToolWrapper
+      toolTitle="Process Flowchart"
+      toolCode="FLOW"
+      phase="Audit Planning"
+      engagementTitle={engagement.title}
+      onSave={handleSave}
+      isSaving={saving}
+      lastSaved={lastSaved}
+      readOnly={readOnly}
+      versions={versions}
+      selectedVersionId={selectedVersionId}
+      onVersionSelect={handleVersionSelect}
+    >
+      <div className="flex h-[calc(100vh-160px)] w-full border border-slate-700 rounded-2xl overflow-hidden bg-slate-900 shadow-2xl">
+        {!readOnly && (
+          <div className="w-72 bg-slate-800 border-r border-slate-700 p-6 flex flex-col gap-6">
+            <div>
+              <h3 className="font-black text-[10px] text-slate-500 uppercase tracking-[0.2em] mb-4">Flow Elements</h3>
+              <div className="space-y-3">
+                <div 
+                  className="bg-emerald-500/10 border-2 border-emerald-500/50 p-4 rounded-xl text-center text-[11px] cursor-grab shadow-lg font-black text-emerald-400 hover:bg-emerald-500/20 transition-all active:scale-95" 
+                  onDragStart={(event) => event.dataTransfer.setData('application/reactflow', 'input')} 
+                  draggable
+                >
+                  START PROCESS
+                </div>
+                
+                <div 
+                  className="bg-indigo-500/10 border-2 border-indigo-500/50 p-4 rounded-xl text-center text-[11px] cursor-grab shadow-lg font-black text-indigo-400 hover:bg-indigo-500/20 transition-all active:scale-95" 
+                  onDragStart={(event) => event.dataTransfer.setData('application/reactflow', 'default')} 
+                  draggable
+                >
+                  PROCEDURE STEP
+                </div>
+                
+                <div 
+                  className="bg-rose-500/10 border-2 border-rose-500/50 p-4 rounded-xl text-center text-[11px] cursor-grab shadow-lg font-black text-rose-400 hover:bg-rose-500/20 transition-all active:scale-95" 
+                  onDragStart={(event) => event.dataTransfer.setData('application/reactflow', 'output')} 
+                  draggable
+                >
+                  END PROCESS
+                </div>
+              </div>
+            </div>
 
-        <div className="mt-auto">
-          <button 
-            onClick={handleSave}
-            className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm transition-colors"
+            <div className="mt-auto pt-6 border-t border-slate-700 space-y-4">
+               <h3 className="font-black text-[10px] text-slate-500 uppercase tracking-[0.2em]">Digital Sign-off</h3>
+               <div className="space-y-3">
+                  <SignOffButton stage="Prepared" documentId={selectedVersionId} history={signOffHistory} onSuccess={handleSignOffSuccess} className="w-full" />
+                  <SignOffButton stage="Reviewed" documentId={selectedVersionId} history={signOffHistory} onSuccess={handleSignOffSuccess} className="w-full" />
+                  <SignOffButton stage="Approved" documentId={selectedVersionId} history={signOffHistory} onSuccess={handleSignOffSuccess} className="w-full" />
+               </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex-1 relative bg-[#0f172a]" ref={reactFlowWrapper}>
+          <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            onNodesChange={readOnly ? undefined : onNodesChange}
+            onEdgesChange={readOnly ? undefined : onEdgesChange}
+            onConnect={readOnly ? undefined : onConnect}
+            onInit={setReactFlowInstance}
+            onDrop={onDrop}
+            onDragOver={onDragOver}
+            fitView
+            defaultEdgeOptions={{ style: { stroke: '#6366f1', strokeWidth: 3 }, animated: true }}
           >
-            <Save className="w-4 h-4" /> Save Flowchart
-          </button>
+            <Controls className="bg-slate-800 border-slate-700 fill-white" />
+            <MiniMap 
+              style={{ background: '#1e293b' }}
+              maskColor="rgba(0, 0, 0, 0.3)"
+              nodeStrokeColor={(n) => {
+                if (n.type === 'input') return '#10b981';
+                if (n.type === 'output') return '#f43f5e';
+                if (n.type === 'default') return '#6366f1';
+                return '#94a3b8';
+              }} 
+              nodeColor={(n) => {
+                if (n.type === 'input') return '#10b981';
+                if (n.type === 'output') return '#f43f5e';
+                if (n.type === 'default') return '#6366f1';
+                return '#1e293b';
+              }} 
+            />
+            <Background color="#334155" variant="lines" gap={20} size={1} />
+          </ReactFlow>
         </div>
       </div>
-
-      <div className="flex-1 relative bg-slate-50/50" ref={reactFlowWrapper}>
-        <ReactFlow
-          nodes={nodes}
-          edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onInit={setReactFlowInstance}
-          onDrop={onDrop}
-          onDragOver={onDragOver}
-          fitView
-          defaultEdgeOptions={{ style: { strokeWidth: 2 } }}
-        >
-          <Controls />
-          <MiniMap nodeStrokeColor={(n) => {
-            if (n.type === 'input') return '#34d399';
-            if (n.type === 'output') return '#fb7185';
-            if (n.type === 'default') return '#818cf8';
-            return '#eee';
-          }} nodeColor={(n) => {
-            if (n.type === 'input') return '#a7f3d0';
-            if (n.type === 'output') return '#fecdd3';
-            if (n.type === 'default') return '#c7d2fe';
-            return '#fff';
-          }} />
-          <Background variant="dots" gap={12} size={1} />
-        </ReactFlow>
-      </div>
-    </div>
+    </AuditToolWrapper>
   );
 };
 
-export default function InteractiveFlowchart({ engagementId }) {
+export default function InteractiveFlowchart({ engagement, user, readOnly }) {
   return (
     <ReactFlowProvider>
-      <FlowchartEditor engagementId={engagementId} />
+      <FlowchartEditor engagement={engagement} user={user} readOnly={readOnly} />
     </ReactFlowProvider>
   );
 }

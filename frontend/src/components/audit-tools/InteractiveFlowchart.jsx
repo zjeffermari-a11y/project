@@ -15,6 +15,7 @@ import {
 import '@xyflow/react/dist/style.css';
 import { Save, Plus, Trash2, Layout } from 'lucide-react';
 import api from '../../api';
+import AuditToolWrapper from './AuditToolWrapper';
 import StandardAuditFooter from '../common/StandardAuditFooter';
 
 

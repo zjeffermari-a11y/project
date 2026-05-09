@@ -109,10 +109,6 @@ export default function NoticeConference({ engagement, readOnly = false }) {
         <input type="text" className={`doc-input font-bold ${cls}`} value={formData[field]} onChange={e=>set(field,e.target.value)} disabled={readOnly} placeholder={placeholder} />
     );
 
-    const Field = ({ field, placeholder='', cls='' }) => (
-        <input type="text" className={`doc-input font-bold ${cls}`} value={formData[field]} onChange={e=>set(field,e.target.value)} disabled={readOnly} placeholder={placeholder} />
-    );
-
     return (
         <AuditToolWrapper
             toolTitle="Notice of Entry/Exit Conference"

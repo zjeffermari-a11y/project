@@ -1,5 +1,6 @@
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
+import { Lock, ArrowLeft } from 'lucide-react';
 import api from '../api';
 
 // --- Tool Components ---
@@ -32,6 +33,70 @@ const TOOL_MAP = {
 };
 
 /**
+ * Phase/tool mapping — mirrors AuditWorkspace.jsx DOCUMENTS constant.
+ * Used to determine which phase a toolKey belongs to for gate enforcement.
+ */
+const PHASE_ORDER = ['planning', 'execution', 'reporting', 'followup'];
+
+const PHASE_TOOLS = {
+    planning:  ['flowchart', 'iom', 'aap', 'awp', 'ccl', 'mac'],
+    execution: ['neecm', 'ecb', 'oac', 'wt'],
+    reporting: [],
+    followup:  [],
+};
+
+const PHASE_DOCS = {
+    planning: [
+        { label: 'Interactive Flowchart',               toolKey: 'flowchart' },
+        { label: 'Inventory of MOVs (IM)',               toolKey: 'iom' },
+        { label: 'Audit Area Profile (AAP)',             toolKey: 'aap' },
+        { label: 'Audit Work Program (AWP)',             toolKey: 'awp' },
+        { label: 'Compliance Checklist (CC)',            toolKey: 'ccl' },
+        { label: 'Management Audit Checklist',          toolKey: 'mac' },
+    ],
+    execution: [
+        { label: 'Notice of Entry/Exit Conference (ECM)', toolKey: 'neecm' },
+        { label: 'Entry Conference Briefer (ECB)',         toolKey: 'ecb' },
+        { label: 'Operations Audit Checklist (OAC)',       toolKey: 'oac' },
+        { label: 'Walkthrough Test Work Paper (WT)',       toolKey: 'wt' },
+    ],
+};
+
+/** Returns true if a document record has an approval signal. */
+function docIsApproved(doc) {
+    if (!doc) return false;
+    if (doc.approved_by_id != null) return true;
+    if (doc.status === 'approved') return true;
+    return doc.history?.some(h => {
+        const s = (h.stage || '').toLowerCase().replace(/\s+/g, '_');
+        return s === 'approved_by' || s === 'approved';
+    }) ?? false;
+}
+
+/** Returns true if all tool docs in `phaseId` are approved. */
+function isPhaseApproved(phaseId, allDocuments) {
+    const gateDocs = PHASE_DOCS[phaseId] || [];
+    const toolGateDocs = gateDocs.filter(d => d.toolKey);
+    if (toolGateDocs.length === 0) return true;
+    return toolGateDocs.every(docDef => {
+        const matches = allDocuments.filter(
+            d => d.phase === phaseId && d.document_type === docDef.label
+        );
+        if (matches.length === 0) return false;
+        const latest = matches.sort((a, b) => b.id - a.id)[0];
+        return docIsApproved(latest);
+    });
+}
+
+/** Given a toolKey, find which phase it belongs to. */
+function getPhaseForTool(toolKey) {
+    for (const [phase, keys] of Object.entries(PHASE_TOOLS)) {
+        if (keys.includes(toolKey)) return phase;
+    }
+    return null;
+}
+
+/**
  * AuditTool page — renders the correct interactive audit tool
  * based on the URL params: /workspace/:id/tool/:toolKey
  *
@@ -40,7 +105,9 @@ const TOOL_MAP = {
  */
 export default function AuditTool() {
     const { id, toolKey } = useParams();
+    const navigate = useNavigate();
     const [engagement, setEngagement] = useState(null);
+    const [documents, setDocuments] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -49,17 +116,21 @@ export default function AuditTool() {
     const isAuditee = user.role === 'auditee';
 
     useEffect(() => {
-        const fetchEngagement = async () => {
+        const fetchData = async () => {
             try {
-                const res = await api.get(`/engagements/${id}`);
-                setEngagement(res.data);
+                const [engRes, docsRes] = await Promise.all([
+                    api.get(`/engagements/${id}`),
+                    api.get(`/engagements/${id}/documents`),
+                ]);
+                setEngagement(engRes.data);
+                setDocuments(docsRes.data?.data || docsRes.data || []);
             } catch (e) {
                 setError('Failed to load engagement details. Please go back and try again.');
             } finally {
                 setLoading(false);
             }
         };
-        fetchEngagement();
+        fetchData();
     }, [id]);
 
     if (loading) {
@@ -95,6 +166,39 @@ export default function AuditTool() {
                 </div>
             </div>
         );
+    }
+
+    // --- Phase Gate Enforcement ---
+    // Determine which phase this tool belongs to. If it's not planning (always open),
+    // verify that the preceding phase has all its tool documents fully approved.
+    const toolPhase = getPhaseForTool(toolKey);
+    const phaseIdx = PHASE_ORDER.indexOf(toolPhase);
+    if (phaseIdx > 0) {
+        const prevPhase = PHASE_ORDER[phaseIdx - 1];
+        if (!isPhaseApproved(prevPhase, documents)) {
+            const prevPhaseLabel = prevPhase.charAt(0).toUpperCase() + prevPhase.slice(1);
+            return (
+                <div className="h-screen bg-slate-900 flex flex-col items-center justify-center gap-6">
+                    <div className="text-center bg-slate-800 border border-amber-800/60 p-10 rounded-2xl max-w-md shadow-2xl">
+                        <div className="w-16 h-16 bg-amber-900/40 border border-amber-700 rounded-2xl flex items-center justify-center mx-auto mb-5">
+                            <Lock className="w-8 h-8 text-amber-400" />
+                        </div>
+                        <h2 className="text-white font-black text-lg mb-2 uppercase tracking-wider">Phase Locked</h2>
+                        <p className="text-slate-400 text-sm leading-relaxed">
+                            This tool belongs to the <span className="text-amber-400 font-bold capitalize">{toolPhase}</span> phase.
+                            All <span className="text-amber-400 font-bold">{prevPhaseLabel}</span> interactive documents
+                            must be fully approved before proceeding.
+                        </p>
+                        <button
+                            onClick={() => navigate(`/auditor/workspace/${id}`)}
+                            className="mt-6 inline-flex items-center gap-2 px-5 py-2.5 bg-slate-700 hover:bg-slate-600 text-white rounded-xl text-sm font-black uppercase tracking-widest transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" /> Back to Workspace
+                        </button>
+                    </div>
+                </div>
+            );
+        }
     }
 
     return (

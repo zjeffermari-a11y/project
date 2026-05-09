@@ -273,15 +273,68 @@ export default function AuditWorkspace() {
     if (loading) return <div className="p-10 text-center font-bold text-slate-400">Loading Workspace...</div>;
     if (!engagement) return <div className="p-10 text-center font-bold text-rose-500">Engagement not found.</div>;
 
+    // Phase gate: a phase is unlocked if all tool docs in the PREVIOUS phase have been approved.
+    // Planning is always unlocked. Each subsequent phase requires the prior phase's interactive
+    // tool documents to have an 'approved_by' signature recorded in their history.
+    const PHASE_ORDER = ['planning', 'execution', 'reporting', 'followup'];
+
+    const isPhaseUnlocked = (phaseId) => {
+        const idx = PHASE_ORDER.indexOf(phaseId);
+        if (idx <= 0) return true; // planning is always open
+        const prevPhase = PHASE_ORDER[idx - 1];
+        const prevItems = DOCUMENTS[prevPhase]?.items || [];
+        const prevToolItems = prevItems.filter(d => d.toolKey); // only interactive tool docs
+        if (prevToolItems.length === 0) return true; // no gate items, open
+        return prevToolItems.every(doc => {
+            const docs = documents.filter(d => d.phase === prevPhase && d.document_type === doc.label);
+            if (docs.length === 0) return false;
+            const latest = docs.sort((a, b) => b.id - a.id)[0];
+            // Check multiple signals for approval:
+            // 1. approved_by FK column set directly
+            // 2. history entry with stage 'approved_by' (backend canonical form)
+            // 3. history entry with stage 'Approved' (legacy/frontend form)
+            // 4. document status is already 'approved'
+            const hasApproval =
+                latest?.approved_by_id != null ||
+                latest?.status === 'approved' ||
+                latest?.history?.some(h => {
+                    const s = (h.stage || '').toLowerCase().replace(/\s+/g, '_');
+                    return s === 'approved_by' || s === 'approved';
+                });
+            return hasApproval;
+        });
+    };
+
     const PhaseCard = ({ phaseId, label, iconTheme }) => {
         const isSelected = selectedPhase === phaseId;
         const theme = THEMES[iconTheme];
+        const unlocked = isPhaseUnlocked(phaseId);
         return (
-            <div onClick={() => setSelectedPhase(phaseId)} className={`group bg-white p-6 rounded-[2rem] border border-slate-200 shadow-sm transition-all duration-300 flex flex-col items-center text-center cursor-pointer ${isSelected ? `ring-4 ${theme.ring} shadow-xl scale-105` : `hover:shadow-xl ${theme.hoverBorder}`}`}>
-                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 shadow-inner ${isSelected ? `${theme.bgMain} text-white` : `${theme.bgLight} ${theme.textMain} group-hover:${theme.bgMain} group-hover:text-white`}`}>
-                    <Folder className="h-10 w-10" />
+            <div
+                onClick={() => {
+                    if (!unlocked) return;
+                    setSelectedPhase(phaseId);
+                }}
+                title={!unlocked ? `Complete all ${DOCUMENTS[PHASE_ORDER[PHASE_ORDER.indexOf(phaseId)-1]]?.title} before proceeding.` : ''}
+                className={`group bg-white p-6 rounded-[2rem] border shadow-sm transition-all duration-300 flex flex-col items-center text-center ${
+                    !unlocked
+                        ? 'border-slate-100 opacity-60 cursor-not-allowed'
+                        : isSelected
+                        ? `ring-4 ${theme.ring} border-transparent shadow-xl scale-105 cursor-pointer`
+                        : `border-slate-200 hover:shadow-xl ${theme.hoverBorder} cursor-pointer`
+                }`}
+            >
+                <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 shadow-inner ${
+                    !unlocked
+                        ? 'bg-slate-100 text-slate-300'
+                        : isSelected
+                        ? `${theme.bgMain} text-white`
+                        : `${theme.bgLight} ${theme.textMain} group-hover:${theme.bgMain} group-hover:text-white`
+                }`}>
+                    {!unlocked ? <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg> : <Folder className="h-10 w-10" />}
                 </div>
-                <h3 className="font-black text-slate-800 uppercase text-[10px] tracking-widest">{label}</h3>
+                <h3 className={`font-black uppercase text-[10px] tracking-widest ${!unlocked ? 'text-slate-400' : 'text-slate-800'}`}>{label}</h3>
+                {!unlocked && <span className="text-[9px] font-bold text-slate-400 mt-1">Locked</span>}
             </div>
         );
     };
@@ -376,47 +429,35 @@ export default function AuditWorkspace() {
                                                         .sort((a, b) => b.id - a.id);
                                                     const latestDoc = relatedDocs.length > 0 ? relatedDocs[0] : null;
 
-                                                    // 1. Prepared By: From AWP "Responsible Personnel" for matching labels
-                                                    let awpPersonnelMatched = null;
-                                                    if (awpTool?.form_data?.phases) {
-                                                        for (const p of awpTool.form_data.phases) {
-                                                            const row = p.rows?.find(r => 
-                                                                r.activity && 
-                                                                (r.activity.toLowerCase().includes(doc.label.toLowerCase()) || 
-                                                                 doc.label.toLowerCase().includes(r.activity.toLowerCase()))
-                                                            );
-                                                            if (row?.personnel) {
-                                                                awpPersonnelMatched = row.personnel;
-                                                                break;
-                                                            }
-                                                        }
-                                                    }
+                                                    // Read signatories from the tool's own form_data (saved via StandardAuditFooter)
+                                                    const toolFormData = latestDoc?.form_data || {};
 
-                                                    const preparedBy = latestDoc?.uploader?.name || awpPersonnelMatched || null;
-                                                    const preparedInitials = preparedBy ? preparedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase() : '';
+                                                    // Prepared By: prefer history sign-off > form_data > uploader
+                                                    const prepHistEntry = latestDoc?.history?.find(h => h.stage === 'Prepared' || h.stage === 'prepared_by');
+                                                    const preparedBy = prepHistEntry?.user?.name || toolFormData.preparedBy || latestDoc?.uploader?.name || null;
+                                                    const preparedTitle = toolFormData.preparedTitle || '';
+                                                    const isPrepSigned = !!prepHistEntry;
 
-                                                    // Leader fallback for initials display
-                                                    const leadUser = engagement.users?.find(u => u.pivot?.role_in_engagement === 'lead_auditor' || u.pivot?.role_in_engagement === 'Lead Auditor');
-                                                    const leadName = leadUser?.name || 'Unassigned';
-                                                    const leadInitials = leadName.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase();
-
-                                                    // 2. Approved By: Director (Dynamic fetch from engagement roles)
-                                                    const directorUser = engagement.users?.find(u => 
-                                                        u.pivot?.role_in_engagement?.toLowerCase() === 'director'
-                                                    );
-                                                    const approvedBy = latestDoc?.approved_by?.name || directorUser?.name || 'Director';
-                                                    const aprvStatus = latestDoc?.approved_by?.name ? 'Approved' : 'Awaiting';
-
-                                                    // 3. Reviewed By: Asst TL or Team Leader
-                                                    const atlUser = engagement.users?.find(u => 
+                                                    // Reviewed By: prefer history sign-off > form_data > role lookup
+                                                    const revHistEntry = latestDoc?.history?.find(h => h.stage === 'Reviewed' || h.stage === 'reviewed_by');
+                                                    const atlUser = engagement.users?.find(u =>
                                                         ['assistant team leader', 'asst_team_leader', 'atl'].includes(u.pivot?.role_in_engagement?.toLowerCase())
                                                     );
-                                                    const tlUser = engagement.users?.find(u => 
+                                                    const tlUser = engagement.users?.find(u =>
                                                         ['team leader', 'lead_auditor', 'tl'].includes(u.pivot?.role_in_engagement?.toLowerCase())
                                                     );
-                                                    
-                                                    const reviewedBy = latestDoc?.reviewed_by?.name || atlUser?.name || tlUser?.name || null;
-                                                    const reviewStatus = latestDoc?.reviewed_by?.name ? 'Reviewed' : (preparedBy ? 'Awaiting Receipt' : 'Awaiting');
+                                                    const reviewedBy = revHistEntry?.user?.name || toolFormData.reviewedBy || atlUser?.name || tlUser?.name || null;
+                                                    const reviewedTitle = toolFormData.reviewedTitle || '';
+                                                    const isRevSigned = !!revHistEntry;
+
+                                                    // Approved By: prefer history sign-off > form_data > director role lookup
+                                                    const aprvHistEntry = latestDoc?.history?.find(h => h.stage === 'Approved' || h.stage === 'approved_by');
+                                                    const directorUser = engagement.users?.find(u =>
+                                                        u.pivot?.role_in_engagement?.toLowerCase() === 'director'
+                                                    );
+                                                    const approvedBy = aprvHistEntry?.user?.name || toolFormData.approvedBy || directorUser?.name || null;
+                                                    const approvedTitle = toolFormData.approvedTitle || '';
+                                                    const isAprvSigned = !!aprvHistEntry;
 
                                                     return (
                                                         <tr key={idx} className="hover:bg-slate-50 transition-colors group">
@@ -430,14 +471,28 @@ export default function AuditWorkspace() {
                                                                         {latestDoc && <div className="text-[10px] font-bold text-slate-400 mt-1">Updated: {new Date(latestDoc.updated_at).toLocaleDateString()}</div>}
                                                                         <div className="flex flex-wrap gap-2 mt-2">
                                                                             {doc.toolKey && (
-                                                                                <Link to={`/auditor/workspace/${engagement.id}/tool/${doc.toolKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors">
-                                                                                    <FileCode2 className="w-3 h-3" /> Interactive Tool
-                                                                                </Link>
+                                                                                isPhaseUnlocked(selectedPhase) ? (
+                                                                                    <Link to={`/auditor/workspace/${engagement.id}/tool/${doc.toolKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors">
+                                                                                        <FileCode2 className="w-3 h-3" /> Interactive Tool
+                                                                                    </Link>
+                                                                                ) : (
+                                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed" title="Complete and approve the previous phase first.">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                                                                        Locked
+                                                                                    </span>
+                                                                                )
                                                                             )}
                                                                             {doc.generateKey && (
-                                                                                <Link to={`/auditor/workspace/${engagement.id}/generate/${doc.generateKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 hover:bg-blue-600 hover:text-white transition-colors">
-                                                                                    <PenTool className="w-3 h-3" /> Generate Draft
-                                                                                </Link>
+                                                                                isPhaseUnlocked(selectedPhase) ? (
+                                                                                    <Link to={`/auditor/workspace/${engagement.id}/generate/${doc.generateKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 hover:bg-blue-600 hover:text-white transition-colors">
+                                                                                        <PenTool className="w-3 h-3" /> Generate Draft
+                                                                                    </Link>
+                                                                                ) : (
+                                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed" title="Complete and approve the previous phase first.">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                                                                        Locked
+                                                                                    </span>
+                                                                                )
                                                                             )}
                                                                         </div>
                                                                     </div>
@@ -445,68 +500,58 @@ export default function AuditWorkspace() {
                                                             </td>
                                                             
                                                             {/* Prepared By cell */}
-                                                            <td className="py-4 px-4 whitespace-nowrap">
-                                                                {latestDoc ? (
-                                                                    <SignOffButton
-                                                                        documentId={latestDoc.id}
-                                                                        stage="prepared_by"
-                                                                        label="Preparer"
-                                                                        user={currentUser}
-                                                                        existingEntry={latestDoc.history?.find(h => h.action === 'signed_off' && h.stage === 'prepared_by')}
-                                                                        onSuccess={() => {
-                                                                            const updatedEng = { ...engagement };
-                                                                            setEngagement(updatedEng);
-                                                                        }}
-                                                                    />
-                                                                ) : (
-                                                                    <div className="flex flex-col items-center w-full">
-                                                                        <div className="w-full border-b border-dashed border-slate-700/30 mb-2 mt-1" />
-                                                                        <div className="w-full py-1.5 px-3 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-600 text-[10px] font-bold uppercase tracking-widest text-center cursor-not-allowed">
-                                                                            Awaiting Prep
+                                                            <td className="py-4 px-4 align-middle">
+                                                                {preparedBy ? (
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isPrepSigned ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400' : 'bg-indigo-100 text-indigo-700'}`}>
+                                                                            {preparedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{preparedBy}</div>
+                                                                            {preparedTitle && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{preparedTitle}</div>}
+                                                                            {isPrepSigned && <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Signed</div>}
                                                                         </div>
                                                                     </div>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Awaiting Prep</span>
                                                                 )}
                                                             </td>
 
                                                             {/* Reviewed By cell */}
-                                                            <td className="py-4 px-4 whitespace-nowrap">
-                                                                {latestDoc ? (
-                                                                    <SignOffButton
-                                                                        documentId={latestDoc.id}
-                                                                        stage="reviewed_by"
-                                                                        label="Reviewer"
-                                                                        user={currentUser}
-                                                                        existingEntry={latestDoc.history?.find(h => h.action === 'signed_off' && h.stage === 'reviewed_by')}
-                                                                        onSuccess={() => {}}
-                                                                    />
-                                                                ) : (
-                                                                    <div className="flex flex-col items-center w-full">
-                                                                        <div className="w-full border-b border-dashed border-slate-700/30 mb-2 mt-1" />
-                                                                        <div className="w-full py-1.5 px-3 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-600 text-[10px] font-bold uppercase tracking-widest text-center cursor-not-allowed">
-                                                                            Awaiting Review
+                                                            <td className="py-4 px-4 align-middle">
+                                                                {reviewedBy ? (
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isRevSigned ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400' : 'bg-amber-100 text-amber-700'}`}>
+                                                                            {reviewedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{reviewedBy}</div>
+                                                                            {reviewedTitle && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{reviewedTitle}</div>}
+                                                                            {isRevSigned && <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Signed</div>}
+                                                                            {!isRevSigned && preparedBy && <div className="text-[9px] font-bold text-amber-500 uppercase tracking-wider">Awaiting Receipt</div>}
                                                                         </div>
                                                                     </div>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Awaiting Review</span>
                                                                 )}
                                                             </td>
 
                                                             {/* Approved By cell */}
-                                                            <td className="py-4 px-4 whitespace-nowrap">
-                                                                {latestDoc ? (
-                                                                    <SignOffButton
-                                                                        documentId={latestDoc.id}
-                                                                        stage="approved_by"
-                                                                        label="Approver"
-                                                                        user={currentUser}
-                                                                        existingEntry={latestDoc.history?.find(h => h.action === 'signed_off' && h.stage === 'approved_by')}
-                                                                        onSuccess={() => {}}
-                                                                    />
-                                                                ) : (
-                                                                    <div className="flex flex-col items-center w-full">
-                                                                        <div className="w-full border-b border-dashed border-slate-700/30 mb-2 mt-1" />
-                                                                        <div className="w-full py-1.5 px-3 rounded-md bg-slate-800/50 border border-slate-700/50 text-slate-600 text-[10px] font-bold uppercase tracking-widest text-center cursor-not-allowed">
-                                                                            Awaiting Approval
+                                                            <td className="py-4 px-4 align-middle">
+                                                                {approvedBy ? (
+                                                                    <div className="flex items-center gap-2.5">
+                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isAprvSigned ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400' : 'bg-rose-100 text-rose-700'}`}>
+                                                                            {approvedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                        </div>
+                                                                        <div>
+                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{approvedBy}</div>
+                                                                            {approvedTitle && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{approvedTitle}</div>}
+                                                                            {isAprvSigned && <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Approved</div>}
+                                                                            {!isAprvSigned && reviewedBy && <div className="text-[9px] font-bold text-rose-400 uppercase tracking-wider">Awaiting Approval</div>}
                                                                         </div>
                                                                     </div>
+                                                                ) : (
+                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Awaiting Approval</span>
                                                                 )}
                                                             </td>
 

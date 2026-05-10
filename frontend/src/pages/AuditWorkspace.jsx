@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
 import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, CheckCircle2, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink, Lock } from 'lucide-react';
 import api from '../api';
 import MovTable from '../components/dashboard/MovTable';
@@ -175,7 +175,11 @@ export default function AuditWorkspace() {
     const [documents, setDocuments] = useState([]);
     const [logs, setLogs] = useState([]);
     const [activeTab, setActiveTab] = useState('tools'); // 'tools', 'movs', 'trail'
-    const [selectedPhase, setSelectedPhase] = useState(null);
+    const [searchParams, setSearchParams] = useSearchParams();
+    const selectedPhase = searchParams.get('phase') || null;
+    const setSelectedPhase = (phase) => {
+        setSearchParams(phase ? { phase } : {}, { replace: true });
+    };
     const [awpTool, setAwpTool] = useState(null);
     const [loading, setLoading] = useState(true);
     const [completingPhase, setCompletingPhase] = useState(false);

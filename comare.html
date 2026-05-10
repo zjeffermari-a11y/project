@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Completion Assessment Report (ComARe)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            color: #000;
+            background-color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Header Styles */
+        .header-section {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .logo {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .dept-name {
+            font-size: 12px;
+            margin: 0 0 2px 0;
+        }
+
+        .doc-title {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 0 0 2px 0;
+        }
+
+        .doc-meta {
+            font-size: 9px;
+            margin: 0;
+            color: #333;
+        }
+
+        /* Form Fields Styles */
+        .form-fields {
+            display: grid;
+            grid-template-columns: 140px 10px 400px;
+            row-gap: 5px;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .form-fields div:nth-child(3n) {
+            border-bottom: 1px solid #000;
+            min-height: 15px;
+        }
+
+        .section-break {
+            grid-column: 1 / -1;
+            height: 15px;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+            table-layout: fixed;
+        }
+
+        th, td {
+            border: 1px solid #000;
+            padding: 5px;
+            vertical-align: top;
+            word-wrap: break-word;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        thead th {
+            vertical-align: middle;
+        }
+
+        .col-comp { width: 14%; }
+        .col-focus { width: 14%; }
+        .col-perf { width: 14%; }
+        .col-form { width: 22%; }
+        .col-mov { width: 14%; }
+        .col-assess { width: 10%; }
+        .col-remarks { width: 12%; }
+
+        .text-center { text-align: center; }
+        .text-right { text-align: right; }
+        .font-bold { font-weight: bold; }
+        .font-italic { font-style: italic; }
+        
+        /* Purple Text Color corresponding to the image */
+        .text-purple { 
+            color: #7030a0; 
+        }
+
+        .list-unstyled {
+            list-style-type: none;
+            padding-left: 0;
+            margin: 5px 0;
+        }
+
+        .list-unstyled li {
+            margin-bottom: 2px;
+        }
+
+        /* Overall Assessment Section */
+        .overall-assessment {
+            margin-bottom: 40px;
+        }
+
+        .overall-title {
+            font-weight: bold;
+            text-decoration: underline;
+            margin-bottom: 5px;
+        }
+
+        .overall-box {
+            border: 1px solid transparent; /* Keeps spacing but matches excel empty look */
+            min-height: 60px;
+            margin-bottom: 40px;
+        }
+
+        /* Signatures Section */
+        .signatures-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .sig-block {
+            position: relative;
+        }
+
+        .sig-label {
+            font-weight: bold;
+            margin-bottom: 40px;
+        }
+
+        .sig-line {
+            border-bottom: 1px solid #000;
+            margin-bottom: 2px;
+            width: 90%;
+            min-height: 15px;
+        }
+
+        /* Floating Box Styles (replicating the excel pasted boxes) */
+        .floating-sig-box {
+            border: 1px solid #000;
+            width: 85%;
+            margin-top: 10px;
+            background-color: #fff;
+        }
+
+        .floating-sig-box .box-header {
+            background-color: #000;
+            color: #fff;
+            font-weight: bold;
+            padding: 2px 5px;
+            font-size: 10px;
+        }
+
+        .floating-sig-box .box-body {
+            height: 40px;
+        }
+
+        .floating-sig-box .box-footer {
+            border-top: 1px solid #000;
+            text-align: center;
+            font-size: 10px;
+            padding: 2px;
+        }
+        
+        .overlay-block {
+            position: absolute;
+            top: 20px;
+            left: 0;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .bottom-signatures {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-top: 50px;
+        }
+
+        /* Inner Table logo */
+        .inner-table-logo {
+            width: 60px;
+            height: 60px;
+            display: block;
+            margin: 10px auto;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header -->
+    <div class="header-section">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg/1024px-Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png" alt="DILG Logo" class="logo">
+        <div class="header-text">
+            <p class="dept-name">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+            <h1 class="doc-title">COMPLETION ASSESSMENT REPORT (ComARe)</h1>
+            <p class="doc-meta">FM-QP-DILG-IAS-33-30 | Rev00 | 10.10.22</p>
+        </div>
+    </div>
+
+    <!-- Form Info Fields -->
+    <div class="form-fields">
+        <div>ComARe Reference No.</div><div>:</div><div></div>
+        <div>Engagement Title</div><div>:</div><div></div>
+        <div>Period</div><div>:</div><div></div>
+        <div class="section-break"></div>
+        <div>Team/s Composition</div><div></div><div></div>
+        <div>Team Leader</div><div>:</div><div></div>
+        <div>Assistant Team Leader</div><div>:</div><div></div>
+        <div>Team Member/s</div><div>:</div><div></div>
+    </div>
+
+    <!-- Main Table -->
+    <table>
+        <thead>
+            <tr>
+                <th class="col-comp" rowspan="2">Components</th>
+                <th class="col-focus" rowspan="2">Focus</th>
+                <th colspan="2">Key Performance Indicators</th>
+                <th class="col-mov" rowspan="2">MOV</th>
+                <th class="col-assess" rowspan="2">Assesment Result</th>
+                <th class="col-remarks" rowspan="2">Remarks<br><span style="font-size: 9px; font-style: italic; font-weight: normal;">(If unmet indicate reason(s)/Interventions)</span></th>
+            </tr>
+            <tr>
+                <th class="col-perf">Performance Areas</th>
+                <th class="col-form">Formula and Target</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Row A -->
+            <tr>
+                <td>A. Overall effectiveness and efficiency of the IAS/IAU in accordance with DBM rules and regulations and the agency's policies and standards;</td>
+                <td>
+                    To include Audit Reporting to Audit Follow-up accomplishments<br><br>
+                    <span class="font-bold">Effectiveness:</span>
+                    <ul class="list-unstyled">
+                        <li>1. Consolidated PARe results</li>
+                        <li>2. Relevant SPMS targets</li>
+                        <li>3. QO rating</li>
+                        <li>4. Audit Work Program</li>
+                        <li>6. Feedback Survey</li>
+                    </ul>
+                    <span class="font-bold">Efficiency:</span><br>
+                    - Budget Plan vs Actual
+                </td>
+                <td>
+                    <span class="font-bold">Effectiveness:</span>
+                    <ul class="list-unstyled">
+                        <li>1. PARe overall rating</li>
+                        <li>2. SPMS output rating</li>
+                        <li>3. QO rating</li>
+                        <li>4. Audit Work Program rating</li>
+                        <li>5. AFSF rating</li>
+                    </ul>
+                    <span class="font-bold">Efficiency:</span><br>
+                    Physical and Financial Accomplishments
+                </td>
+                <td>
+                    <span class="font-bold">Effectiveness:</span>
+                    <ul class="list-unstyled">
+                        <li>1. At least 80%</li>
+                        <li>2. At least 4</li>
+                        <li>3. At least 80%</li>
+                        <li>4. At least 80%</li>
+                        <li>5. At least 90%</li>
+                    </ul>
+                    <span class="font-bold">Efficiency:</span><br>
+                    Physical and Financial Actual Outputs over Targets x 100
+                </td>
+                <td>
+                    <span class="font-bold">Effectiveness:</span>
+                    <ul class="list-unstyled">
+                        <li>1. Updated PARe (Audit Planning to Follow-up)</li>
+                        <li>2. SPMS output rating,</li>
+                        <li>3. QME</li>
+                        <li>4. Audit Work Program</li>
+                        <li>5. CSS Monitoring Logsheet</li>
+                    </ul>
+                    <span class="font-bold">Efficiency:</span><br>
+                    OPB and Accomplishment Report
+                </td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- Row B1 -->
+            <tr>
+                <td rowspan="3">B. Findings and recommendations which are based on facts and substantial evidence and in compliance with relevant laws, rules and regulations;</td>
+                <td>No. of audit recommendations</td>
+                <td>No. of SILG approved audit recommendations</td>
+                <td class="text-center font-bold font-italic">A. Sum of Ratings per Audit Finding over Total No. of Audit Findings</td>
+                <td rowspan="3">
+                    IAR<br><br><br><br><br>
+                    Consolidated rating of Item B of PARe results
+                </td>
+                <td rowspan="3"></td>
+                <td rowspan="3"></td>
+            </tr>
+            <!-- Row B2 -->
+            <tr>
+                <td>Quality of Audit Findings and Audit Recommendations</td>
+                <td>
+                    Average rating of Quality of Audit Findings<br>
+                    <span class="font-italic">[1) completeness; 2) appropriateness; 3) relevance; 4) factual; 5) evidence-based]</span><br><br>
+                    Average rating of Quality of Audit Recommendations<br>
+                    <span class="font-italic">[1) Specific; 2) Measurable; 3) Achievable; 4) Result-oriented; 5) Time-bound]</span>
+                </td>
+                <td class="text-center">
+                    <span class="font-bold font-italic">B. Sum of Ratings per Audit Recommendation over Total No. of Recommendations</span><br><br>
+                    <span class="font-bold font-italic">C. Sum of Ratings per Workpaper over Total No. of Workpapers</span><br><br>
+                    <span class="font-bold">Note:<br>Average Rating is 3 or above = Met<br>Below 3 = Unmet</span>
+                </td>
+            </tr>
+            <!-- Row B3 -->
+            <tr>
+                <td>Quality of Work Papers</td>
+                <td>
+                    Average rating of Quality of Work Papers<br>
+                    <span class="font-italic">1) correct (accurate);<br>2) complete;<br>3) clear;<br>4) concise (few words);<br>5) coherent (organized)</span>
+                </td>
+                <td class="text-center"></td>
+            </tr>
+
+            <!-- Row C -->
+            <tr>
+                <td>
+                    C. Application of internal auditing standards (NGICS, PGIAM and other relevant standards) pursuant to DBM rules and regulations;
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg/1024px-Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png" class="inner-table-logo" alt="DILG Logo inner">
+                </td>
+                <td>
+                    To include Audit Reporting to Audit Follow-up accomplishments<br><br>
+                    Compliance to Audit Process/Procedure<br><br>
+                    <span class="font-italic">(Based on planned arrangements as indicated in the approved Audit Work Program)</span>
+                </td>
+                <td>Percentage of met items in the Audit Work Program</td>
+                <td class="text-center">
+                    <span class="font-bold font-italic">No. of Activities Completed over Total No. of Activities Due x 100</span><br><br>
+                    <span class="font-italic">Note:<br>80% and above = Met<br>Below 80% = Unmet</span>
+                </td>
+                <td>Consolidated rating of Item C of PARe results, including audit reporting and follow-up</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- Row D -->
+            <tr>
+                <td>D. Findings and recommendations which promote the adequacy of internal control pursuant to DBM rules and regulations; and</td>
+                <td>Findings and recommendations addressed gaps, weaknesses and deficiencies of ICS</td>
+                <td>No. of audit findings and recommendations on internal control</td>
+                <td class="text-center text-purple font-italic">
+                    No. of Control Deficiencies with corresponding Audit Finding and Recommendation/s over Total No. of Control Deficiencies x 100<br><br>
+                    Note:<br>100% = Met<br>Below 100% = Unmet
+                </td>
+                <td>Consolidated rating of Item D of PARe results, including audit reporting and follow-up</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- Row E -->
+            <tr>
+                <td>E. High standards of ethics and efficiency of public officials and employees are observed pursuant to CSC rules and regulations.</td>
+                <td>
+                    To include Audit Reporting to Audit Follow-up accomplishments<br><br>
+                    On efficiency:<br>
+                    1. Scope <span class="text-purple font-italic">(audit areas and samples)</span><br>
+                    2. Cost <span class="text-purple font-italic">and Audit Activities Completed per Audit Work Program</span><br><br><br>
+                    On ethics:<br>
+                    3. Discharged duties with utmost responsibility, integrity, competence and uphold public interest over personal interest based on RA 6713
+                </td>
+                <td>
+                    Planned vs Actual<br>
+                    1. Scope<br>
+                    2. Cost<br><br><br>
+                    3. Rating on Individual Assessment on Demonstration of IA Principles
+                </td>
+                <td class="text-purple font-italic">
+                    On efficiency:<br>
+                    1. No. of Audit Areas and Transactions Covered over Total No. of Audit Areas and Transactions planned to be covered x 100<br>
+                    Note:<br>
+                    At least 80% = Met<br>
+                    Below 80% = Unmet<br><br>
+                    2. Actual Cost over Commited Cost x 100 with at least 80% completion of Audit Activities in the Audit Work Program<br>
+                    Note:<br>
+                    80-100% = Met<br>
+                    Less than 80% or more than 100% = Unmet<br><br>
+                    On Ethics:<br>
+                    3. Sum of all Ratings of Team Members over 5<br><br>
+                    At least 3 = Met<br>
+                    Below 3 = Unmet
+                </td>
+                <td>Consolidated rating of Item E of PARe results, including audit reporting and follow-up</td>
+                <td></td>
+                <td></td>
+            </tr>
+
+            <!-- Footer Row -->
+            <tr>
+                <td colspan="5" class="text-right font-bold" style="background-color: #f2f2f2; border-right: none;">Total Met</td>
+                <td style="background-color: #f2f2f2; border-left: none;"></td>
+                <td style="background-color: #f2f2f2;"></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <!-- Overall Assessment -->
+    <div class="overall-assessment">
+        <div class="overall-title">OVERALL ASSESSMENT</div>
+        <div class="font-italic">(Describe results of assessment)</div>
+        <div class="overall-box"></div>
+    </div>
+
+    <!-- Signatures Container Top -->
+    <div class="signatures-container">
+        <div class="sig-block">
+            <div class="sig-label">Prepared by:</div>
+            
+            <!-- Standard text lines overlapping with pasted box look -->
+            <div style="margin-top: 60px;">
+                <div class="sig-line" style="margin-top: 10px;">Auditor's Name over Signature/Date</div>
+                <div>Position</div>
+            </div>
+
+            <!-- Floating box replication -->
+            <div class="overlay-block floating-sig-box">
+                <div class="box-header">Prepared By</div>
+                <div class="box-body"></div>
+                <div class="box-footer">Process Owner</div>
+            </div>
+        </div>
+        
+        <div class="sig-block">
+            <div class="sig-label">Reviewed by:</div>
+            <div style="margin-top: 110px;">
+                <div class="sig-line">Team Leader's Name over Signature/Date</div>
+                <div>Position</div>
+            </div>
+        </div>
+        
+        <div class="sig-block">
+            <div class="sig-label">Approved by:</div>
+            <div style="margin-top: 110px;">
+                <div class="sig-line">Head of Internal Audit Service/Date</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signatures Container Bottom -->
+    <div class="bottom-signatures">
+        <div class="sig-block">
+            <!-- Empty column left -->
+        </div>
+        
+        <div class="sig-block">
+            <div class="floating-sig-box" style="width: 100%;">
+                <div class="box-header">Reviewed By</div>
+                <div class="box-body" style="height: 50px;"></div>
+                <div class="box-footer">Division Chiefs</div>
+            </div>
+        </div>
+        
+        <div class="sig-block">
+            <div class="floating-sig-box" style="width: 100%;">
+                <div class="box-header">Prepared By</div>
+                <div class="box-body" style="height: 50px;"></div>
+                <div class="box-footer">IAS Deputy QMR</div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Document;
+use App\Models\Engagement;
 use App\Models\Mov;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -173,6 +174,7 @@ class DocumentController extends Controller
     /**
      * Save the JSON form data for an interactive audit tool.
      * Creates a new document record every time (versioning/multi-draft).
+     * Enforces backend phase gate so a locked phase cannot be written to.
      */
     public function saveToolData(Request $request, $engagementId, $toolKey)
     {
@@ -181,6 +183,16 @@ class DocumentController extends Controller
             'document_type' => 'required|string',
             'phase' => 'required|string',
         ]);
+
+        // --- Backend Phase Gate ---
+        $engagement = Engagement::findOrFail($engagementId);
+        $phase      = $request->phase;
+        if (!EngagementController::isPhaseUnlocked($engagement, $phase)) {
+            return response()->json([
+                'message' => 'Phase "' . $phase . '" is locked. Complete and approve all ' .
+                    'documents in the previous phase before saving tool data here.',
+            ], 403);
+        }
 
         // We use create() instead of updateOrCreate() to support multiple drafts
         $document = Document::create([
@@ -207,9 +219,22 @@ class DocumentController extends Controller
 
     /**
      * Get all saved versions for a specific tool in an engagement.
+     * Enforces backend phase gate.
      */
     public function getToolVersions($engagementId, $toolKey)
     {
+        // Derive phase from toolKey map
+        $phaseMap = [
+            'flowchart' => 'planning',  'iom'  => 'planning', 'aap' => 'planning',
+            'awp'       => 'planning',  'ccl'  => 'planning', 'mac' => 'planning',
+            'neecm'     => 'execution', 'ecb'  => 'execution',
+            'oac'       => 'execution', 'wt'   => 'execution',
+        ];
+        $phase = $phaseMap[$toolKey] ?? 'planning';
+        $engagement = Engagement::findOrFail($engagementId);
+        if (!EngagementController::isPhaseUnlocked($engagement, $phase)) {
+            return response()->json(['message' => 'Phase locked.'], 403);
+        }
         $versions = Document::where('engagement_id', $engagementId)
             ->where('tool_key', $toolKey)
             ->whereNotNull('form_data')
@@ -222,9 +247,22 @@ class DocumentController extends Controller
 
     /**
      * Get the latest saved JSON form data for an interactive audit tool.
+     * Enforces backend phase gate.
      */
     public function getToolData($engagementId, $toolKey)
     {
+        // Derive phase from toolKey map
+        $phaseMap = [
+            'flowchart' => 'planning',  'iom'  => 'planning', 'aap' => 'planning',
+            'awp'       => 'planning',  'ccl'  => 'planning', 'mac' => 'planning',
+            'neecm'     => 'execution', 'ecb'  => 'execution',
+            'oac'       => 'execution', 'wt'   => 'execution',
+        ];
+        $phase = $phaseMap[$toolKey] ?? 'planning';
+        $engagement = Engagement::findOrFail($engagementId);
+        if (!EngagementController::isPhaseUnlocked($engagement, $phase)) {
+            return response()->json(['message' => 'Phase locked.'], 403);
+        }
         $document = Document::where('engagement_id', $engagementId)
             ->where('tool_key', $toolKey)
             ->latest()

@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Walkthrough Test | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Document specific styling to look like paper/forms */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px dashed #000;
+            width: 100%;
+            outline: none;
+            font-family: serif;
+            font-size: 12px;
+            padding: 2px 4px;
+        }
+        .doc-input:focus, .doc-input:hover {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #6366f1;
+        }
+        .tbl-input {
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-family: serif;
+            font-size: 11px;
+            padding: 4px;
+            resize: vertical;
+            min-height: 25px;
+        }
+        .tbl-input:focus {
+            background-color: #eef2ff;
+        }
+
+        /* Table Borders */
+        .wt-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: serif;
+            margin-bottom: 1rem;
+        }
+        .wt-table th, .wt-table td {
+            border: 1px solid #000; 
+            padding: 4px;
+            vertical-align: middle;
+        }
+        .wt-table th {
+            text-align: center;
+            font-weight: bold;
+            font-size: 10px;
+        }
+        .wt-table td {
+            font-size: 11px;
+        }
+        .section-header {
+            font-weight: bold;
+            font-size: 11px;
+            background-color: #f8fafc;
+        }
+        .header-gray {
+            background-color: #e2e8f0; /* Light gray for top headers */
+        }
+
+        /* Smaller tables (Quality) */
+        .small-table {
+            border-collapse: collapse;
+            font-family: serif;
+            font-size: 10px;
+        }
+        .small-table th, .small-table td {
+            border: 1px solid #000;
+            padding: 4px 8px;
+        }
+
+        /* Print formatting */
+        @media print {
+            aside, header { display: none !important; }
+            main { background: white !important; overflow: visible !important; }
+            .print-area { box-shadow: none !important; width: 100% !important; padding: 0 !important; max-width: none !important; }
+            .hide-on-print { display: none !important; }
+            @page { size: landscape; margin: 10mm; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden" x-data="{
+        iccRows: [{}, {}, {}],
+        processRows: [{}, {}, {}]
+    }">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0 hide-on-print">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm hide-on-print">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Execution</a> <span>/</span>
+                    <span class="text-indigo-600">Walkthrough Test (WT)</span>
+                </nav>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        Print Document
+                    </button>
+                    <button onclick="exportToWord('wtDocument', 'Walkthrough_Test')" class="px-4 py-2 bg-white border border-slate-200 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Word
+                    </button>
+                    <button onclick="exportToExcel('wtDocument', 'Walkthrough_Test')" class="px-4 py-2 bg-white border border-slate-200 text-emerald-600 font-bold text-xs rounded-lg hover:bg-emerald-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        Excel
+                    </button>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all ml-2">
+                        Save Workpaper
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-x-auto overflow-y-auto custom-scrollbar p-10 flex justify-center items-start">
+                
+                <div class="bg-white shadow-2xl w-[1400px] min-w-max px-12 py-12 relative flex flex-col font-serif print-area" id="wtDocument">
+                    
+                    <div class="flex items-center gap-4 mb-6">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" class="h-16 w-16">
+                        <div>
+                            <p class="text-[11px] font-serif text-gray-800 leading-tight">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                            <h1 class="text-xl font-black font-serif tracking-wide leading-tight">WALKTHROUGH TEST</h1>
+                            <p class="text-[8px] font-serif text-gray-500 italic">FM-QP-DILG-IAS-33-09 | Rev01 | 10.10.22</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-[180px_10px_400px] gap-y-1 mb-6 text-[11px] font-bold items-center font-serif">
+                        <div>WT Reference No.</div><div>:</div>
+                        <div><input type="text" value="WT-2026-001" readonly class="doc-input font-bold text-black" title="System Generated"></div>
+
+                        <div>Audit Engagement No.</div><div>:</div>
+                        <div><input type="text" value="AE-2026-04" readonly class="doc-input font-bold text-black" title="System Generated"></div>
+
+                        <div>Agency/Office</div><div>:</div>
+                        <div><input type="text" class="doc-input font-bold text-black"></div>
+
+                        <div>Title of Process/System</div><div>:</div>
+                        <div><input type="text" class="doc-input font-bold text-black"></div>
+
+                        <div>Walkthrough Participant</div><div>:</div>
+                        <div><input type="text" class="doc-input font-bold text-black" placeholder="[Name and Position of personnel]"></div>
+
+                        <div>Walkthrough Date/s</div><div>:</div>
+                        <div><input type="text" class="doc-input font-bold text-black"></div>
+                    </div>
+
+                    <p class="font-bold text-[11px] italic mb-1 mt-4">A. For ICC</p>
+                    <table class="wt-table mb-8">
+                        <thead class="header-gray">
+                            <tr>
+                                <th colspan="6" class="py-2 border-b-2 border-black">AUDIT PLANNING</th>
+                                <th colspan="2" class="py-2 border-b-2 border-black">AUDIT EXECUTION</th>
+                            </tr>
+                            <tr class="bg-white">
+                                <th class="w-8">Item<br>No.</th>
+                                <th class="w-16">CC/ICC<br>Ref. No.</th>
+                                <th class="w-64">Activity/Statement</th>
+                                <th class="w-48">Control Attributes<br>A2R4C2SM* VaCATE**</th>
+                                <th class="w-48">Sample MOV</th>
+                                <th class="w-48">Walkthrough<br>Procedure</th>
+                                <th class="w-64">Documents Examined</th>
+                                <th class="w-64">Audit Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="section-header group">
+                                <td colspan="8" class="px-2 py-1 flex justify-between items-center border-b-0">
+                                    <span>Controls from CC/ICC</span>
+                                    <button @click="iccRows.push({})" class="text-indigo-600 text-[9px] hover:underline normal-case font-bold hide-on-print">+ Add Row</button>
+                                </td>
+                            </tr>
+                            <template x-for="(row, rIndex) in iccRows" :key="'icc'+rIndex">
+                                <tr>
+                                    <td class="text-center font-bold" x-text="rIndex + 1"></td>
+                                    <td><input type="text" class="tbl-input text-center"></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <p class="font-bold text-[11px] italic mb-1">B. For Process</p>
+                    <table class="wt-table mb-2">
+                        <thead class="header-gray">
+                            <tr>
+                                <th colspan="6" class="py-2 border-b-2 border-black">AUDIT PLANNING</th>
+                                <th colspan="2" class="py-2 border-b-2 border-black">AUDIT EXECUTION</th>
+                            </tr>
+                            <tr class="bg-white">
+                                <th class="w-8">Item<br>No.</th>
+                                <th class="w-16">Activity<br>No.</th>
+                                <th class="w-64">Activity/Statement</th>
+                                <th class="w-48">Control Attributes<br>A2R4C2SM* VaCATE**</th>
+                                <th class="w-48">Sample MOV</th>
+                                <th class="w-48">Walkthrough<br>Procedure</th>
+                                <th class="w-64">Documents Examined</th>
+                                <th class="w-64">Audit Notes</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="section-header group">
+                                <td colspan="8" class="px-2 py-1 flex justify-between items-center border-b-0">
+                                    <span>Controls from Process</span>
+                                    <button @click="processRows.push({})" class="text-indigo-600 text-[9px] hover:underline normal-case font-bold hide-on-print">+ Add Row</button>
+                                </td>
+                            </tr>
+                            <template x-for="(row, rIndex) in processRows" :key="'proc'+rIndex">
+                                <tr>
+                                    <td class="text-center font-bold" x-text="rIndex + 1"></td>
+                                    <td><input type="text" class="tbl-input text-center"></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                    <td><textarea class="tbl-input"></textarea></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+
+                    <div class="flex justify-between items-start mb-10">
+                        <div class="w-2/3 pr-8 pt-2">
+                            <p class="text-[8px] mb-1"><span class="font-bold">*Activity Controls (AC)-</span> Authorization/Approval/Recording/Review/Reporting/Reconciliation/Custody/Comparison/Segregation/Monitoring</p>
+                            <p class="text-[8px]"><span class="font-bold">**Quality Controls (QC)-</span> Validity/Completeness/Accuracy/Timeliness/Existence</p>
+                        </div>
+
+                        <table class="small-table w-72">
+                            <thead>
+                                <tr class="header-gray">
+                                    <th class="text-left py-1">Quality of Workpaper</th>
+                                    <th class="text-center w-24">Pointing (1 or 0)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr><td class="font-bold">Correct</td><td><input type="text" class="w-full text-center outline-none bg-transparent"></td></tr>
+                                <tr><td class="font-bold">Complete</td><td><input type="text" class="w-full text-center outline-none bg-transparent"></td></tr>
+                                <tr><td class="font-bold">Clear</td><td><input type="text" class="w-full text-center outline-none bg-transparent"></td></tr>
+                                <tr><td class="font-bold">Concise</td><td><input type="text" class="w-full text-center outline-none bg-transparent"></td></tr>
+                                <tr><td class="font-bold">Coherent</td><td><input type="text" class="w-full text-center outline-none bg-transparent"></td></tr>
+                                <tr class="header-gray"><td class="font-bold">Total (WP) Rating</td><td><input type="text" class="w-full text-center font-bold outline-none bg-transparent"></td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-x-12 text-[10px] font-serif mb-10">
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <p class="italic text-gray-500 mb-4 text-[9px]">For preparation</p>
+                                <p class="font-bold mb-4">Prepared by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black mb-1 font-bold">
+                                <p class="italic text-[9px]">Auditor's Name over Signature/Date</p>
+                                <p class="italic text-[9px]">Position</p>
+                            </div>
+                            <div>
+                                <p class="font-bold mb-4 mt-8">Reviewed by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black mb-1 font-bold">
+                                <p class="italic text-[9px]">Team Leader's Name over Signature/Date</p>
+                                <p class="italic text-[9px]">Position</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 pt-8">
+                            <div>
+                                <p class="font-bold text-red-600 mb-4">Accomplished by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-red-600 text-red-600 font-bold mb-1">
+                                <p class="italic text-[9px] text-red-600">Auditee's Representative Name over Signature/Date</p>
+                                <p class="italic text-[9px] text-red-600">Position</p>
+                            </div>
+                            <div>
+                                <p class="font-bold text-red-600 mb-4 mt-8">Conformed by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-red-600 text-red-600 font-bold mb-1">
+                                <p class="italic text-[9px] text-red-600">Auditee's Immediate Supervisor Name over Signature/Date</p>
+                                <p class="italic text-[9px] text-red-600">Position</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-6 pt-8">
+                            <div>
+                                <p class="font-bold mb-4">Performed by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black mb-1 font-bold">
+                                <p class="italic text-[9px]">Auditor's Name over Signature/Date</p>
+                                <p class="italic text-[9px]">Position</p>
+                            </div>
+                            <div>
+                                <p class="font-bold mb-4 mt-8">Reviewed by:</p>
+                                <input type="text" class="w-full bg-transparent outline-none border-b border-black mb-1 font-bold">
+                                <p class="italic text-[9px]">Team Leader's Name over Signature/Date</p>
+                                <p class="italic text-[9px]">Position</p>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // TRUE EXCEL EXPORT USING SHEETJS
+        function exportToExcel(elementID, filename = 'Walkthrough_Test') {
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // 1. Convert Textareas to plain text
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var val = document.createTextNode(ta.value);
+                ta.parentNode.replaceChild(val, ta);
+            });
+
+            // 2. Convert regular inputs to plain text
+            var inputs = clone.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+                var val = document.createTextNode(input.value);
+                input.parentNode.replaceChild(val, input);
+            });
+
+            // Find all tables and export via SheetJS
+            var tables = clone.querySelectorAll('table');
+            var htmlData = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
+            
+            htmlData += "<h2>WALKTHROUGH TEST</h2><br>";
+            
+            tables.forEach(function(table) {
+                htmlData += table.outerHTML + "<br><br>";
+            });
+            
+            htmlData += "</body></html>";
+
+            var downloadLink = document.createElement("a");
+            var dataType = 'application/vnd.ms-excel';
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob){
+                var blob = new Blob(['\ufeff', htmlData], { type: dataType });
+                navigator.msSaveOrOpenBlob(blob, filename + '.xls');
+            } else {
+                downloadLink.href = 'data:' + dataType + ', ' + encodeURIComponent(htmlData);
+                downloadLink.download = filename + '.xls';
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+
+        // Export whole document to Word
+        function exportToWord(elementID, filename = ''){
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+            var postHtml = "</body></html>";
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Convert inputs/textareas to plain text elements for Word structure
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var p = document.createElement('p');
+                p.innerText = ta.value;
+                ta.parentNode.replaceChild(p, ta);
+            });
+
+            var html = preHtml + clone.innerHTML + postHtml;
+
+            var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

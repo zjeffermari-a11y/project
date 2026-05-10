@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entry Conference Briefer | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Document specific styling */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px dashed #000;
+            width: 100%;
+            outline: none;
+            font-family: serif;
+            font-size: 13px;
+            padding: 2px 4px;
+            text-align: center;
+        }
+        .doc-input:focus, .doc-input:hover {
+            background-color: #f8fafc;
+            border-bottom: 1px solid #6366f1;
+        }
+        
+        .briefer-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: serif;
+        }
+        .briefer-table td {
+            border: 1px solid #000;
+            padding: 6px 8px;
+            vertical-align: top;
+            height: 100px; /* Minimum height for boxes */
+        }
+        .briefer-label {
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .briefer-textarea {
+            width: 100%;
+            height: 100%;
+            min-height: 70px;
+            background: transparent;
+            outline: none;
+            resize: vertical;
+            font-family: serif;
+            font-size: 12px;
+        }
+        .briefer-textarea:focus {
+            background-color: #f8fafc;
+        }
+
+        .sig-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+            font-family: serif;
+            font-size: 11px;
+        }
+        .sig-table th {
+            background-color: #000;
+            color: #fff;
+            border: 1px solid #000;
+            padding: 4px;
+            font-weight: bold;
+        }
+        .sig-table td {
+            border: 1px solid #000;
+            padding: 4px;
+        }
+
+        /* Print formatting */
+        @media print {
+            aside, header { display: none !important; }
+            main { background: white !important; overflow: visible !important; }
+            .print-area { box-shadow: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important;}
+            .hide-on-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden" x-data="{}">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0 hide-on-print">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Lyra+Zel+Bedayo&background=6366f1&color=fff" class="w-10 h-10 rounded-xl mb-4 border border-slate-700">
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm hide-on-print">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Execution</a> <span>/</span>
+                    <span class="text-indigo-600">Entry Conference Briefer (ECB)</span>
+                </nav>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        Print
+                    </button>
+                    <button onclick="exportToWord('ecbDocument', 'Entry_Conference_Briefer')" class="px-4 py-2 bg-white border border-slate-200 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Word
+                    </button>
+                    <button onclick="exportToExcel('ecbDocument', 'Entry_Conference_Briefer')" class="px-4 py-2 bg-white border border-slate-200 text-emerald-600 font-bold text-xs rounded-lg hover:bg-emerald-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        Excel
+                    </button>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all ml-2">
+                        Save Briefer
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-10 flex justify-center items-start">
+                
+                <div id="ecbDocument" class="bg-white shadow-2xl w-[794px] min-h-[1123px] px-16 py-12 relative flex flex-col font-serif my-auto print-area">
+                    
+                    <div class="text-right text-[9px] font-serif italic text-gray-600 mb-2">
+                        FM-QP-DILG-IAS-33-04B | Rev00 | 09.16.22
+                    </div>
+
+                    <div class="text-center mb-8">
+                        <div class="flex justify-center items-center gap-4 mb-2">
+                            <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" class="h-16 w-16">
+                            <div class="h-16 w-16 rounded-full border-2 border-purple-900 flex items-center justify-center text-purple-900 font-black text-xl">IAS</div>
+                        </div>
+                        <p class="text-[10px] leading-tight">Republic of the Philippines</p>
+                        <p class="text-sm font-bold tracking-wide leading-tight">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                        <p class="text-[10px] leading-tight">DILG-NAPOLCOM Center, EDSA corner Quezon Avenue, West Triangle, Quezon City</p>
+                        <a href="http://www.dilg.gov.ph" class="text-[10px] text-blue-600 hover:underline leading-tight">http://www.dilg.gov.ph</a>
+                    </div>
+
+                    <h1 class="text-center font-bold text-[14px] tracking-widest mb-6 uppercase">ENTRY CONFERENCE BRIEFER</h1>
+                    
+                    <div class="text-center mb-6">
+                        <input type="text" value="ANNUAL IT SECURITY AUDIT 2026" class="doc-input font-bold uppercase text-[12px] w-3/4 mx-auto" title="Audit Title">
+                    </div>
+
+                    <div class="flex-1 mb-6">
+                        <table class="briefer-table">
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <div class="briefer-label">INTRODUCTION/BACKGROUND:</div>
+                                        <textarea class="briefer-textarea"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="briefer-label">AUDIT ENGAGEMENT OBJECTIVE:</div>
+                                        <textarea class="briefer-textarea"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="briefer-label">AUDIT ENGAGEMENT SCOPE/COVERAGE:</div>
+                                        <textarea class="briefer-textarea"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="briefer-label">AUDIT ENGAGEMENT PERIOD:</div>
+                                        <textarea class="briefer-textarea"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="briefer-label">AUDIT CRITERIA:</div>
+                                        <textarea class="briefer-textarea"></textarea>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <div class="briefer-label">AUDIT METHODOLOGY/SAMPLING:</div>
+                                        <textarea class="briefer-textarea"></textarea>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="text-center mb-12">
+                        <p class="font-bold text-[11px] italic">"Matino, Mahusay at Maaasahan"</p>
+                        <p class="text-[10px]">Trunkline No. : 8876 34 54</p>
+                    </div>
+
+                    <hr class="border-t border-black mb-8">
+
+                    <table class="sig-table">
+                        <thead>
+                            <tr>
+                                <th>Prepared by</th>
+                                <th>Reviewed by</th>
+                                <th>Approved by</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td class="pt-10 pb-2">
+                                    <input type="text" value="JESSICA M. BAYLON" class="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]">
+                                </td>
+                                <td class="pt-10 pb-2">
+                                    <input type="text" value="ATTY. BENJAMIN J. ZABALA, JR. / ANGELBERT I. TULAUAN" class="w-full text-center font-bold bg-transparent outline-none uppercase text-[10px]">
+                                </td>
+                                <td class="pt-10 pb-2">
+                                    <input type="text" value="MARY ROSE L. VILCHEZ-MARIANO" class="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]">
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>Process Owner</td>
+                                <td>Division Chiefs / OIC</td>
+                                <td>IAS Deputy QMR</td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" class="py-2 font-bold italic">DATE</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Multi-table Excel Export (Works for the boxes and signatures)
+        function exportToExcel(elementID, filename = '') {
+            var downloadLink;
+            var dataType = 'application/vnd.ms-excel';
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Convert Textareas to text nodes so data is exported
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var val = document.createTextNode(ta.value);
+                ta.parentNode.replaceChild(val, ta);
+            });
+
+            // Convert Inputs to text nodes
+            var inputs = clone.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+                var val = document.createTextNode(input.value);
+                input.parentNode.replaceChild(val, input);
+            });
+            
+            // Extract all tables
+            var tables = clone.querySelectorAll('table');
+            var htmlData = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
+            
+            htmlData += "<h2>ENTRY CONFERENCE BRIEFER</h2><br>";
+            
+            tables.forEach(function(table) {
+                htmlData += table.outerHTML + "<br><br>";
+            });
+            
+            htmlData += "</body></html>";
+
+            filename = filename ? filename + '.xls' : 'excel_data.xls';
+            downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob){
+                var blob = new Blob(['\ufeff', htmlData], { type: dataType });
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = 'data:' + dataType + ', ' + encodeURIComponent(htmlData);
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+
+        // Export whole document to Word
+        function exportToWord(elementID, filename = ''){
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+            var postHtml = "</body></html>";
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Replace textareas for Word export layout integrity
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var p = document.createElement('p');
+                p.innerText = ta.value;
+                p.style.fontFamily = 'serif';
+                p.style.fontSize = '12px';
+                ta.parentNode.replaceChild(p, ta);
+            });
+
+            var html = preHtml + clone.innerHTML + postHtml;
+
+            var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

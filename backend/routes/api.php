@@ -80,6 +80,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Engagements
     Route::apiResource('engagements', App\Http\Controllers\Api\EngagementController::class);
+    Route::patch('/engagements/{id}/complete-phase', [App\Http\Controllers\Api\EngagementController::class, 'completePhase']);
 
     // MOVs
     Route::get('/engagements/{engagement}/movs', [App\Http\Controllers\Api\MovController::class, 'index']);

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory of MOVs | IAMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Document specific styling */
+        .doc-input {
+            background: transparent;
+            border-bottom: 1px solid #000;
+            width: 100%;
+            outline: none;
+            font-family: serif;
+            font-size: 12px;
+            padding: 2px 4px;
+        }
+        .doc-input:focus, .doc-input:hover {
+            background-color: #f8fafc;
+            border-bottom: 2px solid #6366f1;
+        }
+        
+        .iom-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: serif;
+        }
+        .iom-table th, .iom-table td {
+            border: 1px solid #000;
+            padding: 4px 6px;
+            vertical-align: top;
+        }
+        .iom-table th {
+            text-align: center;
+            font-weight: bold;
+            font-size: 11px;
+            vertical-align: middle;
+        }
+        
+        .tbl-input {
+            width: 100%;
+            background: transparent;
+            outline: none;
+            font-family: serif;
+            font-size: 11px;
+            resize: vertical;
+            min-height: 24px;
+        }
+        .tbl-input:focus {
+            background-color: #eef2ff;
+        }
+
+        /* Print formatting */
+        @media print {
+            aside, header { display: none !important; }
+            main { background: white !important; overflow: visible !important; }
+            .print-area { box-shadow: none !important; width: 100% !important; padding: 0 !important; margin: 0 !important;}
+            .hide-on-print { display: none !important; }
+        }
+    </style>
+</head>
+<body class="bg-slate-100 text-black font-sans">
+
+    <div class="flex h-screen overflow-hidden" 
+         x-data="{ 
+            initialRows: [{}, {}, {}, {}, {}],
+            additionalRows: [{}, {}, {}, {}]
+         }">
+        
+        <aside class="w-20 bg-slate-900 flex flex-col items-center py-8 shadow-xl z-20 shrink-0 hide-on-print">
+            <div class="bg-indigo-500 p-2 rounded-lg text-white mb-8">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04m17.236 0a11.955 11.955 0 00-11.764 0 11.955 11.955 0 01-8.618-3.04m17.236 0A11.956 11.956 0 0112 21.48a11.956 11.956 0 01-8.618-3.04" /></svg>
+            </div>
+            <img src="https://ui-avatars.com/api/?name=Lyra+Zel+Bedayo&background=6366f1&color=fff" class="w-10 h-10 rounded-xl mb-4 border border-slate-700">
+            <nav class="flex-1 flex flex-col gap-4 mt-4">
+                <a href="/dashboard" class="p-3 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+                </a>
+            </nav>
+        </aside>
+
+        <main class="flex-1 flex flex-col overflow-hidden bg-slate-200/50">
+            
+            <header class="bg-white border-b border-slate-200 px-10 py-4 shrink-0 z-10 flex justify-between items-center shadow-sm hide-on-print">
+                <nav class="flex text-xs text-slate-400 font-bold uppercase tracking-widest gap-2">
+                    <a href="/inventory" class="hover:text-indigo-600 transition-colors">Audit Planning</a> <span>/</span>
+                    <span class="text-indigo-600">Inventory of MOVs Form</span>
+                </nav>
+                <div class="flex gap-2">
+                    <button onclick="window.print()" class="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-bold text-xs rounded-lg hover:bg-slate-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" /></svg>
+                        Print
+                    </button>
+                    <button onclick="exportToWord('iomDocument', 'Inventory_of_MOVs')" class="px-4 py-2 bg-white border border-slate-200 text-blue-600 font-bold text-xs rounded-lg hover:bg-blue-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                        Word
+                    </button>
+                    <button onclick="exportToExcel('iomDocument', 'Inventory_of_MOVs')" class="px-4 py-2 bg-white border border-slate-200 text-emerald-600 font-bold text-xs rounded-lg hover:bg-emerald-50 flex items-center gap-2 shadow-sm transition-all">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                        Excel
+                    </button>
+                    <button class="px-6 py-2 bg-indigo-600 text-white font-bold text-xs rounded-lg shadow-md hover:bg-indigo-700 transition-all ml-2">
+                        Save Document
+                    </button>
+                </div>
+            </header>
+
+            <div class="flex-1 overflow-y-auto custom-scrollbar p-10 flex justify-center items-start">
+                
+                <div id="iomDocument" class="bg-white shadow-2xl w-[900px] min-h-[1123px] px-12 py-12 relative flex flex-col font-serif my-auto print-area">
+                    
+                    <div class="flex items-center gap-4 mb-10">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" class="h-16 w-16">
+                        <div>
+                            <p class="text-[10px] font-serif text-gray-800 leading-tight">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                            <h1 class="text-xl font-black font-serif tracking-wide leading-tight">INVENTORY OF MOVs</h1>
+                            <p class="text-[9px] font-serif text-gray-500 italic">FM-QP-DILG-IAS-33-22 | Rev00 | 09.16.22</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-[180px_10px_1fr] gap-y-1 mb-8 text-[12px] font-bold items-center max-w-2xl font-serif">
+                        <div>IoM Reference No.</div><div>:</div>
+                        <div><input type="text" value="IOM-2026-001" readonly tabindex="-1" class="doc-input font-bold" title="System Generated"></div>
+
+                        <div>Audit Engagement No.</div><div>:</div>
+                        <div><input type="text" value="AE-2026-04" readonly tabindex="-1" class="doc-input font-bold" title="System Generated"></div>
+
+                        <div>Audit Engagement Title/Date</div><div>:</div>
+                        <div><input type="text" value="Annual Audit 2026 / March 10, 2026" class="doc-input font-bold"></div>
+
+                        <div>Audit Area</div><div>:</div>
+                        <div><input type="text" value="Registrar's Office" class="doc-input font-bold"></div>
+                        
+                        <div>Audit Team</div><div>:</div>
+                        <div><input type="text" value="Lyra Zel Bedayo, Aries Domanais" class="doc-input font-bold"></div>
+                    </div>
+
+                    <div class="flex-1 mb-10 relative group">
+                        <table class="iom-table">
+                            <thead>
+                                <tr>
+                                    <th class="w-8">No.</th>
+                                    <th class="w-[35%]">Documents/Records Requested<br><span class="font-normal text-[9px] italic">(Generic name of the documents)</span></th>
+                                    <th class="w-[18%]">Type of Submission<br><span class="font-normal text-[9px] italic">(Online/Physical/Both)</span></th>
+                                    <th class="w-[15%]">Date Submitted</th>
+                                    <th class="w-[32%]">Actual Documents/Records Received<br><span class="font-normal text-[9px] italic">(Description of the documents received; indicate<br>whether sufficient or insufficient)</span></th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-slate-100/50">
+                                    <td></td>
+                                    <td colspan="4" class="font-bold text-[11px] py-2">
+                                        Initial Documents/Records: (Date requested: <input type="text" class="bg-transparent border-b border-black outline-none w-32 font-bold text-center" placeholder="e.g. 03/01/26"> )
+                                    </td>
+                                </tr>
+                                <template x-for="(row, index) in initialRows" :key="'init'+index">
+                                    <tr>
+                                        <td class="text-center font-bold" x-text="index + 1"></td>
+                                        <td><textarea class="tbl-input"></textarea></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><textarea class="tbl-input"></textarea></td>
+                                    </tr>
+                                </template>
+                                <tr class="hide-on-print">
+                                    <td colspan="5" class="p-1">
+                                        <button @click="initialRows.push({})" class="text-indigo-600 text-[10px] hover:underline font-sans font-bold w-full text-left pl-2">+ Add Initial Document Row</button>
+                                    </td>
+                                </tr>
+
+                                <tr class="bg-slate-100/50">
+                                    <td></td>
+                                    <td colspan="4" class="font-bold text-[11px] py-2 border-t-[2px] border-black">
+                                        Additional Documents/Records (Date requested: <input type="text" class="bg-transparent border-b border-black outline-none w-32 font-bold text-center" placeholder="e.g. 03/15/26"> )
+                                    </td>
+                                </tr>
+                                <template x-for="(row, index) in additionalRows" :key="'add'+index">
+                                    <tr>
+                                        <td class="text-center font-bold" x-text="index + 1"></td>
+                                        <td><textarea class="tbl-input"></textarea></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><input type="text" class="tbl-input text-center"></td>
+                                        <td><textarea class="tbl-input"></textarea></td>
+                                    </tr>
+                                </template>
+                                <tr class="hide-on-print">
+                                    <td colspan="5" class="p-1">
+                                        <button @click="additionalRows.push({})" class="text-indigo-600 text-[10px] hover:underline font-sans font-bold w-full text-left pl-2">+ Add Additional Document Row</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Multi-table Excel Export (Works for the boxes and signatures)
+        function exportToExcel(elementID, filename = '') {
+            var downloadLink;
+            var dataType = 'application/vnd.ms-excel';
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Convert Textareas to text nodes so data is exported properly
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var val = document.createTextNode(ta.value);
+                ta.parentNode.replaceChild(val, ta);
+            });
+
+            // Convert Inputs to text nodes
+            var inputs = clone.querySelectorAll('input[type="text"]');
+            inputs.forEach(function(input) {
+                var val = document.createTextNode(input.value);
+                input.parentNode.replaceChild(val, input);
+            });
+            
+            // Extract all tables
+            var tables = clone.querySelectorAll('table');
+            var htmlData = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:x='urn:schemas-microsoft-com:office:excel' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'></head><body>";
+            
+            htmlData += "<h2>INVENTORY OF MOVs</h2><br>";
+            
+            tables.forEach(function(table) {
+                htmlData += table.outerHTML + "<br><br>";
+            });
+            
+            htmlData += "</body></html>";
+
+            filename = filename ? filename + '.xls' : 'excel_data.xls';
+            downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob){
+                var blob = new Blob(['\ufeff', htmlData], { type: dataType });
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = 'data:' + dataType + ', ' + encodeURIComponent(htmlData);
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+
+        // Export whole document to Word
+        function exportToWord(elementID, filename = ''){
+            var preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+            var postHtml = "</body></html>";
+            
+            var wrapper = document.getElementById(elementID);
+            var clone = wrapper.cloneNode(true);
+            
+            // Replace textareas for Word export layout integrity
+            var textareas = clone.querySelectorAll('textarea');
+            textareas.forEach(function(ta) {
+                var p = document.createElement('p');
+                p.innerText = ta.value;
+                p.style.fontFamily = 'serif';
+                p.style.fontSize = '11px';
+                p.style.margin = '0';
+                ta.parentNode.replaceChild(p, ta);
+            });
+
+            var html = preHtml + clone.innerHTML + postHtml;
+
+            var blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+            var url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+            filename = filename?filename+'.doc':'document.doc';
+            var downloadLink = document.createElement("a");
+            document.body.appendChild(downloadLink);
+            
+            if(navigator.msSaveOrOpenBlob ){
+                navigator.msSaveOrOpenBlob(blob, filename);
+            } else {
+                downloadLink.href = url;
+                downloadLink.download = filename;
+                downloadLink.click();
+            }
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>

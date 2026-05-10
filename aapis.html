@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Auditee's Action Plan and Implementation Status (AAPIS)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+            color: #000;
+        }
+        
+        .page-container {
+            max-width: 950px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 40px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Watermark Styles */
+        .watermark {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) rotate(-40deg);
+            font-size: 140px;
+            font-family: "Times New Roman", Times, serif;
+            font-weight: bold;
+            color: rgba(200, 200, 200, 0.15);
+            white-space: nowrap;
+            z-index: 0;
+            pointer-events: none;
+            user-select: none;
+        }
+
+        /* Keep content above watermark */
+        .content {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Header Section */
+        .header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .header img {
+            width: 80px;
+            height: 80px;
+            margin-right: 15px;
+        }
+
+        .header-text p {
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .dept-name {
+            font-size: 14px;
+        }
+
+        .doc-title {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 22px;
+            font-weight: bold;
+        }
+
+        .doc-code {
+            font-size: 10px;
+            margin-top: 5px !important;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+            margin-bottom: 30px;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 5px;
+            vertical-align: middle;
+        }
+
+        th {
+            background-color: #e6e6e6;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        /* Specific Table Adjustments */
+        .main-table th {
+            padding: 8px 4px;
+        }
+
+        .legend-table {
+            width: 80%;
+            margin-bottom: 40px;
+        }
+        
+        .legend-table th {
+            padding: 4px;
+        }
+
+        .legend-table td {
+            vertical-align: top;
+            padding: 6px;
+        }
+
+        .legend-table .desc {
+            font-size: 11px;
+        }
+
+        /* Signature Section */
+        .signature-container {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            margin-bottom: 40px;
+            padding: 0 40px;
+        }
+
+        .signature-block {
+            width: 45%;
+        }
+
+        .signature-block p {
+            margin: 5px 0;
+            font-size: 13px;
+        }
+
+        .sig-label {
+            font-weight: bold;
+            font-style: italic;
+            margin-bottom: 40px !important;
+        }
+
+        .sig-name {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        .sig-title {
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Notes Section */
+        .notes {
+            font-size: 10px;
+            line-height: 1.3;
+            margin-bottom: 60px;
+        }
+        
+        .divider {
+            border: 0;
+            border-top: 2px solid #ddd;
+            margin: 40px 0;
+        }
+
+        /* Second Table Header */
+        .black-header th {
+            background-color: black;
+            height: 20px;
+        }
+
+        .gray-header {
+            background-color: #e6e6e6;
+            font-weight: bold;
+            text-align: center;
+        }
+
+        .name-cell {
+            text-align: center;
+            font-weight: bold;
+            padding: 20px 5px 5px 5px;
+            height: 40px;
+            vertical-align: bottom;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="page-container">
+    <div class="watermark">CONFIDENTIAL</div>
+    
+    <div class="content">
+        <!-- Main Header -->
+        <div class="header">
+            <!-- Using a standard DILG wikipedia logo as a placeholder -->
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg/1024px-Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png" alt="DILG Logo">
+            <div class="header-text">
+                <p class="dept-name">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                <p class="doc-title">AUDITEE'S ACTION PLAN AND<br>IMPLEMENTATION STATUS (AAPIS)</p>
+                <p class="doc-code">FM-QP-DILG-IAS-33-15 | Rev02 |</p>
+            </div>
+        </div>
+
+        <!-- Main Form Table -->
+        <table class="main-table">
+            <thead>
+                <tr>
+                    <td colspan="10" style="font-weight: bold; padding: 6px;">Audit Engagement No. :</td>
+                </tr>
+                <tr>
+                    <td colspan="10" style="font-weight: bold; padding: 6px;">Audit Engagement Title/Date <span style="font-style: italic; font-weight: normal;">of Audit:</span></td>
+                </tr>
+                <tr>
+                    <th rowspan="3" style="width: 3%;">No.</th>
+                    <th rowspan="3" style="width: 15%;">Audit<br>Recommendations</th>
+                    <th colspan="4">Action Plan</th>
+                    <th colspan="4">Status of Implementation as of ____________________</th>
+                </tr>
+                <tr>
+                    <th rowspan="2" style="width: 12%;">Activity/ies</th>
+                    <th rowspan="2" style="width: 12%;">Responsible<br>Person/<br>Office</th>
+                    <th colspan="2">Timelines</th>
+                    <th colspan="4" style="font-size: 11px;">Status (BP, FI, PI, NI) and Actions taken/ actions to be taken (what, when, who)</th>
+                </tr>
+                <tr>
+                    <th style="width: 6%;">From</th>
+                    <th style="width: 6%;">To</th>
+                    <th style="width: 11.5%;">1st</th>
+                    <th style="width: 11.5%;">2nd</th>
+                    <th style="width: 11.5%;">3rd</th>
+                    <th style="width: 11.5%;">4th</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Empty data rows -->
+                <tr>
+                    <td style="text-align: center; font-weight: bold;">1</td>
+                    <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; font-weight: bold;">2</td>
+                    <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+                <tr>
+                    <td style="text-align: center; font-weight: bold;">3</td>
+                    <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Legend Table -->
+        <table class="legend-table">
+            <tr>
+                <th style="font-style: italic; width: 10%;">Legend</th>
+                <th style="font-style: italic;">Description</th>
+                <th style="width: 10%;">No.</th>
+                <th style="width: 10%;">%</th>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: bold;">BP</td>
+                <td class="desc"><b>Best Practice</b>- <i>actions taken are beyond what is required by the audit recommendation and/or was recognized or awarded as best/innovative practice.</i></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: bold;">FI</td>
+                <td class="desc"><b>Fully Implemented</b>- <i>actions taken were adequate to fully comply with the audit recommendations.</i></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: bold;">PI</td>
+                <td class="desc"><b>Partially Implemented</b>- <i>ongoing implementation of the action plans and/or auditees action are inadequate to comply with the audit recommendations.</i></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td style="text-align: center; font-weight: bold;">NI</td>
+                <td class="desc"><b>Not Implemented</b>-<i>action <u style="color:blue;">plan</u> and/or <u style="color:blue;">action</u> taken are not implemented or not responsive to the audit recommendations.<br><span style="font-size: 9px; color: #555;">Note: No submitted MOV does not automatically mean Not Compliant.</span></i></td>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr>
+                <td colspan="2" style="text-align: right; font-weight: bold; font-style: italic; padding-right: 20px;">TOTAL</td>
+                <td></td>
+                <td></td>
+            </tr>
+        </table>
+
+        <!-- Signatures -->
+        <div class="signature-container">
+            <div class="signature-block">
+                <p class="sig-label">Submitted by:</p>
+                <p class="sig-name">Name over Signature/Date</p>
+                <p class="sig-title">Bureau/Service/Regional/Executive Director</p>
+            </div>
+            <div class="signature-block">
+                <p class="sig-label">Noted/Approved by:</p>
+                <p class="sig-name">Name over Signature/Date</p>
+                <p class="sig-title">Supervising Official /Head of Attached Agency</p>
+            </div>
+        </div>
+
+        <!-- Notes -->
+        <div class="notes">
+            Note for Signatories<br>
+            For Central Office, Submitted by the Bureau/Service Director/PMO Head and Noted by the Supervising Official<br>
+            For Regional Office Submitted by the Regional Director<br>
+            For LGA, BJMP, BFP and PPSC, Submitted by the Head of the Attached Agency<br>
+            For NYC, PCW and NCMF, Submitted by Executive Director and Approved by the Head of the Attached Agency
+        </div>
+
+        <hr class="divider">
+
+        <!-- Second Section Header -->
+        <div class="header" style="margin-top: 40px;">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg/1024px-Department_of_the_Interior_and_Local_Government_%28DILG%29_Seal_-_Logo.svg.png" alt="DILG Logo">
+            <div class="header-text">
+                <p class="dept-name">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                <p class="doc-title">AUDITEE'S ACTION PLAN AND<br>IMPLEMENTATION STATUS (AAPIS)</p>
+                <p class="doc-code">FM-QP-DILG-IAS-33-15 | Rev02 |</p>
+            </div>
+        </div>
+
+        <!-- Approval Routing Table -->
+        <table style="width: 90%; margin: 0 auto;">
+            <tr class="black-header">
+                <th style="width: 33%;"></th>
+                <th style="width: 34%; border-left: 1px solid white; border-right: 1px solid white;"></th>
+                <th style="width: 33%;"></th>
+            </tr>
+            <tr>
+                <td class="name-cell">JESSICA M. BAYLON</td>
+                <td class="name-cell">ANGELBERT I. TULAUAN/ANDREA JULINE T. PASCUA</td>
+                <td class="name-cell">MARY ROSE L. VILCHEZ-MARIANO</td>
+            </tr>
+            <tr>
+                <td class="gray-header">Process Owner</td>
+                <td class="gray-header">Assistant Division Chief/OIC-Division Chief</td>
+                <td class="gray-header">IAS Deputy QMR</td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+</body>
+</html>

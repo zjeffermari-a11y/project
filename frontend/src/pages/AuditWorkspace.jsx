@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, CheckCircle2, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink, Lock } from 'lucide-react';
 import api from '../api';
 import MovTable from '../components/dashboard/MovTable';
 import SignOffButton from '../components/common/SignOffButton';
@@ -178,32 +178,38 @@ export default function AuditWorkspace() {
     const [selectedPhase, setSelectedPhase] = useState(null);
     const [awpTool, setAwpTool] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [completingPhase, setCompletingPhase] = useState(false);
 
     useEffect(() => {
         fetchWorkspaceData();
     }, [id]);
 
-    const fetchWorkspaceData = async () => {
-        setLoading(true);
+    const fetchWorkspaceData = async (silent = false) => {
+        if (!silent) setLoading(true);
         try {
-            const [docRes, logRes, awpRes] = await Promise.all([
+            const [engRes, docRes, logRes, awpRes] = await Promise.all([
+                api.get(`/engagements/${id}`),
                 api.get(`/engagements/${id}/documents`),
                 api.get(`/engagements/${id}/activity-logs`).catch(() => ({ data: [] })),
                 api.get(`/engagements/${id}/tools/awp`).catch(() => ({ data: null }))
             ]);
-            
-            // Re-sync global engagements first to ensure we have the latest
+
+            // Directly set engagement from API so phase_completions is always fresh
+            setEngagement(engRes.data);
+
+            // Also re-sync global engagements context
             await refreshData();
-            
+
             setDocuments(docRes.data);
             setLogs(logRes.data);
             setAwpTool(awpRes.data);
         } catch (err) {
             console.error('Failed to load workspace', err);
         } finally {
-            setLoading(false);
+            if (!silent) setLoading(false);
         }
     };
+
 
     // Derived engagement from global context
     useEffect(() => {
@@ -273,15 +279,22 @@ export default function AuditWorkspace() {
     if (loading) return <div className="p-10 text-center font-bold text-slate-400">Loading Workspace...</div>;
     if (!engagement) return <div className="p-10 text-center font-bold text-rose-500">Engagement not found.</div>;
 
-    // Phase gate: a phase is unlocked if all tool docs in the PREVIOUS phase have been approved.
-    // Planning is always unlocked. Each subsequent phase requires the prior phase's interactive
-    // tool documents to have an 'approved_by' signature recorded in their history.
+    // Phase gate: a phase is unlocked if:
+    //   a) it is 'planning' (always open), OR
+    //   b) the previous phase is recorded in engagement.phase_completions, OR
+    //   c) all interactive tool docs in the previous phase have an approval signal.
     const PHASE_ORDER = ['planning', 'execution', 'reporting', 'followup'];
 
     const isPhaseUnlocked = (phaseId) => {
         const idx = PHASE_ORDER.indexOf(phaseId);
         if (idx <= 0) return true; // planning is always open
         const prevPhase = PHASE_ORDER[idx - 1];
+
+        // Check persisted completion flag (fastest, most reliable)
+        const completions = engagement?.phase_completions || {};
+        if (completions[prevPhase]) return true;
+
+        // Fallback: derive from document approvals
         const prevItems = DOCUMENTS[prevPhase]?.items || [];
         const prevToolItems = prevItems.filter(d => d.toolKey); // only interactive tool docs
         if (prevToolItems.length === 0) return true; // no gate items, open
@@ -289,11 +302,6 @@ export default function AuditWorkspace() {
             const docs = documents.filter(d => d.phase === prevPhase && d.document_type === doc.label);
             if (docs.length === 0) return false;
             const latest = docs.sort((a, b) => b.id - a.id)[0];
-            // Check multiple signals for approval:
-            // 1. approved_by FK column set directly
-            // 2. history entry with stage 'approved_by' (backend canonical form)
-            // 3. history entry with stage 'Approved' (legacy/frontend form)
-            // 4. document status is already 'approved'
             const hasApproval =
                 latest?.approved_by_id != null ||
                 latest?.status === 'approved' ||
@@ -303,6 +311,34 @@ export default function AuditWorkspace() {
                 });
             return hasApproval;
         });
+    };
+
+    // Returns true if the given phase has been explicitly marked complete
+    const isPhaseCompleted = (phaseId) => {
+        const completions = engagement?.phase_completions || {};
+        return !!completions[phaseId];
+    };
+
+    // Team Leader / Executive check (can mark phases complete)
+    const canMarkComplete = () => {
+        if (!currentUser || !engagement) return false;
+        const engUser = engagement.users?.find(u => u.id === currentUser.id);
+        const role = engUser?.pivot?.role_in_engagement;
+        const executiveDesignations = ['director', 'division_chief', 'assistant_division_chief'];
+        return role === 'team_leader' || executiveDesignations.includes(currentUser.designation);
+    };
+
+    const handleCompletePhase = async (phaseId) => {
+        if (!window.confirm(`Mark the "${phaseId}" phase as complete? This will unlock the next phase for your team.`)) return;
+        setCompletingPhase(true);
+        try {
+            await api.patch(`/engagements/${id}/complete-phase`, { phase: phaseId });
+            await fetchWorkspaceData(true); // silent refresh — no loading spinner
+        } catch (err) {
+            alert('Failed to mark phase complete: ' + (err.response?.data?.message || err.message));
+        } finally {
+            setCompletingPhase(false);
+        }
     };
 
     const PhaseCard = ({ phaseId, label, iconTheme }) => {
@@ -403,6 +439,7 @@ export default function AuditWorkspace() {
                                 <PhaseCard phaseId="followup" label="Audit Follow Up" iconTheme="rose" />
                             </div>
 
+                                {/* Phase document table */}
                             {selectedPhase && DOCUMENTS[selectedPhase] && (
                                 <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4">
                                     <div className="px-6 py-5 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
@@ -410,6 +447,12 @@ export default function AuditWorkspace() {
                                             <Folder className="h-5 w-5 text-slate-400" />
                                             <h2 className="text-sm font-black text-slate-600 uppercase tracking-widest">{DOCUMENTS[selectedPhase].title}</h2>
                                         </div>
+                                        {/* Phase completion badge */}
+                                        {isPhaseCompleted(selectedPhase) && (
+                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
+                                                <CheckCircle2 className="w-3 h-3" /> Phase Complete
+                                            </span>
+                                        )}
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full text-left border-collapse">
@@ -572,6 +615,38 @@ export default function AuditWorkspace() {
                                             </tbody>
                                         </table>
                                     </div>
+
+                                    {/* Mark as Complete footer — only visible to Team Leaders & Executives */}
+                                    {canMarkComplete() && (
+                                        <div className={`px-6 py-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4`}>
+                                            {isPhaseCompleted(selectedPhase) ? (
+                                                <div className="flex items-center gap-2 text-emerald-600">
+                                                    <CheckCircle2 className="w-5 h-5" />
+                                                    <div>
+                                                        <p className="text-xs font-black uppercase tracking-widest">Phase Signed Off</p>
+                                                        <p className="text-[10px] font-bold text-emerald-500 mt-0.5">
+                                                            Completed on {new Date(engagement.phase_completions?.[selectedPhase]).toLocaleDateString()}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div>
+                                                    <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Team Leader Sign-Off</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">Mark this phase as complete to unlock the next stage for your team.</p>
+                                                </div>
+                                            )}
+                                            {!isPhaseCompleted(selectedPhase) && (
+                                                <button
+                                                    onClick={() => handleCompletePhase(selectedPhase)}
+                                                    disabled={completingPhase}
+                                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-sm shrink-0"
+                                                >
+                                                    <Lock className="w-3.5 h-3.5" />
+                                                    {completingPhase ? 'Saving...' : 'Mark as Complete'}
+                                                </button>
+                                            )}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                         </div>

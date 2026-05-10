@@ -200,8 +200,108 @@ class EngagementController extends Controller
         return response()->json(['message' => 'Engagement deleted successfully']);
     }
 
+    /**
+     * Mark an audit phase as explicitly completed by a Team Leader.
+     * Only users with the 'team_leader' role in the engagement are permitted.
+     * PATCH /engagements/{id}/complete-phase
+     */
+    public function completePhase(Request $request, $id)
+    {
+        $user    = Auth::user();
+        $engagement = Engagement::findOrFail($id);
+
+        // Authorise: must be team_leader for this engagement, or a director/division chief
+        $executiveDesignations = ['director', 'division_chief', 'assistant_division_chief'];
+        $pivot = $engagement->users()->where('users.id', $user->id)->first();
+        $roleInEngagement = $pivot?->pivot?->role_in_engagement;
+
+        $isTeamLeader = $roleInEngagement === 'team_leader';
+        $isExecutive  = in_array($user->designation, $executiveDesignations);
+
+        if (!$isTeamLeader && !$isExecutive) {
+            return response()->json(['message' => 'Only Team Leaders or Executives may mark a phase as complete.'], 403);
+        }
+
+        $request->validate([
+            'phase' => 'required|in:planning,execution,reporting,followup',
+        ]);
+
+        $phase = $request->phase;
+        $current = $engagement->phase_completions ?? [];
+        $current[$phase] = now()->toISOString();
+        $engagement->update(['phase_completions' => $current]);
+
+        // Auto-advance the engagement status to the next phase
+        $phaseOrder  = ['planning', 'execution', 'reporting', 'followup'];
+        $currentIdx  = array_search($phase, $phaseOrder);
+        if ($currentIdx !== false && isset($phaseOrder[$currentIdx + 1])) {
+            $engagement->update(['status' => $phaseOrder[$currentIdx + 1]]);
+        }
+
+        return response()->json([
+            'message'           => ucfirst($phase) . ' phase marked as complete.',
+            'phase_completions' => $engagement->fresh()->phase_completions,
+            'status'            => $engagement->fresh()->status,
+        ]);
+    }
+
+    /**
+     * Static helper — returns true if `$phase` is accessible for `$engagement`.
+     * Planning is always open. Every other phase requires the previous phase to be
+     * in phase_completions OR all its interactive tool documents to be approved.
+     */
+    public static function isPhaseUnlocked(Engagement $engagement, string $phase): bool
+    {
+        $phaseOrder = ['planning', 'execution', 'reporting', 'followup'];
+        $idx = array_search($phase, $phaseOrder);
+        if ($idx <= 0) return true; // planning always open
+
+        $prevPhase = $phaseOrder[$idx - 1];
+
+        // Check persisted completion flag first (fastest)
+        $completions = $engagement->phase_completions ?? [];
+        if (!empty($completions[$prevPhase])) return true;
+
+        // Fallback: derive from document approvals (mirrors frontend logic)
+        $toolDocLabels = [
+            'planning'  => [
+                'Interactive Flowchart', 'Inventory of MOVs (IM)', 'Audit Area Profile (AAP)',
+                'Audit Work Program (AWP)', 'Compliance Checklist (CC)', 'Management Audit Checklist',
+            ],
+            'execution' => [
+                'Notice of Entry/Exit Conference (ECM)', 'Entry Conference Briefer (ECB)',
+                'Operations Audit Checklist (OAC)', 'Walkthrough Test Work Paper (WT)',
+            ],
+            'reporting' => [],
+            'followup'  => [],
+        ];
+
+        $requiredLabels = $toolDocLabels[$prevPhase] ?? [];
+        if (empty($requiredLabels)) return true;
+
+        foreach ($requiredLabels as $label) {
+            $doc = \App\Models\Document::where('engagement_id', $engagement->id)
+                ->where('phase', $prevPhase)
+                ->where('document_type', $label)
+                ->latest()
+                ->first();
+
+            if (!$doc) return false;
+
+            // Check approval signal (mirrors frontend docIsApproved)
+            $approved = $doc->approved_by_id !== null
+                || $doc->status === 'approved'
+                || $doc->history()->whereIn('stage', ['approved_by', 'Approved'])->exists();
+
+            if (!$approved) return false;
+        }
+
+        return true;
+    }
+
     public function activityLogs($id)
     {
+
         $engagement = Engagement::findOrFail($id);
 
         // Allowed users: Auditors + Auditees involved

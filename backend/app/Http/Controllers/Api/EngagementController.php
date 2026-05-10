@@ -277,7 +277,10 @@ class EngagementController extends Controller
         ];
 
         $requiredLabels = $toolDocLabels[$prevPhase] ?? [];
-        if (empty($requiredLabels)) return true;
+
+        // If the previous phase has NO interactive tool docs, it can only be
+        // unlocked via phase_completions (checked above). Return false here.
+        if (empty($requiredLabels)) return false;
 
         foreach ($requiredLabels as $label) {
             $doc = \App\Models\Document::where('engagement_id', $engagement->id)

@@ -290,14 +290,17 @@ export default function AuditWorkspace() {
         if (idx <= 0) return true; // planning is always open
         const prevPhase = PHASE_ORDER[idx - 1];
 
-        // Check persisted completion flag (fastest, most reliable)
+        // ✅ Primary gate: explicit Team Leader sign-off persisted in DB
         const completions = engagement?.phase_completions || {};
         if (completions[prevPhase]) return true;
 
-        // Fallback: derive from document approvals
+        // 🔒 Fallback: derive from document approvals (only applies if prev phase
+        //    has interactive tool docs). Phases with NO tool docs (e.g. Reporting)
+        //    are ONLY unlocked via phase_completions — never by the fallback.
         const prevItems = DOCUMENTS[prevPhase]?.items || [];
-        const prevToolItems = prevItems.filter(d => d.toolKey); // only interactive tool docs
-        if (prevToolItems.length === 0) return true; // no gate items, open
+        const prevToolItems = prevItems.filter(d => d.toolKey);
+        if (prevToolItems.length === 0) return false; // must be explicitly completed
+
         return prevToolItems.every(doc => {
             const docs = documents.filter(d => d.phase === prevPhase && d.document_type === doc.label);
             if (docs.length === 0) return false;
@@ -312,6 +315,7 @@ export default function AuditWorkspace() {
             return hasApproval;
         });
     };
+
 
     // Returns true if the given phase has been explicitly marked complete
     const isPhaseCompleted = (phaseId) => {

@@ -17,9 +17,9 @@ const DOCUMENTS = {
         { label: 'Summary of Audit Team Roles (RR)', toolKey: null },
         { label: 'Compliance Checklist (CC)', toolKey: 'ccl' },
         { label: 'Management Audit Checklist', toolKey: 'mac' },
-        { label: 'Audit Inquiry Memorandum (AIM)', toolKey: null },
     ]},
     execution: { title: 'Audit Execution Documents', theme: 'emerald', items: [
+        { label: 'Audit Inquiry Memorandum (AIM)', toolKey: null },
         { label: 'Notice of Entry/Exit Conference (ECM)', toolKey: 'neecm' },
         { label: 'Entry Conference Briefer (ECB)', toolKey: 'ecb' },
         { label: 'Entry/Exit Conference Notes (ECN)', toolKey: null },
@@ -548,57 +548,79 @@ export default function AuditWorkspace() {
                                                             
                                                             {/* Prepared By cell */}
                                                             <td className="py-4 px-4 align-middle">
-                                                                {preparedBy ? (
-                                                                    <div className="flex items-center gap-2.5">
-                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isPrepSigned ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400' : 'bg-indigo-100 text-indigo-700'}`}>
-                                                                            {preparedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                {isPrepSigned ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">
+                                                                            {(prepHistEntry?.signer_name || preparedBy || '?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
                                                                         </div>
                                                                         <div>
-                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{preparedBy}</div>
-                                                                            {preparedTitle && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{preparedTitle}</div>}
-                                                                            {isPrepSigned && <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Signed</div>}
+                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{prepHistEntry?.signer_name || preparedBy}</div>
+                                                                            {prepHistEntry?.designation && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{prepHistEntry.designation}</div>}
+                                                                            <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Signed</div>
                                                                         </div>
                                                                     </div>
+                                                                ) : latestDoc ? (
+                                                                    <SignOffButton
+                                                                        documentId={latestDoc.id}
+                                                                        stage="prepared_by"
+                                                                        label="Prepared By"
+                                                                        history={latestDoc.history || []}
+                                                                        onSuccess={() => fetchWorkspaceData(true)}
+                                                                    />
                                                                 ) : (
-                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Awaiting Prep</span>
+                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">No file yet</span>
                                                                 )}
                                                             </td>
 
                                                             {/* Reviewed By cell */}
                                                             <td className="py-4 px-4 align-middle">
-                                                                {reviewedBy ? (
-                                                                    <div className="flex items-center gap-2.5">
-                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isRevSigned ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400' : 'bg-amber-100 text-amber-700'}`}>
-                                                                            {reviewedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                {isRevSigned ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">
+                                                                            {(revHistEntry?.signer_name || reviewedBy || '?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
                                                                         </div>
                                                                         <div>
-                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{reviewedBy}</div>
-                                                                            {reviewedTitle && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{reviewedTitle}</div>}
-                                                                            {isRevSigned && <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Signed</div>}
-                                                                            {!isRevSigned && preparedBy && <div className="text-[9px] font-bold text-amber-500 uppercase tracking-wider">Awaiting Receipt</div>}
+                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{revHistEntry?.signer_name || reviewedBy}</div>
+                                                                            {revHistEntry?.designation && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{revHistEntry.designation}</div>}
+                                                                            <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Signed</div>
                                                                         </div>
                                                                     </div>
+                                                                ) : isPrepSigned && latestDoc ? (
+                                                                    <SignOffButton
+                                                                        documentId={latestDoc.id}
+                                                                        stage="reviewed_by"
+                                                                        label="Reviewed By"
+                                                                        history={latestDoc.history || []}
+                                                                        onSuccess={() => fetchWorkspaceData(true)}
+                                                                    />
                                                                 ) : (
-                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Awaiting Review</span>
+                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">{isPrepSigned ? 'No file yet' : 'Awaiting Prep'}</span>
                                                                 )}
                                                             </td>
 
                                                             {/* Approved By cell */}
                                                             <td className="py-4 px-4 align-middle">
-                                                                {approvedBy ? (
-                                                                    <div className="flex items-center gap-2.5">
-                                                                        <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${isAprvSigned ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400' : 'bg-rose-100 text-rose-700'}`}>
-                                                                            {approvedBy.split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
+                                                                {isAprvSigned ? (
+                                                                    <div className="flex items-center gap-2">
+                                                                        <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400 flex items-center justify-center text-[10px] font-black shrink-0">
+                                                                            {(aprvHistEntry?.signer_name || approvedBy || '?').split(' ').map(n=>n[0]).join('').substring(0,2).toUpperCase()}
                                                                         </div>
                                                                         <div>
-                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{approvedBy}</div>
-                                                                            {approvedTitle && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{approvedTitle}</div>}
-                                                                            {isAprvSigned && <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Approved</div>}
-                                                                            {!isAprvSigned && reviewedBy && <div className="text-[9px] font-bold text-rose-400 uppercase tracking-wider">Awaiting Approval</div>}
+                                                                            <div className="text-[11px] font-black text-slate-800 leading-tight">{aprvHistEntry?.signer_name || approvedBy}</div>
+                                                                            {aprvHistEntry?.designation && <div className="text-[9px] font-bold text-slate-400 uppercase tracking-wider">{aprvHistEntry.designation}</div>}
+                                                                            <div className="text-[9px] font-black text-emerald-600 uppercase tracking-wider flex items-center gap-1"><CheckCircle className="w-2.5 h-2.5" />Approved</div>
                                                                         </div>
                                                                     </div>
+                                                                ) : isRevSigned && latestDoc ? (
+                                                                    <SignOffButton
+                                                                        documentId={latestDoc.id}
+                                                                        stage="approved_by"
+                                                                        label="Approved By"
+                                                                        history={latestDoc.history || []}
+                                                                        onSuccess={() => fetchWorkspaceData(true)}
+                                                                    />
                                                                 ) : (
-                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">Awaiting Approval</span>
+                                                                    <span className="text-[10px] font-bold text-slate-300 uppercase tracking-widest italic">{isRevSigned ? 'No file yet' : 'Awaiting Review'}</span>
                                                                 )}
                                                             </td>
 

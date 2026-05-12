@@ -1,9 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, BarChart2, Filter, Download } from 'lucide-react';
+import { LayoutGrid, BarChart2, Filter, Download, RefreshCw } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import DashboardSidebar from '../components/layout/DashboardSidebar';
 import { useDashboardActions } from '../hooks/useDashboardActions';
+import api from '../api';
 
 function getBarBg(pct) {
     if (pct >= 80) return '#10b981'; // emerald-500
@@ -27,58 +28,79 @@ function initials(name = '') {
 
 export default function Aapes() {
     const navigate = useNavigate();
-    const { engagements, loading, initialLoad, refreshData } = useDataContext();
+    const { engagements, loading: ctxLoading, refreshData } = useDataContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
-    const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
+    const { handleLogout } = useDashboardActions(refreshData);
+
+    const [toolData, setToolData] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         document.title = 'AAPIS Dashboard | IAMS';
     }, []);
+
+    const fetchAll = async () => {
+        setLoading(true);
+        try {
+            const results = await Promise.allSettled(
+                engagements.map(eng =>
+                    api.get(`/engagements/${eng.id}/tools/aapis`)
+                        .then(r => ({ eng, data: r.data }))
+                        .catch(() => null)
+                )
+            );
+
+            const rows = [];
+            results.forEach(r => {
+                if (r.status !== 'fulfilled' || !r.value) return;
+                const { eng, data } = r.value;
+                if (!data?.form_data) return;
+                
+                const fd = data.form_data;
+                const total      = parseInt(fd.totalRecs) || 0;
+                const fully      = parseInt(fd.fullyImpl) || 0;
+                const partial    = parseInt(fd.partialImpl) || 0;
+                const notImpl    = parseInt(fd.notImpl) || 0;
+
+                rows.push({
+                    id: eng.id,
+                    name: eng.title || `Engagement #${eng.id}`,
+                    implemented: fully,
+                    partiallyImpl: partial,
+                    notImpl: notImpl,
+                    total: total,
+                });
+            });
+            setToolData(rows.sort((a, b) => a.name.localeCompare(b.name)));
+        } catch (_) {}
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        if (!ctxLoading && engagements.length > 0) fetchAll();
+        if (!ctxLoading && engagements.length === 0) setLoading(false);
+    }, [engagements, ctxLoading]);
 
     const navItems = [
         { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => navigate('/') },
         { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPIS', active: true, onClick: () => {} }
     ];
 
-    // Group MOVs by auditee across all engagements
-    const auditees = useMemo(() => {
-        const map = {};
-        engagements.forEach(eng => {
-            (eng.movs || []).forEach(mov => {
-                const aid = mov.auditee?.id ?? mov.auditee_id;
-                if (!aid) return;
-                if (!map[aid]) {
-                    map[aid] = {
-                        id: aid,
-                        name: mov.auditee?.name ?? `Auditee #${aid}`,
-                        implemented: 0,       // FC - fully complied / approved
-                        partiallyImpl: 0,     // PC - partially complied / submitted
-                        notImpl: 0,           // NC - not complied / pending or returned
-                        total: 0,
-                    };
-                }
-                map[aid].total += 1;
-                if (mov.status === 'approved') map[aid].implemented += 1;
-                else if (mov.status === 'submitted' || mov.status === 'in_review') map[aid].partiallyImpl += 1;
-                else map[aid].notImpl += 1;
-            });
-        });
-        return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
-    }, [engagements]);
-
     return (
         <div className="bg-slate-100 font-sans h-screen flex overflow-hidden">
-            {/* Sidebar */}
             <DashboardSidebar user={user} navItems={navItems} onLogout={handleLogout} />
 
             <main className="flex-1 flex flex-col overflow-hidden bg-slate-50">
-                {/* Header */}
                 <header className="bg-white border-b border-slate-200 px-10 py-5 shrink-0 z-10 flex justify-between items-center shadow-sm">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800">AAPIS Dashboard</h1>
                         <p className="text-sm text-slate-500 mt-1">Audit Action Plan and Implementation Status Overview</p>
                     </div>
                     <div className="flex gap-3">
+                        <button onClick={fetchAll} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
+                            <RefreshCw className="h-4 w-4" />
+                            Refresh
+                        </button>
                         <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
                             <Filter className="h-4 w-4" />
                             Filter
@@ -90,10 +112,8 @@ export default function Aapes() {
                     </div>
                 </header>
 
-                {/* Content */}
                 <div className="flex-1 overflow-y-auto p-10" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
                     <div className="max-w-6xl mx-auto">
-                        {/* Table */}
                         <div style={{
                             width: '100%',
                             backgroundColor: 'white',
@@ -104,7 +124,7 @@ export default function Aapes() {
                             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                                 <thead>
                                     <tr>
-                                        {['Auditee', 'No. of Recommendations with Status', 'Progress'].map((h, i) => (
+                                        {['Audit Engagement', 'No. of Recommendations with Status', 'Progress'].map((h, i) => (
                                             <th key={h} style={{
                                                 backgroundColor: '#f8fafc',
                                                 color: '#475569',
@@ -121,7 +141,7 @@ export default function Aapes() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {auditees.length > 0 ? auditees.map(row => {
+                                    {toolData.length > 0 ? toolData.map(row => {
                                         const pct = row.total > 0 ? Math.round((row.implemented / row.total) * 100) : 0;
                                         const barBg = getBarBg(pct);
                                         const textColor = getTextColor(pct);
@@ -132,7 +152,6 @@ export default function Aapes() {
                                                 onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                                                 onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
 
-                                                {/* Col 1: Avatar + Name */}
                                                 <td style={{ padding: '16px 24px', verticalAlign: 'middle' }}>
                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                                         <div style={{
@@ -148,7 +167,6 @@ export default function Aapes() {
                                                     </div>
                                                 </td>
 
-                                                {/* Col 2: FC / Total + FC PC NC dots */}
                                                 <td style={{ padding: '16px 24px', verticalAlign: 'middle' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
                                                         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
@@ -172,7 +190,6 @@ export default function Aapes() {
                                                     </div>
                                                 </td>
 
-                                                {/* Col 3: % label + progress bar */}
                                                 <td style={{ padding: '16px 24px', verticalAlign: 'middle' }}>
                                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', fontWeight: 500 }}>
@@ -196,7 +213,7 @@ export default function Aapes() {
                                     }) : (
                                         <tr>
                                             <td colSpan="3" style={{ padding: '40px 24px', textAlign: 'center', color: '#94a3b8' }}>
-                                                {loading ? 'Loading data…' : 'No auditee data available.'}
+                                                {loading ? 'Loading AAPIS data...' : 'No AAPIS data available.'}
                                             </td>
                                         </tr>
                                     )}
@@ -204,7 +221,6 @@ export default function Aapes() {
                             </table>
                         </div>
 
-                        {/* Legend */}
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '24px', marginTop: '24px', fontSize: '0.875rem', color: '#475569' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ fontWeight: 700 }}>FC:</span> Fully Complied</div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ fontWeight: 700 }}>PC:</span> Partially Complied</div>

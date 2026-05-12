@@ -42,6 +42,57 @@
   border-radius: 20px;
 }
 
+/* Document specific styling to look like paper/forms */
+.doc-input {
+  background: transparent;
+  border-bottom: 1px dashed #000;
+  width: 100%;
+  outline: none;
+  font-family: serif;
+  font-size: 13px;
+  padding: 2px 4px;
+}
+.doc-input:focus, .doc-input:hover {
+  background-color: #f8fafc;
+  border-bottom: 1px solid #6366f1;
+}
+.doc-textarea {
+  width: 100%;
+  background: transparent;
+  border: 1px dashed transparent;
+  outline: none;
+  resize: vertical;
+  min-height: 80px;
+  padding: 4px;
+  transition: all 0.2s;
+  font-family: serif;
+  font-size: 13px;
+}
+.doc-textarea:focus, .doc-textarea:hover {
+  border: 1px dashed #cbd5e1;
+  background: #f8fafc;
+}
+
+/* Black Header Signatories Table */
+.sig-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: center;
+  font-family: serif;
+  font-size: 11px;
+}
+.sig-table th {
+  background-color: #000;
+  color: #fff;
+  border: 2px solid #000;
+  padding: 6px;
+  font-weight: bold;
+}
+.sig-table td {
+  border: 2px solid #000;
+  padding: 4px;
+}
+
 @media print {
 
   /* 1. Unlock the body and root so the page can be infinitely long */

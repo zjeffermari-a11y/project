@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
-import StandardAuditFooter from '../common/StandardAuditFooter';
 import { formatRef } from '../../utils/formatters';
 
 const TOOL_KEY = 'aapis';
@@ -35,6 +34,9 @@ export default function AuditeeActionPlanStatus({ engagement, readOnly = false }
         // Signatories
         submittedByName: '', submittedByTitle: '',
         approvedByName:  '', approvedByTitle:  '',
+        processOwner: 'JESSICA M. BAYLON',
+        divisionChief: 'ANGELBERT I. TULAUAN/ANDREA JULINE T. PASCUA',
+        qmrName: 'MARY ROSE L. VILCHEZ-MARIANO',
     });
 
     const fetchVersions = async () => {
@@ -250,15 +252,53 @@ export default function AuditeeActionPlanStatus({ engagement, readOnly = false }
                     <hr className="border-t-2 border-gray-300 my-4" />
 
                     {/* Document Control Footer */}
-                    <StandardAuditFooter
-                        documentId={documentId} history={signatureHistory} onSigned={loadLatest}
-                        readOnly={ro} formData={formData} setFormData={set}
-                        sections={[{ label: 'Document Control', labelClass: 'bg-black', signatories: [
-                            { label: 'Process Owner',                       stage: 'Prepared', nameField: 'processOwner',    titleField: 'processOwnerTitle' },
-                            { label: 'Asst. Division Chief/OIC-Div. Chief', stage: 'Reviewed', nameField: 'divisionChief',   titleField: 'divisionChiefTitle' },
-                            { label: 'IAS Deputy QMR',                      stage: 'Approved', nameField: 'qmrName',         titleField: 'qmrTitle' },
-                        ]}]}
-                    />
+                    <div className="mt-8 mb-8">
+                        <table className="sig-table">
+                            <thead>
+                                <tr>
+                                    <th>Prepared by</th>
+                                    <th>Reviewed by</th>
+                                    <th>Approved by</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr className="font-bold">
+                                    <td className="pt-8 pb-2">
+                                        <input 
+                                            type="text" 
+                                            value={formData.processOwner} 
+                                            onChange={e => set('processOwner', e.target.value)}
+                                            disabled={ro}
+                                            className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" 
+                                        />
+                                    </td>
+                                    <td className="pt-8 pb-2">
+                                        <input 
+                                            type="text" 
+                                            value={formData.divisionChief} 
+                                            onChange={e => set('divisionChief', e.target.value)}
+                                            disabled={ro}
+                                            className="w-full text-center font-bold bg-transparent outline-none uppercase text-[9px]" 
+                                        />
+                                    </td>
+                                    <td className="pt-8 pb-2">
+                                        <input 
+                                            type="text" 
+                                            value={formData.qmrName} 
+                                            onChange={e => set('qmrName', e.target.value)}
+                                            disabled={ro}
+                                            className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" 
+                                        />
+                                    </td>
+                                </tr>
+                                <tr className="font-bold text-center">
+                                    <td>Process Owner</td>
+                                    <td>ADC/OIC-DC</td>
+                                    <td>IAS Deputy QMR</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </AuditToolWrapper>

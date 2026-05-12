@@ -31,7 +31,7 @@ export default function GenerateDocument() {
             const formData = new FormData();
             formData.append('file', file);
             formData.append('engagement_id', engagement.id);
-            formData.append('document_type', doc === 'anm' ? 'Audit Notification Memorandum (ANM)' : 'Audit Work Program (AWP)');
+            formData.append('document_type', doc === 'anm' ? 'Audit Notification Memorandum (ANM)' : (doc === 'aim' || doc === 'ainm') ? 'Audit Inquiry Memorandum (AIM)' : 'Audit Work Program (AWP)');
             formData.append('phase', 'planning');
             
             await api.post('/documents/upload', formData, {
@@ -298,6 +298,48 @@ export default function GenerateDocument() {
         link.click();
     };
 
+    const handleExportWord = () => {
+        const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+        const postHtml = "</body></html>";
+        
+        const wrapper = document.getElementById('generated-document');
+        if (!wrapper) return;
+        const clone = wrapper.cloneNode(true);
+        
+        const textareas = clone.querySelectorAll('textarea');
+        textareas.forEach(ta => {
+            const p = document.createElement('p');
+            p.innerText = ta.value || ta.placeholder;
+            if(!ta.value) p.style.color = "#9ca3af"; 
+            ta.parentNode.replaceChild(p, ta);
+        });
+
+        const inputs = clone.querySelectorAll('input[type="text"], input[type="date"]');
+        inputs.forEach(input => {
+            const span = document.createElement('span');
+            span.innerText = input.value ? " " + input.value + " " : " ____________ ";
+            span.style.fontWeight = "bold";
+            input.parentNode.replaceChild(span, input);
+        });
+
+        const html = preHtml + clone.innerHTML + postHtml;
+
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+        const filename = `${doc?.toUpperCase()}_${engagement?.title?.replace(/ /g, '_') || 'Document'}.doc`;
+        const downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        
+        if(navigator.msSaveOrOpenBlob ){
+            navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.click();
+        }
+        document.body.removeChild(downloadLink);
+    };
+
     if (loading) return <div className="p-10 text-center font-bold text-slate-400">Loading Generated Blueprint...</div>;
     if (!engagement) return <div className="p-10 text-center font-bold text-rose-500">Engagement not found.</div>;
 
@@ -366,6 +408,120 @@ export default function GenerateDocument() {
                 <p className="text-red-600 font-bold text-[11px] tracking-wide font-serif">"Matino, Mahusay at Maaasahan"</p>
                 <p className="text-red-600 text-[9px] font-serif">Trunkline No. (02) 8876 3454</p>
             </div>
+        </div>
+    );
+
+    const renderAIM = () => (
+        <div id="generated-document" className="bg-white shadow-2xl w-[794px] min-h-[1123px] px-16 py-14 relative flex flex-col font-serif mx-auto my-10">
+            <style>{`
+                .doc-input { background: transparent; border-bottom: 1px dashed #000; width: 100%; outline: none; transition: border-color 0.2s; }
+                .doc-input:focus, .doc-input:hover { border-bottom: 1px solid #6366f1; background: #f8fafc; }
+                .doc-textarea { width: 100%; background: transparent; border: 1px dashed transparent; outline: none; resize: vertical; min-height: 80px; padding: 4px; transition: all 0.2s; }
+                .doc-textarea:focus, .doc-textarea:hover { border: 1px dashed #cbd5e1; background: #f8fafc; }
+                .sig-table { width: 100%; border-collapse: collapse; text-align: center; font-size: 11px; }
+                .sig-table th { background-color: #000; color: #fff; border: 2px solid #000; padding: 6px; font-weight: bold; }
+                .sig-table td { border: 2px solid #000; padding: 4px; }
+            `}</style>
+            
+            <div className="flex justify-center items-center gap-6 mb-2">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg" className="h-[72px] w-[72px]" alt="DILG Seal" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/3/3a/Bagong_Pilipinas_logo.svg" className="h-[72px] w-[72px] object-contain" alt="Bagong Pilipinas" />
+            </div>
+
+            <div className="text-center mb-8">
+                <p className="text-[10px] font-serif leading-tight">Republic of the Philippines</p>
+                <p className="text-sm font-bold font-serif tracking-wide leading-tight">DEPARTMENT OF THE INTERIOR AND LOCAL GOVERNMENT</p>
+                <p className="text-[10px] font-serif leading-tight">DILG-NAPOLCOM Center, EDSA cor. Quezon Avenue, West Triangle, Quezon City</p>
+                <p className="text-[10px] text-blue-600 font-serif leading-tight">www.dilg.gov.ph</p>
+            </div>
+
+            <div className="mb-6">
+                <h1 className="font-bold text-[14px] tracking-wide mb-1 font-serif">AUDIT INQUIRY MEMORANDUM</h1>
+                <p className="text-[12px] text-gray-700 font-serif">(AIM Ref. No. <input type="text" defaultValue={formatRef('AIM', engagement.ae_number)} readOnly tabIndex="-1" className="bg-transparent border-none outline-none w-32 text-gray-700 font-serif" />)</p>
+            </div>
+
+            <div className="grid grid-cols-[100px_15px_1fr] gap-y-3 mb-8 font-bold items-center text-[13px] font-serif">
+                <div>TO/FOR</div><div className="text-center">:</div>
+                <div><input type="text" className="doc-input font-bold py-0.5" defaultValue={auditeeName} /></div>
+
+                <div>THRU</div><div className="text-center">:</div>
+                <div className="flex items-center gap-2">
+                    <input type="text" className="doc-input font-bold w-1/2 py-0.5" placeholder="(if applicable)" />
+                </div>
+
+                <div>ATTENTION</div><div className="text-center">:</div>
+                <div className="flex items-center gap-2">
+                    <input type="text" className="doc-input font-bold w-1/2 py-0.5" placeholder="(if applicable)" />
+                </div>
+
+                <div>SUBJECT</div><div className="text-center">:</div>
+                <div><input type="text" className="doc-input font-bold py-0.5" defaultValue={engagement.title} /></div>
+
+                <div>DATE</div><div className="text-center">:</div>
+                <div><input type="date" className="doc-input font-bold w-auto py-0.5" defaultValue={new Date().toISOString().split('T')[0]} /></div>
+            </div>
+
+            <hr className="border-t-[1.5px] border-black mb-6" />
+
+            <div className="flex-1 text-[13px] leading-relaxed font-serif">
+                
+                <textarea className="doc-textarea italic" defaultValue={`(Context and Authority: i.e. Audit Engagement Title, Department Order, Audit Notification Memorandum) DO Number: DO-${engagement.ae_number?.replace('AE-', '')} ${engagement.title}`}></textarea>
+                
+                <textarea className="doc-textarea mt-4 italic" style={{minHeight: '120px'}} placeholder="(Details of Inquiry: clarification/additional information on the initially noted noncompliances and control deficiencies and/or request for additional documents)"></textarea>
+
+                <textarea className="doc-textarea mt-4 italic" style={{minHeight: '40px'}} placeholder="(Deadline of Submission)"></textarea>
+
+                <div className="mt-12 space-y-10">
+                    <div>
+                        <input type="text" className="w-64 bg-transparent outline-none border-b border-black font-bold mb-1 uppercase" defaultValue={user.name || "[Enter Name]"} />
+                        <p className="font-bold">Audit Team Leader</p>
+                    </div>
+                    
+                    <div>
+                        <p className="italic mb-6">Noted by:</p>
+                        <input type="text" className="w-64 bg-transparent outline-none border-b border-black font-bold mb-1 uppercase" defaultValue="MARY ROSE VILCHEZ-MARIANO" />
+                        <p className="font-bold">Director, Internal Audit Service</p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="mt-12 mb-8">
+                <table className="sig-table">
+                    <thead>
+                        <tr>
+                            <th>Prepared by</th>
+                            <th>Reviewed by</th>
+                            <th>Approved by</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr className="font-bold">
+                            <td className="pt-8 pb-2">
+                                <input type="text" defaultValue={user.name?.toUpperCase() || "JESSICA M. BAYLON"} className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" />
+                            </td>
+                            <td className="pt-8 pb-2">
+                                <input type="text" defaultValue="ANGELBERT I. TULAUAN/ANDREA JULINE T. PASCUA" className="w-full text-center font-bold bg-transparent outline-none uppercase text-[9px]" />
+                            </td>
+                            <td className="pt-8 pb-2">
+                                <input type="text" defaultValue="MARY ROSE L. VILCHEZ-MARIANO" className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" />
+                            </td>
+                        </tr>
+                        <tr className="font-bold">
+                            <td>Process Owner</td>
+                            <td>ADC/OIC-DC</td>
+                            <td>IAS Deputy QMR</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div className="text-center text-[9px] text-gray-600 mt-auto leading-tight font-serif">
+                <p>DILG- Internal Audit Service</p>
+                <p>DILG-NAPOLCOM Center, EDSA Corner Quezon Avenue, QC</p>
+                <p className="text-blue-600 font-bold underline">ias@dilg.gov.ph</p>
+                <p>02-8256552 / 02-876-3454 Local 5302/5305</p>
+            </div>
+
         </div>
     );
 
@@ -550,6 +706,9 @@ export default function GenerateDocument() {
                 </div>
                 <div className="flex gap-3">
                     <button onClick={handlePrint} className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors border border-slate-700 shadow-sm"><Printer className="w-4 h-4" /> Print / PDF</button>
+                    {doc !== 'awp' && (
+                        <button onClick={handleExportWord} className="px-5 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors shadow-sm"><Download className="w-4 h-4" /> Export Word</button>
+                    )}
                     {doc === 'awp' && (
                         <button onClick={exportToExcel} className="px-5 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-black uppercase tracking-widest flex items-center gap-2 transition-colors shadow-sm"><Download className="w-4 h-4" /> Export Excel</button>
                     )}
@@ -560,7 +719,7 @@ export default function GenerateDocument() {
             </header>
 
             <main className="flex-1 overflow-auto bg-slate-800 p-8 custom-scrollbar">
-                {doc === 'anm' ? renderANM() : renderAWP()}
+                {doc === 'anm' ? renderANM() : (doc === 'aim' || doc === 'ainm') ? renderAIM() : renderAWP()}
             </main>
         </div>
     );

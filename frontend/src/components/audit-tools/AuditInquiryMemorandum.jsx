@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
-import StandardAuditFooter from '../common/StandardAuditFooter';
 import { formatRef } from '../../utils/formatters';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
@@ -29,6 +28,9 @@ export default function AuditInquiryMemorandum({ engagement, readOnly = false })
         deadline: '',
         teamLeaderName: '',
         directorName: '',
+        preparedBy: 'JESSICA M. BAYLON',
+        reviewedBy: 'ANGELBERT I. TULAUAN/ANDREA JULINE T. PASCUA',
+        approvedBy: 'MARY ROSE L. VILCHEZ-MARIANO',
     });
 
     const fetchVersions = async () => {
@@ -65,6 +67,50 @@ export default function AuditInquiryMemorandum({ engagement, readOnly = false })
 
     const set = (key, val) => setFormData(fd => ({ ...fd, [key]: val }));
 
+    const exportToWord = () => {
+        const preHtml = "<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'><head><meta charset='utf-8'><title>Export HTML To Doc</title></head><body>";
+        const postHtml = "</body></html>";
+        
+        const wrapper = document.getElementById('aim-document');
+        if (!wrapper) return;
+        
+        const clone = wrapper.cloneNode(true);
+        
+        // Convert inputs/textareas to plain text elements for Word structure
+        const textareas = clone.querySelectorAll('textarea');
+        textareas.forEach(ta => {
+            const p = document.createElement('p');
+            p.innerText = ta.value || ta.placeholder;
+            if(ta.value === "") p.style.color = "#9ca3af";
+            ta.parentNode.replaceChild(p, ta);
+        });
+
+        const inputs = clone.querySelectorAll('input[type="text"], input[type="date"]');
+        inputs.forEach(input => {
+            const span = document.createElement('span');
+            span.innerText = input.value ? " " + input.value + " " : " ____________ ";
+            span.style.fontWeight = "bold";
+            input.parentNode.replaceChild(span, input);
+        });
+
+        const html = preHtml + clone.innerHTML + postHtml;
+        const blob = new Blob(['\ufeff', html], { type: 'application/msword' });
+        const url = 'data:application/vnd.ms-word;charset=utf-8,' + encodeURIComponent(html);
+        const filename = 'Audit_Inquiry_Memorandum.doc';
+        
+        const downloadLink = document.createElement("a");
+        document.body.appendChild(downloadLink);
+        
+        if (navigator.msSaveOrOpenBlob) {
+            navigator.msSaveOrOpenBlob(blob, filename);
+        } else {
+            downloadLink.href = url;
+            downloadLink.download = filename;
+            downloadLink.click();
+        }
+        document.body.removeChild(downloadLink);
+    };
+
     const handleSave = async () => {
         setSaving(true);
         try {
@@ -89,6 +135,7 @@ export default function AuditInquiryMemorandum({ engagement, readOnly = false })
             phase="Audit Execution"
             engagementTitle={engagement.title}
             onSave={handleSave}
+            onExportWord={exportToWord}
             isSaving={saving}
             lastSaved={lastSaved}
             readOnly={isReadOnly}
@@ -262,26 +309,53 @@ export default function AuditInquiryMemorandum({ engagement, readOnly = false })
                 </div>
 
                 {/* Standard Signatories Footer Table */}
-                <StandardAuditFooter
-                    documentId={documentId}
-                    history={signatureHistory}
-                    onSigned={loadLatest}
-                    readOnly={isReadOnly}
-                    formData={formData}
-                    setFormData={set}
-                    className="mt-12 pt-8 border-t-2 border-slate-100"
-                    sections={[
-                        {
-                            label: 'Preparation & Review',
-                            labelClass: 'bg-indigo-900',
-                            signatories: [
-                                { label: 'Prepared by', stage: 'Prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
-                                { label: 'Reviewed by', stage: 'Reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
-                                { label: 'Approved by', stage: 'Approved', nameField: 'approvedBy', titleField: 'approvedTitle' },
-                            ],
-                        },
-                    ]}
-                />
+                <div className="mt-12 mb-8">
+                    <table className="sig-table">
+                        <thead>
+                            <tr>
+                                <th>Prepared by</th>
+                                <th>Reviewed by</th>
+                                <th>Approved by</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="font-bold">
+                                <td className="pt-8 pb-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.preparedBy} 
+                                        onChange={e => set('preparedBy', e.target.value)}
+                                        disabled={isReadOnly}
+                                        className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" 
+                                    />
+                                </td>
+                                <td className="pt-8 pb-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.reviewedBy} 
+                                        onChange={e => set('reviewedBy', e.target.value)}
+                                        disabled={isReadOnly}
+                                        className="w-full text-center font-bold bg-transparent outline-none uppercase text-[9px]" 
+                                    />
+                                </td>
+                                <td className="pt-8 pb-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.approvedBy} 
+                                        onChange={e => set('approvedBy', e.target.value)}
+                                        disabled={isReadOnly}
+                                        className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" 
+                                    />
+                                </td>
+                            </tr>
+                            <tr className="font-bold text-center">
+                                <td>Process Owner</td>
+                                <td>ADC/OIC-DC</td>
+                                <td>IAS Deputy QMR</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
                 {/* Document Footer */}
                 <div className="text-center text-[9px] text-gray-600 mt-auto pt-4 leading-tight border-t border-slate-100">

@@ -1,98 +1,98 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Filter } from 'lucide-react';
+import { LayoutGrid, FileText, Filter, RefreshCw } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import DashboardSidebar from '../components/layout/DashboardSidebar';
 import { useDashboardActions } from '../hooks/useDashboardActions';
+import api from '../api';
 
-// MOV categories mapped from requirement_name keywords — must match the backend data
 const MOV_CATEGORIES = [
-    { key: 'control_environment',       label: 'Control Environment',                       match: 'control environment' },
-    { key: 'risk_assessment',           label: 'Risk Assessment',                            match: 'risk assessment' },
-    { key: 'control_activities',        label: 'Control Activities',                         match: 'control activities' },
-    { key: 'initial_samples',           label: 'Initial samples based on PMR/APP',           match: 'initial sample' },
-    { key: 'information_communication', label: 'Information and Communication',               match: 'information' },
-    { key: 'monitoring',                label: 'Monitoring',                                  match: 'monitoring' },
-    { key: 'total_docs',                label: 'Total Documents Submitted Prior the discussion', match: 'total' },
-    { key: 'additional_movs',           label: 'Additional MOVs',                            match: 'additional' },
+    { key: 'control_environment',       label: 'Control Environment' },
+    { key: 'risk_assessment',           label: 'Risk Assessment' },
+    { key: 'control_activities',        label: 'Control Activities' },
+    { key: 'initial_samples',           label: 'Initial samples based on PMR/APP' },
+    { key: 'information_communication', label: 'Information and Communication' },
+    { key: 'monitoring',                label: 'Monitoring' },
+    { key: 'total_docs',                label: 'Total Documents Submitted Prior the discussion' },
+    { key: 'additional_movs',           label: 'Additional MOVs' },
 ];
-
-function getCategoryKey(requirementName) {
-    const lower = (requirementName || '').toLowerCase();
-    for (const cat of MOV_CATEGORIES) {
-        if (lower.includes(cat.match)) return cat.key;
-    }
-    return 'additional_movs';
-}
-
-function categoryProgress(movs, categoryKey) {
-    const filtered = movs.filter(m => getCategoryKey(m.requirement_name) === categoryKey);
-    if (filtered.length === 0) return null;
-    const approved = filtered.filter(m => m.status === 'approved').length;
-    return Math.round((approved / filtered.length) * 100);
-}
-
-function formatDatetime() {
-    const now = new Date();
-    return now.toLocaleDateString('en-US', {
-        year: 'numeric', month: 'long', day: 'numeric',
-        hour: '2-digit', minute: '2-digit', hour12: true
-    });
-}
 
 export default function MovMonitoring() {
     const navigate = useNavigate();
-    const { engagements, loading, initialLoad, refreshData } = useDataContext();
+    const { engagements, loading: ctxLoading, refreshData } = useDataContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
-    const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
-    const [currentTime, setCurrentTime] = useState(formatDatetime());
+    const { handleLogout } = useDashboardActions(refreshData);
+
+    const [toolData, setToolData] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         document.title = 'MOV Monitoring Dashboard | IAMS';
-        const interval = setInterval(() => setCurrentTime(formatDatetime()), 60000);
-        return () => clearInterval(interval);
     }, []);
+
+    const fetchAll = async () => {
+        setLoading(true);
+        try {
+            const results = await Promise.allSettled(
+                engagements.map(eng =>
+                    api.get(`/engagements/${eng.id}/tools/inventory`)
+                        .then(r => ({ eng, data: r.data }))
+                        .catch(() => null)
+                )
+            );
+
+            const rows = [];
+            results.forEach(r => {
+                if (r.status !== 'fulfilled' || !r.value) return;
+                const { eng, data } = r.value;
+                if (!data?.form_data) return;
+                
+                const fd = data.form_data;
+                rows.push({
+                    id: eng.id,
+                    name: eng.title || `Engagement #${eng.id}`,
+                    categories: {
+                        control_environment:       parseInt(fd.controlEnvPct) || 0,
+                        risk_assessment:           parseInt(fd.riskAssessPct) || 0,
+                        control_activities:        parseInt(fd.controlActPct) || 0,
+                        initial_samples:           parseInt(fd.initialSamplePct) || 0,
+                        information_communication: parseInt(fd.infoCommPct) || 0,
+                        monitoring:                parseInt(fd.monitoringPct) || 0,
+                        total_docs:                parseInt(fd.totalDocsPct) || 0,
+                        additional_movs:           parseInt(fd.additionalMovsPct) || 0,
+                    }
+                });
+            });
+            setToolData(rows.sort((a, b) => a.name.localeCompare(b.name)));
+        } catch (_) {}
+        setLoading(false);
+    };
+
+    useEffect(() => {
+        if (!ctxLoading && engagements.length > 0) fetchAll();
+        if (!ctxLoading && engagements.length === 0) setLoading(false);
+    }, [engagements, ctxLoading]);
 
     const navItems = [
         { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => navigate('/') },
         { icon: <FileText className="h-5 w-5" />, title: 'MOV Monitor', active: true, onClick: () => {} }
     ];
 
-    const auditeeRows = useMemo(() => {
-        const map = {};
-        engagements.forEach(eng => {
-            (eng.movs || []).forEach(mov => {
-                const aid = mov.auditee?.id ?? mov.auditee_id;
-                if (!aid) return;
-                if (!map[aid]) {
-                    map[aid] = { id: aid, name: mov.auditee?.name ?? `Auditee #${aid}`, movs: [] };
-                }
-                map[aid].movs.push(mov);
-            });
-        });
-        return Object.values(map)
-            .map(row => ({
-                ...row,
-                categories: Object.fromEntries(
-                    MOV_CATEGORIES.map(cat => [cat.key, categoryProgress(row.movs, cat.key)])
-                ),
-            }))
-            .sort((a, b) => a.name.localeCompare(b.name));
-    }, [engagements]);
-
     return (
         <div className="bg-slate-50 font-sans h-screen flex overflow-hidden">
-            {/* Sidebar */}
             <DashboardSidebar user={user} navItems={navItems} onLogout={handleLogout} />
 
             <main className="flex-1 flex flex-col overflow-hidden">
-                {/* Header */}
                 <header className="bg-white border-b border-slate-200 px-10 py-5 shrink-0 z-10 flex justify-between items-center shadow-sm">
                     <div>
                         <h1 className="text-xl font-bold text-slate-800">STATUS OF SUBMITTED MOVs PROCUREMENT</h1>
-                        <p className="text-sm text-slate-500 mt-1">As of {currentTime}</p>
+                        <p className="text-sm text-slate-500 mt-1">Engagement Progress Overview</p>
                     </div>
                     <div className="flex gap-3">
+                        <button onClick={fetchAll} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
+                            <RefreshCw className="h-4 w-4" />
+                            Refresh
+                        </button>
                         <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
                             <Filter className="h-4 w-4" />
                             Filter Data
@@ -100,13 +100,11 @@ export default function MovMonitoring() {
                     </div>
                 </header>
 
-                {/* Scrollable content with horizontal scroll */}
-                <div className="flex-1 overflow-auto p-6 lg:p-10"
-                    style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+                <div className="flex-1 overflow-auto p-6 lg:p-10" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
                     <div className="w-full">
-                        {loading && auditeeRows.length === 0 ? (
+                        {loading && toolData.length === 0 ? (
                             <div className="text-center py-10">
-                                <p className="text-slate-500">Loading data from backend...</p>
+                                <p className="text-slate-500">Loading MOV data...</p>
                             </div>
                         ) : (
                             <table style={{
@@ -120,88 +118,51 @@ export default function MovMonitoring() {
                             }}>
                                 <thead>
                                     <tr>
-                                        {/* Sticky Regions header */}
                                         <th style={{
-                                            width: '192px',
-                                            position: 'sticky',
-                                            left: 0,
-                                            backgroundColor: '#f8fafc',
-                                            zIndex: 10,
-                                            boxShadow: '2px 0 5px -2px rgba(0,0,0,0.1)',
-                                            color: '#475569',
-                                            fontWeight: 600,
-                                            textAlign: 'left',
-                                            padding: '12px 16px',
-                                            borderBottom: '2px solid #e2e8f0',
-                                            textTransform: 'uppercase',
-                                            fontSize: '0.70rem',
-                                            letterSpacing: '0.05em',
-                                            lineHeight: 1.2,
-                                        }}>Regions</th>
+                                            width: '192px', position: 'sticky', left: 0, backgroundColor: '#f8fafc', zIndex: 10,
+                                            boxShadow: '2px 0 5px -2px rgba(0,0,0,0.1)', color: '#475569', fontWeight: 600,
+                                            textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid #e2e8f0',
+                                            textTransform: 'uppercase', fontSize: '0.70rem', letterSpacing: '0.05em', lineHeight: 1.2,
+                                        }}>Audit Engagement</th>
 
-                                        {/* Category headers */}
                                         {MOV_CATEGORIES.map(cat => (
                                             <th key={cat.key} style={{
-                                                backgroundColor: '#f8fafc',
-                                                color: '#475569',
-                                                fontWeight: 600,
-                                                textAlign: 'left',
-                                                padding: '12px 16px',
-                                                borderBottom: '2px solid #e2e8f0',
-                                                textTransform: 'uppercase',
-                                                fontSize: '0.70rem',
-                                                letterSpacing: '0.05em',
-                                                lineHeight: 1.2,
+                                                backgroundColor: '#f8fafc', color: '#475569', fontWeight: 600,
+                                                textAlign: 'left', padding: '12px 16px', borderBottom: '2px solid #e2e8f0',
+                                                textTransform: 'uppercase', fontSize: '0.70rem', letterSpacing: '0.05em', lineHeight: 1.2,
                                             }}>{cat.label}</th>
                                         ))}
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {auditeeRows.length > 0 ? auditeeRows.map(row => (
+                                    {toolData.length > 0 ? toolData.map(row => (
                                         <tr key={row.id}
                                             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                                             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
                                             style={{ borderBottom: '1px solid #e2e8f0' }}>
 
-                                            {/* Sticky name cell */}
                                             <td style={{
-                                                padding: '12px 16px',
-                                                position: 'sticky',
-                                                left: 0,
-                                                backgroundColor: 'inherit',
-                                                zIndex: 10,
-                                                boxShadow: '2px 0 5px -2px rgba(0,0,0,0.1)',
-                                                fontWeight: 500,
-                                                color: '#1e293b',
-                                                whiteSpace: 'nowrap',
-                                                verticalAlign: 'middle',
+                                                padding: '12px 16px', position: 'sticky', left: 0, backgroundColor: 'inherit',
+                                                zIndex: 10, boxShadow: '2px 0 5px -2px rgba(0,0,0,0.1)', fontWeight: 500,
+                                                color: '#1e293b', whiteSpace: 'nowrap', verticalAlign: 'middle',
                                             }}>{row.name}</td>
 
-                                            {/* Category progress bar cells */}
                                             {MOV_CATEGORIES.map(cat => {
                                                 const pct = row.categories[cat.key];
                                                 return (
                                                     <td key={cat.key} style={{
-                                                        padding: '12px 16px',
-                                                        verticalAlign: 'middle',
-                                                        whiteSpace: 'nowrap',
-                                                        color: '#1e293b',
+                                                        padding: '12px 16px', verticalAlign: 'middle', whiteSpace: 'nowrap', color: '#1e293b',
                                                     }}>
-                                                        {pct === null ? (
+                                                        {pct == null ? (
                                                             <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic' }}>N/A</span>
                                                         ) : (
                                                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                                 <div style={{
-                                                                    flex: 1, minWidth: '50px',
-                                                                    backgroundColor: '#e2e8f0',
-                                                                    borderRadius: '9999px',
-                                                                    height: '10px',
-                                                                    overflow: 'hidden',
+                                                                    flex: 1, minWidth: '50px', backgroundColor: '#e2e8f0',
+                                                                    borderRadius: '9999px', height: '10px', overflow: 'hidden',
                                                                 }}>
                                                                     <div style={{
-                                                                        width: `${pct}%`,
-                                                                        height: '100%',
-                                                                        backgroundColor: '#1f2937', // dark fill matching the HTML mockup
+                                                                        width: `${pct}%`, height: '100%', backgroundColor: '#1f2937',
                                                                         transition: 'width 0.5s ease-in-out',
                                                                     }} />
                                                                 </div>

@@ -3,7 +3,6 @@ import api from '../../api';
 import AuditToolWrapper from './AuditToolWrapper';
 import MultiFileAttach from './MultiFileAttach';
 import { formatRef } from '../../utils/formatters';
-import StandardAuditFooter from '../common/StandardAuditFooter';
 
 const DILG_SEAL = 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Seal_of_the_Department_of_the_Interior_and_Local_Government.svg';
 
@@ -23,7 +22,10 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
         additionalDate: '',
         initialRows: Array(5).fill(null).map(() => ['', '', '', '', []]),
         additionalRows: Array(4).fill(null).map(() => ['', '', '', '', []]),
-        attachments: []
+        attachments: [],
+        preparedBy: 'JESSICA M. BAYLON',
+        reviewedBy: 'ANGELBERT I. TULAUAN/ANDREA JULINE T. PASCUA',
+        approvedBy: 'MARY ROSE L. VILCHEZ-MARIANO',
     });
 
     useEffect(() => {
@@ -259,20 +261,53 @@ export default function InventoryMOVs({ engagement, readOnly = false }) {
                     </tbody>
                 </table>
 
-                <StandardAuditFooter 
-                    documentId={selectedVersionId}
-                    history={signatureHistory}
-                    onSigned={loadLatest}
-                    readOnly={readOnly || !!selectedVersionId}
-                    formData={formData}
-                    setFormData={set}
-                    className="mt-16 pt-12 border-t-2 border-slate-100"
-                    signatories={[
-                        { label: 'Prepared by', stage: 'Prepared', nameField: 'preparedBy', titleField: 'preparedTitle' },
-                        { label: 'Reviewed by', stage: 'Reviewed', nameField: 'reviewedBy', titleField: 'reviewedTitle' },
-                        { label: 'Approved by', stage: 'Approved', nameField: 'approvedBy', titleField: 'approvedTitle' }
-                    ]}
-                />
+                <div className="mt-12 mb-8">
+                    <table className="sig-table">
+                        <thead>
+                            <tr>
+                                <th>Prepared by</th>
+                                <th>Reviewed by</th>
+                                <th>Approved by</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr className="font-bold">
+                                <td className="pt-8 pb-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.preparedBy} 
+                                        onChange={e => set('preparedBy', e.target.value)}
+                                        disabled={readOnly || !!selectedVersionId}
+                                        className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" 
+                                    />
+                                </td>
+                                <td className="pt-8 pb-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.reviewedBy} 
+                                        onChange={e => set('reviewedBy', e.target.value)}
+                                        disabled={readOnly || !!selectedVersionId}
+                                        className="w-full text-center font-bold bg-transparent outline-none uppercase text-[9px]" 
+                                    />
+                                </td>
+                                <td className="pt-8 pb-2">
+                                    <input 
+                                        type="text" 
+                                        value={formData.approvedBy} 
+                                        onChange={e => set('approvedBy', e.target.value)}
+                                        disabled={readOnly || !!selectedVersionId}
+                                        className="w-full text-center font-bold bg-transparent outline-none uppercase text-[11px]" 
+                                    />
+                                </td>
+                            </tr>
+                            <tr className="font-bold text-center">
+                                <td>Process Owner</td>
+                                <td>ADC/OIC-DC</td>
+                                <td>IAS Deputy QMR</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
 
             </div>
         </AuditToolWrapper>

@@ -1,24 +1,28 @@
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, BarChart2, CheckCircle, Clock, ArrowRightCircle, AlertCircle, XCircle, FileText, Users, TrendingUp } from 'lucide-react';
+import { LayoutGrid, BarChart2, Filter, Download } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
-import DashboardLayout from '../components/layout/DashboardLayout';
 import DashboardSidebar from '../components/layout/DashboardSidebar';
-import DashboardHeader from '../components/layout/DashboardHeader';
 import { useDashboardActions } from '../hooks/useDashboardActions';
 
-const STATUS_CONFIG = {
-    completed:  { label: 'Completed',   color: 'bg-emerald-100 text-emerald-700', icon: <CheckCircle className="w-3.5 h-3.5" /> },
-    in_review:  { label: 'In Review',   color: 'bg-blue-100 text-blue-700',       icon: <ArrowRightCircle className="w-3.5 h-3.5" /> },
-    returned:   { label: 'Returned',    color: 'bg-rose-100 text-rose-700',       icon: <XCircle className="w-3.5 h-3.5" /> },
-    followup:   { label: 'Follow-up',   color: 'bg-purple-100 text-purple-700',   icon: <ArrowRightCircle className="w-3.5 h-3.5" /> },
-    reporting:  { label: 'Reporting',   color: 'bg-indigo-100 text-indigo-700',   icon: <FileText className="w-3.5 h-3.5" /> },
-    execution:  { label: 'Execution',   color: 'bg-amber-100 text-amber-700',     icon: <ArrowRightCircle className="w-3.5 h-3.5" /> },
-    planning:   { label: 'Planning',    color: 'bg-slate-100 text-slate-600',     icon: <Clock className="w-3.5 h-3.5" /> },
-};
+function getBarBg(pct) {
+    if (pct >= 80) return '#10b981'; // emerald-500
+    if (pct >= 50) return '#fbbf24'; // amber-400
+    return '#f87171';                // red-400
+}
+function getTextColor(pct) {
+    if (pct >= 80) return '#059669'; // emerald-600
+    if (pct >= 50) return '#d97706'; // amber-500
+    return '#ef4444';                // red-500
+}
 
-function getStatusConfig(status) {
-    return STATUS_CONFIG[status] ?? { label: (status || 'Unknown').replace(/_/g, ' ').toUpperCase(), color: 'bg-slate-100 text-slate-600', icon: null };
+function initials(name = '') {
+    return name
+        .split(' ')
+        .map(w => w[0] ?? '')
+        .join('')
+        .slice(0, 4)
+        .toUpperCase();
 }
 
 export default function Aapes() {
@@ -28,7 +32,7 @@ export default function Aapes() {
     const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
 
     useEffect(() => {
-        document.title = 'AAPIS | Internal Audit Management';
+        document.title = 'AAPIS Dashboard | IAMS';
     }, []);
 
     const navItems = [
@@ -36,203 +40,179 @@ export default function Aapes() {
         { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPIS', active: true, onClick: () => {} }
     ];
 
-    const { rows, totals } = useMemo(() => {
-        const rows = engagements.map(eng => {
-            const movs = eng.movs || [];
-            const total     = movs.length;
-            const approved  = movs.filter(m => m.status === 'approved').length;
-            const submitted = movs.filter(m => m.status === 'submitted').length;
-            const returned  = movs.filter(m => m.status === 'returned').length;
-            const pending   = movs.filter(m => m.status === 'pending').length;
-            const progress  = total > 0 ? Math.round((approved / total) * 100) : 0;
-
-            // Collect unique auditee names from MOVs
-            const auditeeNames = [
-                ...new Set(
-                    movs
-                        .map(m => m.auditee?.name)
-                        .filter(Boolean)
-                )
-            ];
-
-            return {
-                id: eng.id,
-                aeNumber: eng.ae_number,
-                title: eng.title,
-                status: eng.status,
-                total,
-                approved,
-                submitted,
-                returned,
-                pending,
-                progress,
-                auditeeNames,
-            };
+    // Group MOVs by auditee across all engagements
+    const auditees = useMemo(() => {
+        const map = {};
+        engagements.forEach(eng => {
+            (eng.movs || []).forEach(mov => {
+                const aid = mov.auditee?.id ?? mov.auditee_id;
+                if (!aid) return;
+                if (!map[aid]) {
+                    map[aid] = {
+                        id: aid,
+                        name: mov.auditee?.name ?? `Auditee #${aid}`,
+                        implemented: 0,       // FC - fully complied / approved
+                        partiallyImpl: 0,     // PC - partially complied / submitted
+                        notImpl: 0,           // NC - not complied / pending or returned
+                        total: 0,
+                    };
+                }
+                map[aid].total += 1;
+                if (mov.status === 'approved') map[aid].implemented += 1;
+                else if (mov.status === 'submitted' || mov.status === 'in_review') map[aid].partiallyImpl += 1;
+                else map[aid].notImpl += 1;
+            });
         });
-
-        const totals = {
-            engagements: rows.length,
-            completed:   rows.filter(r => r.status === 'completed').length,
-            inProgress:  rows.filter(r => !['completed', 'planning'].includes(r.status)).length,
-        };
-
-        return { rows, totals };
+        return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
     }, [engagements]);
 
     return (
-        <DashboardLayout
-            isLoggingOut={isLoggingOut}
-            userName={user?.name}
-            sidebar={<DashboardSidebar user={user} navItems={navItems} onLogout={handleLogout} />}
-            header={
-                <DashboardHeader
-                    user={user}
-                    roleLabel="AAPIS"
-                    title="AAPIS Monitoring Dashboard"
-                    subtitle="Annual Audit Program Implementation Status — track progress across all audit engagements"
-                    isInitialLoad={initialLoad}
-                    isLoading={loading}
-                    onRefresh={refreshData}
-                    actions={null}
-                />
-            }
-        >
-            {/* Summary Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-indigo-50 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-indigo-600" />
-                    </div>
+        <div className="bg-slate-100 font-sans h-screen flex overflow-hidden">
+            {/* Sidebar */}
+            <DashboardSidebar user={user} navItems={navItems} onLogout={handleLogout} />
+
+            <main className="flex-1 flex flex-col overflow-hidden bg-slate-50">
+                {/* Header */}
+                <header className="bg-white border-b border-slate-200 px-10 py-5 shrink-0 z-10 flex justify-between items-center shadow-sm">
                     <div>
-                        <p className="text-2xl font-bold text-slate-800">{totals.engagements}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Total Engagements</p>
+                        <h1 className="text-xl font-bold text-slate-800">AAPIS Dashboard</h1>
+                        <p className="text-sm text-slate-500 mt-1">Audit Action Plan and Implementation Status Overview</p>
                     </div>
-                </div>
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-emerald-600" />
+                    <div className="flex gap-3">
+                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
+                            <Filter className="h-4 w-4" />
+                            Filter
+                        </button>
+                        <button className="px-4 py-2 bg-indigo-600 text-white font-medium text-sm rounded-lg shadow-md hover:bg-indigo-700 transition-all flex items-center gap-2">
+                            <Download className="h-4 w-4" />
+                            Export Report
+                        </button>
                     </div>
-                    <div>
-                        <p className="text-2xl font-bold text-emerald-700">{totals.completed}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Completed</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-amber-50 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-amber-600" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-amber-700">{totals.inProgress}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">In Progress</p>
-                    </div>
-                </div>
-            </div>
+                </header>
 
-            {/* Main Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-200 flex items-center gap-2">
-                    <BarChart2 className="w-5 h-5 text-indigo-500" />
-                    <h2 className="text-lg font-bold text-slate-800">Engagement Progress Overview</h2>
-                </div>
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-10" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+                    <div className="max-w-6xl mx-auto">
+                        {/* Table */}
+                        <div style={{
+                            width: '100%',
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                        }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr>
+                                        {['Auditee', 'No. of Recommendations with Status', 'Progress'].map((h, i) => (
+                                            <th key={h} style={{
+                                                backgroundColor: '#f8fafc',
+                                                color: '#475569',
+                                                fontWeight: 600,
+                                                textAlign: i === 1 ? 'center' : 'left',
+                                                padding: '16px 24px',
+                                                borderBottom: '2px solid #e2e8f0',
+                                                textTransform: 'uppercase',
+                                                fontSize: '0.75rem',
+                                                letterSpacing: '0.05em',
+                                                width: '33%',
+                                            }}>{h}</th>
+                                        ))}
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {auditees.length > 0 ? auditees.map(row => {
+                                        const pct = row.total > 0 ? Math.round((row.implemented / row.total) * 100) : 0;
+                                        const barBg = getBarBg(pct);
+                                        const textColor = getTextColor(pct);
+                                        const acr = initials(row.name);
+                                        return (
+                                            <tr key={row.id}
+                                                style={{ borderBottom: '1px solid #e2e8f0' }}
+                                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-600">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Engagement</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Auditee(s)</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Phase / Status</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">MOV Breakdown</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Compliance Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {rows.length > 0 ? (
-                                rows.map(row => {
-                                    const sc = getStatusConfig(row.status);
-                                    const barClass = row.progress === 100
-                                        ? 'bg-emerald-500'
-                                        : row.progress >= 75 ? 'bg-blue-500'
-                                        : row.progress >= 50 ? 'bg-amber-500'
-                                        : 'bg-indigo-500';
-
-                                    return (
-                                        <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                                            {/* Engagement */}
-                                            <td className="px-6 py-4 font-medium text-slate-800">
-                                                <div className="flex flex-col gap-0.5">
-                                                    <span>{row.title}</span>
-                                                    <span className="text-xs text-slate-400 font-mono">{row.aeNumber}</span>
-                                                </div>
-                                            </td>
-
-                                            {/* Auditees */}
-                                            <td className="px-6 py-4 text-slate-600">
-                                                {row.auditeeNames.length > 0 ? (
-                                                    <div className="flex flex-col gap-0.5">
-                                                        {row.auditeeNames.slice(0, 3).map((name, i) => (
-                                                            <span key={i} className="text-xs">{name}</span>
-                                                        ))}
-                                                        {row.auditeeNames.length > 3 && (
-                                                            <span className="text-xs text-slate-400">+{row.auditeeNames.length - 3} more</span>
-                                                        )}
+                                                {/* Col 1: Avatar + Name */}
+                                                <td style={{ padding: '16px 24px', verticalAlign: 'middle' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                                        <div style={{
+                                                            width: '40px', height: '40px', borderRadius: '50%',
+                                                            backgroundColor: '#e0e7ff', color: '#4338ca',
+                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                            fontWeight: 700, fontSize: '0.75rem', flexShrink: 0
+                                                        }}>{acr}</div>
+                                                        <div>
+                                                            <p style={{ fontWeight: 700, color: '#1e293b', margin: 0 }}>{row.name}</p>
+                                                            <p style={{ fontSize: '0.75rem', color: '#94a3b8', margin: 0 }}>AAPIS Record</p>
+                                                        </div>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400 italic">Not assigned</span>
-                                                )}
-                                            </td>
+                                                </td>
 
-                                            {/* Status Badge */}
-                                            <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${sc.color}`}>
-                                                    {sc.icon}
-                                                    {sc.label}
-                                                </span>
-                                            </td>
-
-                                            {/* MOV Breakdown */}
-                                            <td className="px-6 py-4">
-                                                {row.total > 0 ? (
-                                                    <div className="flex flex-col gap-1 text-xs">
-                                                        <span className="text-emerald-600 font-medium">✓ {row.approved} approved</span>
-                                                        {row.submitted > 0 && <span className="text-blue-600">↑ {row.submitted} submitted</span>}
-                                                        {row.returned  > 0 && <span className="text-rose-600">↩ {row.returned} returned</span>}
-                                                        {row.pending   > 0 && <span className="text-slate-400">⏳ {row.pending} pending</span>}
+                                                {/* Col 2: FC / Total + FC PC NC dots */}
+                                                <td style={{ padding: '16px 24px', verticalAlign: 'middle' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                                        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px' }}>
+                                                            <span style={{ fontSize: '1.5rem', fontWeight: 700, color: '#1e293b' }}>{row.implemented}</span>
+                                                            <span style={{ fontSize: '0.875rem', fontWeight: 500, color: '#64748b', marginBottom: '3px' }}>/ {row.total}</span>
+                                                        </div>
+                                                        <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', marginTop: '4px' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#10b981', display: 'inline-block' }} />
+                                                                <span style={{ color: '#475569' }}>FC: {row.implemented}</span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#fbbf24', display: 'inline-block' }} />
+                                                                <span style={{ color: '#475569' }}>PC: {row.partiallyImpl}</span>
+                                                            </div>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                                                <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#f87171', display: 'inline-block' }} />
+                                                                <span style={{ color: '#475569' }}>NC: {row.notImpl}</span>
+                                                            </div>
+                                                        </div>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-xs text-slate-400 italic">No MOVs</span>
-                                                )}
-                                            </td>
+                                                </td>
 
-                                            {/* Progress Bar */}
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-semibold text-slate-700 w-12 text-sm">
-                                                        {row.approved}/{row.total}
-                                                    </span>
-                                                    <div className="w-28 h-2.5 bg-slate-200 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-500 ${barClass}`}
-                                                            style={{ width: `${row.progress}%` }}
-                                                        />
+                                                {/* Col 3: % label + progress bar */}
+                                                <td style={{ padding: '16px 24px', verticalAlign: 'middle' }}>
+                                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.875rem', fontWeight: 500 }}>
+                                                            <span style={{ color: textColor, fontWeight: 700 }}>{pct}%</span>
+                                                            <span style={{ color: '#94a3b8', fontSize: '0.75rem' }}>Completion Rate</span>
+                                                        </div>
+                                                        <div style={{
+                                                            width: '100%', backgroundColor: '#e2e8f0',
+                                                            borderRadius: '9999px', height: '8px', overflow: 'hidden'
+                                                        }}>
+                                                            <div style={{
+                                                                width: `${pct}%`, height: '100%',
+                                                                backgroundColor: barBg,
+                                                                transition: 'width 0.5s ease-in-out'
+                                                            }} />
+                                                        </div>
                                                     </div>
-                                                    <span className="text-xs text-slate-500">{row.progress}%</span>
-                                                </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }) : (
+                                        <tr>
+                                            <td colSpan="3" style={{ padding: '40px 24px', textAlign: 'center', color: '#94a3b8' }}>
+                                                {loading ? 'Loading data…' : 'No auditee data available.'}
                                             </td>
                                         </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
-                                        {loading ? 'Loading engagements…' : 'No engagements found.'}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Legend */}
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '24px', marginTop: '24px', fontSize: '0.875rem', color: '#475569' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ fontWeight: 700 }}>FC:</span> Fully Complied</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ fontWeight: 700 }}>PC:</span> Partially Complied</div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><span style={{ fontWeight: 700 }}>NC:</span> Non Compliance</div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </DashboardLayout>
+            </main>
+        </div>
     );
 }

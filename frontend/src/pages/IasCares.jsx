@@ -1,11 +1,15 @@
 import React, { useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, Heart, CheckCircle, AlertCircle, FileText, Users, TrendingUp } from 'lucide-react';
+import { LayoutGrid, Heart, Filter } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
-import DashboardLayout from '../components/layout/DashboardLayout';
 import DashboardSidebar from '../components/layout/DashboardSidebar';
-import DashboardHeader from '../components/layout/DashboardHeader';
 import { useDashboardActions } from '../hooks/useDashboardActions';
+
+function getBarColor(pct) {
+    if (pct >= 80) return '#10b981'; // emerald-500
+    if (pct >= 50) return '#3b82f6'; // blue-500
+    return '#f59e0b'; // amber-500
+}
 
 export default function IasCares() {
     const navigate = useNavigate();
@@ -14,7 +18,7 @@ export default function IasCares() {
     const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
 
     useEffect(() => {
-        document.title = 'IAsCARes | Internal Audit Management';
+        document.title = 'IAsCARes Dashboard | IAMS';
     }, []);
 
     const navItems = [
@@ -22,13 +26,8 @@ export default function IasCares() {
         { icon: <Heart className="h-5 w-5" />, title: 'IAsCARes', active: true, onClick: () => {} }
     ];
 
-    /**
-     * Aggregate all MOVs across all engagements, grouped by auditee.
-     * IAsCARes tracks audit recommendation compliance — "approved" MOV = complied.
-     */
-    const { auditeeData, totals } = useMemo(() => {
+    const auditeeData = useMemo(() => {
         const map = {};
-
         engagements.forEach(eng => {
             (eng.movs || []).forEach(mov => {
                 const aid = mov.auditee?.id ?? mov.auditee_id;
@@ -37,170 +36,124 @@ export default function IasCares() {
                     map[aid] = {
                         id: aid,
                         name: mov.auditee?.name ?? `Auditee #${aid}`,
-                        total: 0,
                         complied: 0,
-                        pending: 0,
-                        submitted: 0,
-                        returned: 0,
+                        total: 0,
                     };
                 }
                 map[aid].total += 1;
-                if (mov.status === 'approved')   map[aid].complied   += 1;
-                if (mov.status === 'pending')    map[aid].pending    += 1;
-                if (mov.status === 'submitted')  map[aid].submitted  += 1;
-                if (mov.status === 'returned')   map[aid].returned   += 1;
+                if (mov.status === 'approved') map[aid].complied += 1;
             });
         });
-
-        const rows = Object.values(map).sort((a, b) => b.total - a.total);
-
-        const totals = rows.reduce(
-            (acc, r) => ({
-                total:    acc.total    + r.total,
-                complied: acc.complied + r.complied,
-                pending:  acc.pending  + r.pending,
-            }),
-            { total: 0, complied: 0, pending: 0 }
-        );
-
-        return { auditeeData: rows, totals };
+        return Object.values(map).sort((a, b) => a.name.localeCompare(b.name));
     }, [engagements]);
 
-    const overallRate = totals.total > 0
-        ? Math.round((totals.complied / totals.total) * 100)
-        : 0;
-
     return (
-        <DashboardLayout
-            isLoggingOut={isLoggingOut}
-            userName={user?.name}
-            sidebar={<DashboardSidebar user={user} navItems={navItems} onLogout={handleLogout} />}
-            header={
-                <DashboardHeader
-                    user={user}
-                    roleLabel="IAsCARes"
-                    title="IAsCARes Compliance Monitoring"
-                    subtitle="Track auditee compliance with Internal Audit recommendations"
-                    isInitialLoad={initialLoad}
-                    isLoading={loading}
-                    onRefresh={refreshData}
-                    actions={null}
-                />
-            }
-        >
-            {/* Summary Stat Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-slate-100 flex items-center justify-center">
-                        <FileText className="w-5 h-5 text-slate-600" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-slate-800">{totals.total}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Total Recommendations</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-emerald-50 flex items-center justify-center">
-                        <CheckCircle className="w-5 h-5 text-emerald-600" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-emerald-700">{totals.complied}</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Fully Complied</p>
-                    </div>
-                </div>
-                <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-5 flex items-center gap-4">
-                    <div className="w-11 h-11 rounded-xl bg-rose-50 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-rose-500" />
-                    </div>
-                    <div>
-                        <p className="text-2xl font-bold text-rose-600">{overallRate}%</p>
-                        <p className="text-xs text-slate-500 mt-0.5">Overall Compliance Rate</p>
-                    </div>
-                </div>
-            </div>
+        <div className="bg-slate-50 font-sans h-screen flex overflow-hidden">
+            {/* Sidebar */}
+            <DashboardSidebar user={user} navItems={navItems} onLogout={handleLogout} />
 
-            {/* Main Table */}
-            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div className="p-6 border-b border-slate-200 flex items-center gap-2">
-                    <Heart className="w-5 h-5 text-rose-500" />
-                    <h2 className="text-lg font-bold text-slate-800">Compliance Overview per Auditee</h2>
-                </div>
+            <main className="flex-1 flex flex-col overflow-hidden">
+                {/* Header */}
+                <header className="bg-white border-b border-slate-200 px-10 py-5 shrink-0 z-10 flex justify-between items-center shadow-sm">
+                    <div>
+                        <h1 className="text-xl font-bold text-slate-800">IAsCARes Dashboard</h1>
+                        <p className="text-sm text-slate-500 mt-1">Audit Compliance Tracking &amp; Resolution System</p>
+                    </div>
+                    <div className="flex gap-3">
+                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
+                            <Filter className="h-4 w-4" />
+                            Filter Data
+                        </button>
+                    </div>
+                </header>
 
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-50 text-slate-600">
-                            <tr>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Auditee</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Total Recommendations</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Fully Complied</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Pending / Ongoing</th>
-                                <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Compliance Rate</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-slate-100">
-                            {auditeeData.length > 0 ? (
-                                auditeeData.map(row => {
-                                    const rate = row.total > 0 ? Math.round((row.complied / row.total) * 100) : 0;
-                                    const pending = row.total - row.complied;
-                                    const barClass = rate === 100
-                                        ? 'bg-emerald-500'
-                                        : rate >= 75 ? 'bg-blue-500'
-                                        : rate >= 50 ? 'bg-amber-500'
-                                        : 'bg-rose-500';
-
-                                    return (
-                                        <tr key={row.id} className="hover:bg-slate-50 transition-colors">
-                                            <td className="px-6 py-4 font-medium text-slate-800">
-                                                <div className="flex items-center gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-xs shrink-0">
-                                                        {row.name.charAt(0).toUpperCase()}
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-10" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
+                    <div className="max-w-5xl mx-auto">
+                        <div style={{
+                            width: '100%',
+                            borderCollapse: 'collapse',
+                            backgroundColor: 'white',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06)'
+                        }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white' }}>
+                                <thead>
+                                    <tr>
+                                        <th style={{
+                                            backgroundColor: '#f8fafc', color: '#475569', fontWeight: 600,
+                                            textAlign: 'left', padding: '16px 24px', borderBottom: '2px solid #e2e8f0',
+                                            textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em',
+                                            width: '33%'
+                                        }}>Auditee</th>
+                                        <th style={{
+                                            backgroundColor: '#f8fafc', color: '#475569', fontWeight: 600,
+                                            textAlign: 'center', padding: '16px 24px', borderBottom: '2px solid #e2e8f0',
+                                            textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em',
+                                            width: '33%'
+                                        }}>Fully Complied Recommendations</th>
+                                        <th style={{
+                                            backgroundColor: '#f8fafc', color: '#475569', fontWeight: 600,
+                                            textAlign: 'left', padding: '16px 24px', borderBottom: '2px solid #e2e8f0',
+                                            textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.05em',
+                                            width: '33%'
+                                        }}>Percentage</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {auditeeData.length > 0 ? auditeeData.map(row => {
+                                        const pct = row.total > 0 ? Math.round((row.complied / row.total) * 100) : 0;
+                                        const barColor = getBarColor(pct);
+                                        return (
+                                            <tr key={row.id} style={{ borderBottom: '1px solid #e2e8f0', cursor: 'default' }}
+                                                onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
+                                                onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}>
+                                                {/* Col 1: Auditee name */}
+                                                <td style={{ padding: '16px 24px', color: '#1e293b', verticalAlign: 'middle' }}>
+                                                    <span style={{ fontWeight: 700, color: '#1e293b', fontSize: '1rem' }}>{row.name}</span>
+                                                </td>
+                                                {/* Col 2: Complied / Total */}
+                                                <td style={{ padding: '16px 24px', color: '#1e293b', verticalAlign: 'middle' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', fontSize: '1.125rem' }}>
+                                                        <span style={{ fontWeight: 700, color: '#1e293b' }}>{row.complied}</span>
+                                                        <span style={{ color: '#94a3b8' }}>/</span>
+                                                        <span style={{ color: '#475569', fontWeight: 500 }}>{row.total}</span>
                                                     </div>
-                                                    {row.name}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2 text-slate-600">
-                                                    <FileText className="w-4 h-4" />
-                                                    {row.total}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2 text-emerald-600 font-medium">
-                                                    <CheckCircle className="w-4 h-4" />
-                                                    {row.complied}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-2 text-amber-600 font-medium">
-                                                    <AlertCircle className="w-4 h-4" />
-                                                    {pending}
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <div className="flex items-center gap-3">
-                                                    <span className="font-semibold text-slate-700 w-10">{rate}%</span>
-                                                    <div className="w-28 h-2.5 bg-slate-200 rounded-full overflow-hidden">
-                                                        <div
-                                                            className={`h-full rounded-full transition-all duration-500 ${barClass}`}
-                                                            style={{ width: `${rate}%` }}
-                                                        />
+                                                </td>
+                                                {/* Col 3: Progress bar + % */}
+                                                <td style={{ padding: '16px 24px', color: '#1e293b', verticalAlign: 'middle' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                                        <div style={{
+                                                            flex: 1, backgroundColor: '#e2e8f0', borderRadius: '9999px',
+                                                            height: '10px', overflow: 'hidden', display: 'flex'
+                                                        }}>
+                                                            <div style={{
+                                                                width: `${pct}%`, height: '100%',
+                                                                backgroundColor: barColor,
+                                                                transition: 'width 0.5s ease-in-out'
+                                                            }} />
+                                                        </div>
+                                                        <span style={{ fontWeight: 700, color: '#334155', minWidth: '48px', textAlign: 'right' }}>
+                                                            {pct}%
+                                                        </span>
                                                     </div>
-                                                </div>
+                                                </td>
+                                            </tr>
+                                        );
+                                    }) : (
+                                        <tr>
+                                            <td colSpan="3" style={{ padding: '40px 24px', textAlign: 'center', color: '#94a3b8' }}>
+                                                {loading ? 'Loading data…' : 'No auditee data available.'}
                                             </td>
                                         </tr>
-                                    );
-                                })
-                            ) : (
-                                <tr>
-                                    <td colSpan="5" className="px-6 py-10 text-center text-slate-500">
-                                        {loading ? 'Loading data…' : 'No auditee data available.'}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
                 </div>
-            </div>
-        </DashboardLayout>
+            </main>
+        </div>
     );
 }

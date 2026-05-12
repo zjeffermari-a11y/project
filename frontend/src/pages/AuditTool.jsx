@@ -14,22 +14,43 @@ import EntryConferenceBriefer from '../components/audit-tools/EntryConferenceBri
 import NoticeConference from '../components/audit-tools/NoticeConference';
 import AuditWorkProgram from '../components/audit-tools/AuditWorkProgram';
 import InteractiveFlowchart from '../components/audit-tools/InteractiveFlowchart';
+import AuditInquiryMemorandum from '../components/audit-tools/AuditInquiryMemorandum';
+import HighlightsAuditFindings from '../components/audit-tools/HighlightsAuditFindings';
+import IndividualAuditFindings from '../components/audit-tools/IndividualAuditFindings';
+import InterimAuditMemorandum from '../components/audit-tools/InterimAuditMemorandum';
+import InternalAuditReport from '../components/audit-tools/InternalAuditReport';
+import ProgressAssessmentReport from '../components/audit-tools/ProgressAssessmentReport';
+import CompletionAssessmentReport from '../components/audit-tools/CompletionAssessmentReport';
+import AuditeeActionPlan from '../components/audit-tools/AuditeeActionPlanStatus';
+import IAsCARes from '../components/audit-tools/IAsCARes';
 
 /**
  * Maps the URL "tool key" to the corresponding tool component.
  * These keys are set in the AuditWorkspace.jsx DOCUMENTS constant.
  */
 const TOOL_MAP = {
-    aap:   AuditAreaProfile,
-    iom:   InventoryMOVs,
-    ccl:   ComplianceChecklist,
-    oac:   OperationsAuditChecklist,
-    mac:   ManagementAuditChecklist,
-    wt:    WalkthroughTest,
-    ecb:   EntryConferenceBriefer,
-    neecm: NoticeConference,
-    awp:   AuditWorkProgram,
+    aap:       AuditAreaProfile,
+    iom:       InventoryMOVs,
+    ccl:       ComplianceChecklist,
+    ccl2:      ComplianceChecklist,          // complianceCL.html — same component, different doc label
+    oac:       OperationsAuditChecklist,
+    mac:       ManagementAuditChecklist,
+    wt:        WalkthroughTest,
+    ecb:       EntryConferenceBriefer,
+    neecm:     NoticeConference,
+    awp:       AuditWorkProgram,
     flowchart: InteractiveFlowchart,
+    // Execution tools
+    ainm:      AuditInquiryMemorandum,
+    hoaf:      HighlightsAuditFindings,
+    iaf:       IndividualAuditFindings,
+    iam:       InterimAuditMemorandum,
+    iar:       InternalAuditReport,
+    pare:      ProgressAssessmentReport,
+    // Follow-Up tools
+    comare:    CompletionAssessmentReport,
+    aapis:     AuditeeActionPlan,
+    iascares:  IAsCARes,
 };
 
 /**
@@ -39,28 +60,43 @@ const TOOL_MAP = {
 const PHASE_ORDER = ['planning', 'execution', 'reporting', 'followup'];
 
 const PHASE_TOOLS = {
-    planning:  ['flowchart', 'iom', 'aap', 'awp', 'ccl', 'mac'],
-    execution: ['neecm', 'ecb', 'oac', 'wt'],
+    // Planning: all tools now live here (Wt, OAC, NEECM, ECB moved from Execution)
+    planning:  ['flowchart', 'iom', 'aap', 'awp', 'ccl', 'ccl2', 'mac', 'oac', 'wt', 'neecm', 'ecb'],
+    // Execution: new 6-form set
+    execution: ['ainm', 'hoaf', 'iaf', 'iam', 'iar', 'pare'],
     reporting: [],
-    followup:  [],
+    followup:  ['comare', 'aapis', 'iascares'],
 };
 
 const PHASE_DOCS = {
     planning: [
-        { label: 'Interactive Flowchart',               toolKey: 'flowchart' },
-        { label: 'Inventory of MOVs (IM)',               toolKey: 'iom' },
-        { label: 'Audit Area Profile (AAP)',             toolKey: 'aap' },
-        { label: 'Audit Work Program (AWP)',             toolKey: 'awp' },
-        { label: 'Compliance Checklist (CC)',            toolKey: 'ccl' },
-        { label: 'Management Audit Checklist',          toolKey: 'mac' },
+        { label: 'Interactive Flowchart',                         toolKey: 'flowchart' },
+        { label: 'Inventory of MOVs (IM)',                        toolKey: 'iom' },
+        { label: 'Audit Area Profile (AAP)',                      toolKey: 'aap' },
+        { label: 'Audit Work Program (AWP)',                      toolKey: 'awp' },
+        { label: 'Compliance Checklist (CC)',                     toolKey: 'ccl' },
+        { label: 'Compliance Checklist (Compliance CL)',          toolKey: 'ccl2' },
+        { label: 'Management Audit Checklist (MAC)',              toolKey: 'mac' },
+        { label: 'Operations Audit Checklist (OAC)',              toolKey: 'oac' },
+        { label: 'Walkthrough Test Work Paper (WT)',              toolKey: 'wt' },
+        { label: 'Notice of Entry/Exit Conference (NEECM)',       toolKey: 'neecm' },
+        { label: 'Entry Conference Briefer (ECB)',                toolKey: 'ecb' },
     ],
     execution: [
-        { label: 'Notice of Entry/Exit Conference (ECM)', toolKey: 'neecm' },
-        { label: 'Entry Conference Briefer (ECB)',         toolKey: 'ecb' },
-        { label: 'Operations Audit Checklist (OAC)',       toolKey: 'oac' },
-        { label: 'Walkthrough Test Work Paper (WT)',       toolKey: 'wt' },
+        { label: 'Audit Inquiry Memorandum (AINM)',               toolKey: 'ainm' },
+        { label: 'Highlights of Audit Findings (HOAF)',           toolKey: 'hoaf' },
+        { label: 'Individual Audit Findings (IAF)',               toolKey: 'iaf' },
+        { label: 'Interim Audit Memorandum (IAM)',                toolKey: 'iam' },
+        { label: 'Internal Audit Report (IAR)',                   toolKey: 'iar' },
+        { label: 'Progress Assessment Report (PARE)',             toolKey: 'pare' },
+    ],
+    followup: [
+        { label: 'Completion Assessment Report (ComARe)',         toolKey: 'comare' },
+        { label: "Auditee's Action Plan and Implementation Status (AAPIS)", toolKey: 'aapis' },
+        { label: 'Internal Assessment of Compliance with Audit Recommendation/s (IAsCARes)', toolKey: 'iascares' },
     ],
 };
+
 
 /** Returns true if a document record has an approval signal. */
 function docIsApproved(doc) {

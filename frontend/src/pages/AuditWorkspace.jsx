@@ -7,37 +7,42 @@ import SignOffButton from '../components/common/SignOffButton';
 
 
 const DOCUMENTS = {
+    // Phase 1 — Planning (9 forms from: Wt.html, toc.html, oac.html, NEECM.html, mac.html, ECB.html, aap.html, CCL.html, complianceCL.html)
     planning: { title: 'Audit Planning Documents', theme: 'indigo', items: [
-        { label: 'Interactive Flowchart', toolKey: 'flowchart' },
-        { label: 'Audit Notification Memorandum (ANM)', toolKey: null, generateKey: 'anm' },
-        { label: 'Inventory of MOVs (IM)', toolKey: 'iom' },
-        { label: 'Audit Area Profile (AAP)', toolKey: 'aap' },
-        { label: 'Audit Engagement Plan (AEP)', toolKey: null },
-        { label: 'Audit Work Program (AWP)', toolKey: 'awp' },
-        { label: 'Summary of Audit Team Roles (RR)', toolKey: null },
-        { label: 'Compliance Checklist (CC)', toolKey: 'ccl' },
-        { label: 'Management Audit Checklist', toolKey: 'mac' },
+        { label: 'Interactive Flowchart',                          toolKey: 'flowchart' },
+        { label: 'Audit Notification Memorandum (ANM)',            toolKey: null,        generateKey: 'anm' },
+        { label: 'Inventory of MOVs (IM)',                         toolKey: 'iom' },
+        { label: 'Audit Area Profile (AAP)',                       toolKey: 'aap' },
+        { label: 'Audit Work Program (AWP)',                       toolKey: 'awp' },
+        { label: 'Compliance Checklist (CC)',                      toolKey: 'ccl' },
+        { label: 'Compliance Checklist (Compliance CL)',           toolKey: 'ccl2' },
+        { label: 'Management Audit Checklist (MAC)',               toolKey: 'mac' },
+        { label: 'Operations Audit Checklist (OAC)',               toolKey: 'oac' },
+        { label: 'Walkthrough Test Work Paper (WT)',               toolKey: 'wt' },
+        { label: 'Notice of Entry/Exit Conference (NEECM)',        toolKey: 'neecm' },
+        { label: 'Entry Conference Briefer (ECB)',                 toolKey: 'ecb' },
     ]},
+    // Phase 2 — Execution (6 forms from: ainm.html, hoaf.html, iaf.html, iam.html, internal-a-report.html, pare.html)
     execution: { title: 'Audit Execution Documents', theme: 'emerald', items: [
-        { label: 'Audit Inquiry Memorandum (AIM)', toolKey: null },
-        { label: 'Notice of Entry/Exit Conference (ECM)', toolKey: 'neecm' },
-        { label: 'Entry Conference Briefer (ECB)', toolKey: 'ecb' },
-        { label: 'Entry/Exit Conference Notes (ECN)', toolKey: null },
-        { label: 'Operations Audit Checklist (OAC)', toolKey: 'oac' },
-        { label: 'Walkthrough Test Work Paper (WT)', toolKey: 'wt' },
-        { label: 'Interim Audit Memorandum (IAM)', toolKey: null },
-        { label: 'Interview Notes (IN)', toolKey: null },
+        { label: 'Audit Inquiry Memorandum (AINM)',                toolKey: 'ainm' },
+        { label: 'Highlights of Audit Findings (HOAF)',           toolKey: 'hoaf' },
+        { label: 'Individual Audit Findings (IAF)',                toolKey: 'iaf' },
+        { label: 'Interim Audit Memorandum (IAM)',                 toolKey: 'iam' },
+        { label: 'Internal Audit Report (IAR)',                    toolKey: 'iar' },
+        { label: 'Progress Assessment Report (PARE)',              toolKey: 'pare' },
     ]},
+    // Phase 3 — Reporting (generated from Execution)
     reporting: { title: 'Audit Reporting Documents', theme: 'amber', items: [
-        { label: 'Internal Audit Report (IAR)', toolKey: null },
-        { label: 'Audit Feedback Survey Form (AFSF)', toolKey: null },
-        { label: 'Audit Feedback Survey Analysis Report (AFSAR)', toolKey: null },
+        { label: 'Internal Audit Report (IAR)',                    toolKey: null },
+        { label: 'Audit Feedback Survey Form (AFSF)',              toolKey: null },
+        { label: 'Audit Feedback Survey Analysis Report (AFSAR)',  toolKey: null },
     ]},
+    // Phase 4 — Follow-Up (3 forms: iascares.html, aapis.html, comare.html)
     followup: { title: 'Audit Follow Up Documents', theme: 'rose', items: [
-        { label: 'Action Plan Status (AAPIS)', toolKey: null },
-        { label: 'Compliance to Recommendations (IAsCARes)', toolKey: null },
-        { label: 'Internal Audit Follow-up Report (IAFR)', toolKey: null },
-        { label: 'Completion Assessment Report (ComARe)', toolKey: null },
+        { label: 'Action Plan Status (AAPIS)',                     toolKey: null, monitorRoute: '/aapes' },
+        { label: 'Compliance to Recommendations (IAsCARes)',       toolKey: null, monitorRoute: '/ias-cares' },
+        { label: 'Completion Assessment Report (ComARe)',          toolKey: 'comare' },
+        { label: 'Internal Audit Follow-up Report (IAFR)',         toolKey: null },
     ]}
 };
 
@@ -545,7 +550,21 @@ export default function AuditWorkspace() {
                                                                                     </span>
                                                                                 )
                                                                             )}
+                                                                            {/* Monitor button for Follow-Up items (AAPIS, IAsCARes) */}
+                                                                            {doc.monitorRoute && (
+                                                                                isPhaseUnlocked(selectedPhase) ? (
+                                                                                    <Link to={doc.monitorRoute} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 hover:bg-rose-600 hover:text-white transition-colors">
+                                                                                        <FileCheck2 className="w-3 h-3" /> Monitor
+                                                                                    </Link>
+                                                                                ) : (
+                                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed" title="Complete and approve the previous phase first.">
+                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                                                                                        Locked
+                                                                                    </span>
+                                                                                )
+                                                                            )}
                                                                         </div>
+
                                                                     </div>
                                                                 </div>
                                                             </td>

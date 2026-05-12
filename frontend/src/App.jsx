@@ -14,6 +14,7 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import IasCares from './pages/IasCares';
 import Aapes from './pages/Aapes';
+import MovMonitoring from './pages/MovMonitoring';
 import SsoCallback from './pages/SsoCallback';
 import { DataProvider } from './context/DataContext';
 
@@ -78,6 +79,12 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
         <Route path="/aapes" element={
           <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
             <Aapes />
+          </ProtectedRoute>
+        } />
+
+        <Route path="/mov-monitoring" element={
+          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
+            <MovMonitoring />
           </ProtectedRoute>
         } />
 

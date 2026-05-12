@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Users, Plus, TrendingUp, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Users, Plus, TrendingUp, ChevronRight, Heart, BarChart2 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import api from '../api';
 
@@ -71,7 +71,10 @@ export default function DivisionChiefDashboard() {
     };
 
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} }
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
+        { icon: <Heart className="h-5 w-5" />, title: 'IAsCARes', active: false, onClick: () => window.location.href = '/ias-cares' },
+        { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPIS', active: false, onClick: () => window.location.href = '/aapes' },
+        { icon: <FileText className="h-5 w-5" />, title: 'MOV Monitor', active: false, onClick: () => window.location.href = '/mov-monitoring' },
     ];
 
     if (initialLoad && engagements.length === 0) {

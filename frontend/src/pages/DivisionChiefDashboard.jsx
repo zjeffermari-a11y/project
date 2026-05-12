@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LayoutGrid, Database, Clock, ArrowRightLeft, CheckCircle, FileText, Users, Plus, TrendingUp, ChevronRight, Heart, BarChart2 } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import api from '../api';
@@ -17,6 +18,7 @@ import HistoryModal from '../components/dashboard/HistoryModal';
 import NewAuditModal from '../components/dashboard/NewAuditModal';
 
 export default function DivisionChiefDashboard() {
+    const navigate = useNavigate();
     const { 
         engagements, 
         auditees,
@@ -72,9 +74,9 @@ export default function DivisionChiefDashboard() {
 
     const navItems = [
         { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} },
-        { icon: <Heart className="h-5 w-5" />, title: 'IAsCARes', active: false, onClick: () => window.location.href = '/ias-cares' },
-        { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPIS', active: false, onClick: () => window.location.href = '/aapes' },
-        { icon: <FileText className="h-5 w-5" />, title: 'MOV Monitor', active: false, onClick: () => window.location.href = '/mov-monitoring' },
+        { icon: <Heart className="h-5 w-5" />, title: 'IAsCARes', active: false, onClick: () => navigate('/ias-cares') },
+        { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPIS', active: false, onClick: () => navigate('/aapes') },
+        { icon: <FileText className="h-5 w-5" />, title: 'MOV Monitor', active: false, onClick: () => navigate('/mov-monitoring') },
     ];
 
     if (initialLoad && engagements.length === 0) {

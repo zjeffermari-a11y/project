@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LayoutGrid, FileText, RefreshCw } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -46,6 +47,7 @@ function barColor(pct) {
 }
 
 export default function MovMonitoring() {
+    const navigate = useNavigate();
     const { engagements, loading, initialLoad, refreshData } = useDataContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
@@ -55,7 +57,7 @@ export default function MovMonitoring() {
     }, []);
 
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => window.location.href = '/' },
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => navigate('/') },
         { icon: <FileText className="h-5 w-5" />, title: 'MOV Monitoring', active: true, onClick: () => {} }
     ];
 

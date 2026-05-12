@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LayoutGrid, BarChart2, CheckCircle, Clock, ArrowRightCircle, AlertCircle, XCircle, FileText, Users, TrendingUp } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -21,6 +22,7 @@ function getStatusConfig(status) {
 }
 
 export default function Aapes() {
+    const navigate = useNavigate();
     const { engagements, loading, initialLoad, refreshData } = useDataContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
@@ -30,7 +32,7 @@ export default function Aapes() {
     }, []);
 
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => window.location.href = '/' },
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => navigate('/') },
         { icon: <BarChart2 className="h-5 w-5" />, title: 'AAPIS', active: true, onClick: () => {} }
     ];
 

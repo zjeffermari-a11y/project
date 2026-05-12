@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { LayoutGrid, Heart, CheckCircle, AlertCircle, FileText, Users, TrendingUp } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import DashboardLayout from '../components/layout/DashboardLayout';
@@ -7,6 +8,7 @@ import DashboardHeader from '../components/layout/DashboardHeader';
 import { useDashboardActions } from '../hooks/useDashboardActions';
 
 export default function IasCares() {
+    const navigate = useNavigate();
     const { engagements, loading, initialLoad, refreshData } = useDataContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
@@ -16,7 +18,7 @@ export default function IasCares() {
     }, []);
 
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => window.location.href = '/' },
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => navigate('/') },
         { icon: <Heart className="h-5 w-5" />, title: 'IAsCARes', active: true, onClick: () => {} }
     ];
 

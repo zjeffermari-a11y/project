@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { LayoutGrid, FileText, Filter, RefreshCw } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { LayoutGrid, FileText, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import DashboardSidebar from '../components/layout/DashboardSidebar';
 import { useDashboardActions } from '../hooks/useDashboardActions';
@@ -18,60 +18,54 @@ const MOV_CATEGORIES = [
 ];
 
 export default function MovMonitoring() {
+    const { id } = useParams();
     const navigate = useNavigate();
-    const { engagements, loading: ctxLoading, refreshData } = useDataContext();
+    const { refreshData } = useDataContext();
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const { handleLogout } = useDashboardActions(refreshData);
 
-    const [toolData, setToolData] = useState([]);
+    const [categories, setCategories] = useState(null);
+    const [engagementName, setEngagementName] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         document.title = 'MOV Monitoring Dashboard | IAMS';
     }, []);
 
-    const fetchAll = async () => {
+    const fetchData = async () => {
         setLoading(true);
         try {
-            const results = await Promise.allSettled(
-                engagements.map(eng =>
-                    api.get(`/engagements/${eng.id}/tools/inventory`)
-                        .then(r => ({ eng, data: r.data }))
-                        .catch(() => null)
-                )
-            );
+            const [engRes, toolRes] = await Promise.allSettled([
+                api.get(`/engagements/${id}`),
+                api.get(`/engagements/${id}/tools/inventory`),
+            ]);
 
-            const rows = [];
-            results.forEach(r => {
-                if (r.status !== 'fulfilled' || !r.value) return;
-                const { eng, data } = r.value;
-                if (!data?.form_data) return;
-                
-                const fd = data.form_data;
-                rows.push({
-                    id: eng.id,
-                    name: eng.title || `Engagement #${eng.id}`,
-                    categories: {
-                        control_environment:       parseInt(fd.controlEnvPct) || 0,
-                        risk_assessment:           parseInt(fd.riskAssessPct) || 0,
-                        control_activities:        parseInt(fd.controlActPct) || 0,
-                        initial_samples:           parseInt(fd.initialSamplePct) || 0,
-                        information_communication: parseInt(fd.infoCommPct) || 0,
-                        monitoring:                parseInt(fd.monitoringPct) || 0,
-                        total_docs:                parseInt(fd.totalDocsPct) || 0,
-                        additional_movs:           parseInt(fd.additionalMovsPct) || 0,
-                    }
+            if (engRes.status === 'fulfilled') {
+                setEngagementName(engRes.value.data?.title || `Engagement #${id}`);
+            }
+
+            if (toolRes.status === 'fulfilled' && toolRes.value.data?.form_data) {
+                const fd = toolRes.value.data.form_data;
+                setCategories({
+                    control_environment:       parseInt(fd.controlEnvPct)    || 0,
+                    risk_assessment:           parseInt(fd.riskAssessPct)    || 0,
+                    control_activities:        parseInt(fd.controlActPct)    || 0,
+                    initial_samples:           parseInt(fd.initialSamplePct) || 0,
+                    information_communication: parseInt(fd.infoCommPct)      || 0,
+                    monitoring:                parseInt(fd.monitoringPct)    || 0,
+                    total_docs:                parseInt(fd.totalDocsPct)     || 0,
+                    additional_movs:           parseInt(fd.additionalMovsPct)|| 0,
                 });
-            });
-            setToolData(rows.sort((a, b) => a.name.localeCompare(b.name)));
+            } else {
+                setCategories(null);
+            }
         } catch (_) {}
         setLoading(false);
     };
 
     useEffect(() => {
-        if (!ctxLoading && engagements.length > 0) fetchAll();
-        if (!ctxLoading && engagements.length === 0) setLoading(false);
-    }, [engagements, ctxLoading]);
+        if (id) fetchData();
+    }, [id]);
 
     const navItems = [
         { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: false, onClick: () => navigate('/') },
@@ -85,24 +79,28 @@ export default function MovMonitoring() {
             <main className="flex-1 flex flex-col overflow-hidden">
                 <header className="bg-white border-b border-slate-200 px-10 py-5 shrink-0 z-10 flex justify-between items-center shadow-sm">
                     <div>
+                        <button
+                            onClick={() => navigate(`/auditor/workspace/${id}`)}
+                            className="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-800 font-bold mb-1 transition-colors"
+                        >
+                            <ArrowLeft className="h-4 w-4" /> Back to Workspace
+                        </button>
                         <h1 className="text-xl font-bold text-slate-800">STATUS OF SUBMITTED MOVs PROCUREMENT</h1>
-                        <p className="text-sm text-slate-500 mt-1">Engagement Progress Overview</p>
+                        <p className="text-sm text-slate-500 mt-1">
+                            Engagement Progress Overview — <span className="font-semibold text-slate-700">{engagementName}</span>
+                        </p>
                     </div>
                     <div className="flex gap-3">
-                        <button onClick={fetchAll} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
+                        <button onClick={fetchData} className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
                             <RefreshCw className="h-4 w-4" />
                             Refresh
-                        </button>
-                        <button className="px-4 py-2 bg-white border border-slate-200 text-slate-600 font-medium text-sm rounded-lg hover:bg-slate-50 shadow-sm transition-all flex items-center gap-2">
-                            <Filter className="h-4 w-4" />
-                            Filter Data
                         </button>
                     </div>
                 </header>
 
                 <div className="flex-1 overflow-auto p-6 lg:p-10" style={{ scrollbarWidth: 'thin', scrollbarColor: '#cbd5e1 #f1f5f9' }}>
                     <div className="w-full">
-                        {loading && toolData.length === 0 ? (
+                        {loading ? (
                             <div className="text-center py-10">
                                 <p className="text-slate-500">Loading MOV data...</p>
                             </div>
@@ -135,8 +133,8 @@ export default function MovMonitoring() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    {toolData.length > 0 ? toolData.map(row => (
-                                        <tr key={row.id}
+                                    {categories ? (
+                                        <tr
                                             onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f1f5f9'}
                                             onMouseLeave={e => e.currentTarget.style.backgroundColor = 'white'}
                                             style={{ borderBottom: '1px solid #e2e8f0' }}>
@@ -145,10 +143,10 @@ export default function MovMonitoring() {
                                                 padding: '12px 16px', position: 'sticky', left: 0, backgroundColor: 'inherit',
                                                 zIndex: 10, boxShadow: '2px 0 5px -2px rgba(0,0,0,0.1)', fontWeight: 500,
                                                 color: '#1e293b', whiteSpace: 'nowrap', verticalAlign: 'middle',
-                                            }}>{row.name}</td>
+                                            }}>{engagementName}</td>
 
                                             {MOV_CATEGORIES.map(cat => {
-                                                const pct = row.categories[cat.key];
+                                                const pct = categories[cat.key];
                                                 return (
                                                     <td key={cat.key} style={{
                                                         padding: '12px 16px', verticalAlign: 'middle', whiteSpace: 'nowrap', color: '#1e293b',
@@ -175,11 +173,11 @@ export default function MovMonitoring() {
                                                 );
                                             })}
                                         </tr>
-                                    )) : (
+                                    ) : (
                                         <tr>
                                             <td colSpan={MOV_CATEGORIES.length + 1}
                                                 style={{ padding: '40px 24px', textAlign: 'center', color: '#94a3b8' }}>
-                                                No MOV data available.
+                                                No MOV data available for this engagement.
                                             </td>
                                         </tr>
                                     )}

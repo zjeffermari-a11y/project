@@ -305,7 +305,6 @@ export default function AuditWorkspace() {
     const PhaseCard = ({ phaseId, label, iconTheme }) => {
         const isSelected = selectedPhase === phaseId;
         const theme = THEMES[iconTheme];
-        const isDone = isPhaseCompleted(phaseId);
         return (
             <div
                 onClick={() => setSelectedPhase(phaseId)}

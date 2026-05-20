@@ -200,7 +200,7 @@ export default function AuditWorkspace() {
     };
     const [awpTool, setAwpTool] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [completingPhase, setCompletingPhase] = useState(false);
+
 
     useEffect(() => {
         fetchWorkspaceData();
@@ -301,45 +301,7 @@ export default function AuditWorkspace() {
     if (loading) return <div className="p-10 text-center font-bold text-slate-400">Loading Workspace...</div>;
     if (!engagement) return <div className="p-10 text-center font-bold text-rose-500">Engagement not found.</div>;
 
-    // Phase gate: a phase is unlocked if:
-    //   a) it is 'planning' (always open), OR
-    //   b) the previous phase is recorded in engagement.phase_completions, OR
-    //   c) all interactive tool docs in the previous phase have an approval signal.
-    const PHASE_ORDER = ['planning', 'execution', 'reporting', 'followup'];
-
-    const isPhaseUnlocked = (phaseId) => {
-        const idx = PHASE_ORDER.indexOf(phaseId);
-        if (idx <= 0) return true; // planning is always open
-        const prevPhase = PHASE_ORDER[idx - 1];
-
-        // ✅ Primary gate: explicit Team Leader sign-off persisted in DB
-        const completions = engagement?.phase_completions || {};
-        if (completions[prevPhase]) return true;
-
-        // 🔒 Fallback: derive from document approvals (only applies if prev phase
-        //    has interactive tool docs). Phases with NO tool docs (e.g. Reporting)
-        //    are ONLY unlocked via phase_completions — never by the fallback.
-        const prevItems = DOCUMENTS[prevPhase]?.items || [];
-        const prevToolItems = prevItems.filter(d => d.toolKey);
-        if (prevToolItems.length === 0) return false; // must be explicitly completed
-
-        return prevToolItems.every(doc => {
-            const docs = documents.filter(d => d.phase === prevPhase && d.document_type === doc.label);
-            if (docs.length === 0) return false;
-            const latest = docs.sort((a, b) => b.id - a.id)[0];
-            const hasApproval =
-                latest?.approved_by_id != null ||
-                latest?.status === 'approved' ||
-                latest?.history?.some(h => {
-                    const s = (h.stage || '').toLowerCase().replace(/\s+/g, '_');
-                    return s === 'approved_by' || s === 'approved';
-                });
-            return hasApproval;
-        });
-    };
-
-
-    // Returns true if the given phase has been explicitly marked complete
+    // Returns true if the given phase has been explicitly marked complete (for status tracking only)
     const isPhaseCompleted = (phaseId) => {
         const completions = engagement?.phase_completions || {};
         return !!completions[phaseId];
@@ -355,11 +317,11 @@ export default function AuditWorkspace() {
     };
 
     const handleCompletePhase = async (phaseId) => {
-        if (!window.confirm(`Mark the "${phaseId}" phase as complete? This will unlock the next phase for your team.`)) return;
+        if (!window.confirm(`Mark the "${phaseId}" phase as complete?`)) return;
         setCompletingPhase(true);
         try {
             await api.patch(`/engagements/${id}/complete-phase`, { phase: phaseId });
-            await fetchWorkspaceData(true); // silent refresh — no loading spinner
+            await fetchWorkspaceData(true);
         } catch (err) {
             alert('Failed to mark phase complete: ' + (err.response?.data?.message || err.message));
         } finally {
@@ -370,33 +332,24 @@ export default function AuditWorkspace() {
     const PhaseCard = ({ phaseId, label, iconTheme }) => {
         const isSelected = selectedPhase === phaseId;
         const theme = THEMES[iconTheme];
-        const unlocked = isPhaseUnlocked(phaseId);
+        const isDone = isPhaseCompleted(phaseId);
         return (
             <div
-                onClick={() => {
-                    if (!unlocked) return;
-                    setSelectedPhase(phaseId);
-                }}
-                title={!unlocked ? `Complete all ${DOCUMENTS[PHASE_ORDER[PHASE_ORDER.indexOf(phaseId)-1]]?.title} before proceeding.` : ''}
-                className={`group bg-white p-6 rounded-[2rem] border shadow-sm transition-all duration-300 flex flex-col items-center text-center ${
-                    !unlocked
-                        ? 'border-slate-100 opacity-60 cursor-not-allowed'
-                        : isSelected
-                        ? `ring-4 ${theme.ring} border-transparent shadow-xl scale-105 cursor-pointer`
-                        : `border-slate-200 hover:shadow-xl ${theme.hoverBorder} cursor-pointer`
+                onClick={() => setSelectedPhase(phaseId)}
+                className={`group bg-white p-6 rounded-[2rem] border shadow-sm transition-all duration-300 flex flex-col items-center text-center cursor-pointer ${
+                    isSelected
+                        ? `ring-4 ${theme.ring} border-transparent shadow-xl scale-105`
+                        : `border-slate-200 hover:shadow-xl ${theme.hoverBorder}`
                 }`}
             >
                 <div className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 transition-all duration-300 shadow-inner ${
-                    !unlocked
-                        ? 'bg-slate-100 text-slate-300'
-                        : isSelected
+                    isSelected
                         ? `${theme.bgMain} text-white`
                         : `${theme.bgLight} ${theme.textMain} group-hover:${theme.bgMain} group-hover:text-white`
                 }`}>
-                    {!unlocked ? <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg> : <Folder className="h-10 w-10" />}
+                    <Folder className="h-10 w-10" />
                 </div>
-                <h3 className={`font-black uppercase text-[10px] tracking-widest ${!unlocked ? 'text-slate-400' : 'text-slate-800'}`}>{label}</h3>
-                {!unlocked && <span className="text-[9px] font-bold text-slate-400 mt-1">Locked</span>}
+                <h3 className="font-black uppercase text-[10px] tracking-widest text-slate-800">{label}</h3>
             </div>
         );
     };
@@ -473,12 +426,7 @@ export default function AuditWorkspace() {
                                             <Folder className="h-5 w-5 text-slate-400" />
                                             <h2 className="text-sm font-black text-slate-600 uppercase tracking-widest">{DOCUMENTS[selectedPhase].title}</h2>
                                         </div>
-                                        {/* Phase completion badge */}
-                                        {isPhaseCompleted(selectedPhase) && (
-                                            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[10px] font-black uppercase tracking-widest border border-emerald-200">
-                                                <CheckCircle2 className="w-3 h-3" /> Phase Complete
-                                            </span>
-                                        )}
+
                                     </div>
                                     <div className="overflow-x-auto">
                                         <table className="min-w-full text-left border-collapse">
@@ -540,41 +488,20 @@ export default function AuditWorkspace() {
                                                                         {latestDoc && <div className="text-[10px] font-bold text-slate-400 mt-1">Updated: {new Date(latestDoc.updated_at).toLocaleDateString()}</div>}
                                                                         <div className="flex flex-wrap gap-2 mt-2">
                                                                             {doc.toolKey && (
-                                                                                isPhaseUnlocked(selectedPhase) ? (
-                                                                                    <Link to={`/auditor/workspace/${engagement.id}/tool/${doc.toolKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors">
-                                                                                        <FileCode2 className="w-3 h-3" /> Interactive Tool
-                                                                                    </Link>
-                                                                                ) : (
-                                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed" title="Complete and approve the previous phase first.">
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                                                                        Locked
-                                                                                    </span>
-                                                                                )
+                                                                                <Link to={`/auditor/workspace/${engagement.id}/tool/${doc.toolKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-2 py-1 rounded-lg border border-indigo-200 hover:bg-indigo-600 hover:text-white transition-colors">
+                                                                                    <FileCode2 className="w-3 h-3" /> Interactive Tool
+                                                                                </Link>
                                                                             )}
                                                                             {doc.generateKey && (
-                                                                                isPhaseUnlocked(selectedPhase) ? (
-                                                                                    <Link to={`/auditor/workspace/${engagement.id}/generate/${doc.generateKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 hover:bg-blue-600 hover:text-white transition-colors">
-                                                                                        <PenTool className="w-3 h-3" /> Generate Draft
-                                                                                    </Link>
-                                                                                ) : (
-                                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed" title="Complete and approve the previous phase first.">
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                                                                        Locked
-                                                                                    </span>
-                                                                                )
+                                                                                <Link to={`/auditor/workspace/${engagement.id}/generate/${doc.generateKey}`} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2 py-1 rounded-lg border border-blue-200 hover:bg-blue-600 hover:text-white transition-colors">
+                                                                                    <PenTool className="w-3 h-3" /> Generate Draft
+                                                                                </Link>
                                                                             )}
                                                                             {/* Monitor button for Follow-Up items (AAPIS, IAsCARes) */}
                                                                             {doc.monitorRoute && (
-                                                                                isPhaseUnlocked(selectedPhase) ? (
-                                                                                    <Link to={doc.monitorRoute} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 hover:bg-rose-600 hover:text-white transition-colors">
-                                                                                        <FileCheck2 className="w-3 h-3" /> Monitor
-                                                                                    </Link>
-                                                                                ) : (
-                                                                                    <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 px-2 py-1 rounded-lg border border-slate-200 cursor-not-allowed" title="Complete and approve the previous phase first.">
-                                                                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                                                                                        Locked
-                                                                                    </span>
-                                                                                )
+                                                                                <Link to={doc.monitorRoute} className="inline-flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-rose-600 bg-rose-50 px-2 py-1 rounded-lg border border-rose-200 hover:bg-rose-600 hover:text-white transition-colors">
+                                                                                    <FileCheck2 className="w-3 h-3" /> Monitor
+                                                                                </Link>
                                                                             )}
                                                                         </div>
 
@@ -678,9 +605,9 @@ export default function AuditWorkspace() {
                                         </table>
                                     </div>
 
-                                    {/* Mark as Complete footer — only visible to Team Leaders & Executives */}
+                                    {/* Team Leader Sign-Off — status tracking only, does NOT lock any phase */}
                                     {canMarkComplete() && (
-                                        <div className={`px-6 py-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4`}>
+                                        <div className="px-6 py-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4">
                                             {isPhaseCompleted(selectedPhase) ? (
                                                 <div className="flex items-center gap-2 text-emerald-600">
                                                     <CheckCircle2 className="w-5 h-5" />
@@ -694,7 +621,7 @@ export default function AuditWorkspace() {
                                             ) : (
                                                 <div>
                                                     <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Team Leader Sign-Off</p>
-                                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">Mark this phase as complete to unlock the next stage for your team.</p>
+                                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">Mark this phase as complete for record-keeping purposes.</p>
                                                 </div>
                                             )}
                                             {!isPhaseCompleted(selectedPhase) && (

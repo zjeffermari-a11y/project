@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutGrid, FileText, AlertCircle, CheckCircle, Clock, RotateCcw, Folder, Bell, RefreshCw, ChevronRight } from 'lucide-react';
+import { LayoutGrid, FileText, BarChart2, Heart, AlertCircle, CheckCircle, Clock, RotateCcw, Folder, Bell, RefreshCw, ChevronRight, Lock } from 'lucide-react';
 import { useDataContext } from '../context/DataContext';
 import { useNavigate } from 'react-router-dom';
 import api from '../api';
@@ -30,6 +30,23 @@ export default function AuditeeDashboard() {
     const user = JSON.parse(localStorage.getItem('user')) || {};
     const auditeeData = useAuditeeData(engagements, user);
     const { isLoggingOut, handleLogout } = useDashboardActions(refreshData);
+
+    // IAsCARes read-only state
+    const [iasCaresData, setIasCaresData] = useState(null);
+    useEffect(() => {
+        const firstEng = engagements[0];
+        if (!firstEng) return;
+        api.get(`/engagements/${firstEng.id}/tools/iascares`)
+            .then(r => {
+                if (!r.data?.form_data) return;
+                const fd = r.data.form_data;
+                const totalNo = parseInt(fd.totalNo) || 0;
+                const fcNo    = parseInt(fd.fcNo)    || 0;
+                const bpNo    = parseInt(fd.bpNo)    || 0;
+                setIasCaresData({ complied: fcNo + bpNo, total: totalNo });
+            })
+            .catch(() => {});
+    }, [engagements]);
 
     const { 
         complianceRate, 
@@ -68,7 +85,9 @@ export default function AuditeeDashboard() {
     };
 
     const navItems = [
-        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard', active: true, onClick: () => {} }
+        { icon: <LayoutGrid className="h-5 w-5" />, title: 'Dashboard',   active: true,  onClick: () => {} },
+        { icon: <FileText   className="h-5 w-5" />, title: 'MOV Monitor', active: false, onClick: () => navigate('/mov-monitoring') },
+        { icon: <BarChart2  className="h-5 w-5" />, title: 'AAPIS',       active: false, onClick: () => navigate('/aapes') },
     ];
 
     const getMovStatusStyle = (status) => {
@@ -327,6 +346,38 @@ export default function AuditeeDashboard() {
                                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
+                    </div>
+
+                    {/* IAsCARes — View-only compliance panel */}
+                    <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
+                        <div className="flex items-center justify-between mb-4">
+                            <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest">IAsCARes Status</h4>
+                            <span className="flex items-center gap-1 text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-1 rounded-lg border border-slate-200">
+                                <Lock className="w-3 h-3" /> View Only
+                            </span>
+                        </div>
+                        {iasCaresData ? (() => {
+                            const pct = iasCaresData.total > 0
+                                ? Math.round((iasCaresData.complied / iasCaresData.total) * 100)
+                                : 0;
+                            const barColor = pct >= 80 ? '#10b981' : pct >= 50 ? '#3b82f6' : '#f59e0b';
+                            return (
+                                <div className="space-y-3">
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-xs font-bold text-slate-600">Fully Complied Recommendations</p>
+                                        <p className="text-lg font-black" style={{ color: barColor }}>{pct}%</p>
+                                    </div>
+                                    <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                        <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                                    </div>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                        {iasCaresData.complied} / {iasCaresData.total} recommendations complied
+                                    </p>
+                                </div>
+                            );
+                        })() : (
+                            <p className="text-xs text-slate-400 italic">No IAsCARes data available yet.</p>
+                        )}
                     </div>
 
                     <div className="bg-indigo-900 p-8 rounded-3xl shadow-xl shadow-indigo-100 text-white relative overflow-hidden">

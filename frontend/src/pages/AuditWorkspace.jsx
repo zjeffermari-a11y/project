@@ -39,8 +39,8 @@ const DOCUMENTS = {
     ]},
     // Phase 4 — Follow-Up (3 forms: iascares.html, aapis.html, comare.html)
     followup: { title: 'Audit Follow Up Documents', theme: 'rose', items: [
-        { label: 'Action Plan Status (AAPIS)',                     toolKey: null, monitorRoute: 'aapis' },
-        { label: 'Compliance to Recommendations (IAsCARes)',       toolKey: null, monitorRoute: 'ias-cares' },
+        { label: 'Action Plan Status (AAPIS)',                     toolKey: null, monitorRoute: '/aapes' },
+        { label: 'Compliance to Recommendations (IAsCARes)',       toolKey: null, monitorRoute: '/ias-cares' },
         { label: 'Completion Assessment Report (ComARe)',          toolKey: 'comare' },
         { label: 'Internal Audit Follow-up Report (IAFR)',         toolKey: null },
     ]}
@@ -156,7 +156,7 @@ function DocumentItem({ doc, phaseKey, themeColor, engagementId, documents, onRe
                                 <h4 className="text-xs font-black text-rose-800 uppercase tracking-widest flex items-center gap-2"><FileCode2 className="w-4 h-4"/>Monitor Dashboard Available</h4>
                                 <p className="text-[10px] text-rose-600 font-bold mt-1">View the real-time monitoring dashboard for this engagement.</p>
                             </div>
-                            <Link to={`/auditor/workspace/${engagementId}/${monitorRoute}`} className="bg-rose-600 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm hover:bg-rose-700 transition-colors shrink-0 flex items-center gap-2">
+                            <Link to={monitorRoute} className="bg-rose-600 text-white px-4 py-2 rounded-lg text-xs font-black uppercase tracking-widest shadow-sm hover:bg-rose-700 transition-colors shrink-0 flex items-center gap-2">
                                 <ExternalLink className="w-3.5 h-3.5" /> Open Monitor
                             </Link>
                         </div>

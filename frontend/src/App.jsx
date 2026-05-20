@@ -70,20 +70,20 @@ function AnimatedRoutes({ user, DefaultRouteComponent }) {
           </ProtectedRoute>
         } />
         
-        <Route path="/auditor/workspace/:id/ias-cares" element={
+        <Route path="/ias-cares" element={
           <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
             <IasCares />
           </ProtectedRoute>
         } />
 
-        <Route path="/auditor/workspace/:id/aapis" element={
-          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
+        <Route path="/aapes" element={
+          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor', 'auditee']}>
             <Aapes />
           </ProtectedRoute>
         } />
 
-        <Route path="/auditor/workspace/:id/mov-monitoring" element={
-          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor']}>
+        <Route path="/mov-monitoring" element={
+          <ProtectedRoute designations={['director', 'division_chief', 'assistant_division_chief', 'lead_auditor', 'auditor', 'assistant_auditor', 'auditee']}>
             <MovMonitoring />
           </ProtectedRoute>
         } />

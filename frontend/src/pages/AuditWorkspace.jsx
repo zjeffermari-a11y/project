@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, CheckCircle2, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink, Lock } from 'lucide-react';
+import { ArrowLeft, Folder, ChevronDown, ChevronRight, FileText, Plus, PenTool, Download, CheckCircle, RotateCcw, Building2, Calendar, FileCheck2, FileCode2, ExternalLink } from 'lucide-react';
 import api from '../api';
 import MovTable from '../components/dashboard/MovTable';
 import SignOffButton from '../components/common/SignOffButton';
@@ -301,33 +301,6 @@ export default function AuditWorkspace() {
     if (loading) return <div className="p-10 text-center font-bold text-slate-400">Loading Workspace...</div>;
     if (!engagement) return <div className="p-10 text-center font-bold text-rose-500">Engagement not found.</div>;
 
-    // Returns true if the given phase has been explicitly marked complete (for status tracking only)
-    const isPhaseCompleted = (phaseId) => {
-        const completions = engagement?.phase_completions || {};
-        return !!completions[phaseId];
-    };
-
-    // Team Leader / Executive check (can mark phases complete)
-    const canMarkComplete = () => {
-        if (!currentUser || !engagement) return false;
-        const engUser = engagement.users?.find(u => u.id === currentUser.id);
-        const role = engUser?.pivot?.role_in_engagement;
-        const executiveDesignations = ['director', 'division_chief', 'assistant_division_chief'];
-        return role === 'team_leader' || executiveDesignations.includes(currentUser.designation);
-    };
-
-    const handleCompletePhase = async (phaseId) => {
-        if (!window.confirm(`Mark the "${phaseId}" phase as complete?`)) return;
-        setCompletingPhase(true);
-        try {
-            await api.patch(`/engagements/${id}/complete-phase`, { phase: phaseId });
-            await fetchWorkspaceData(true);
-        } catch (err) {
-            alert('Failed to mark phase complete: ' + (err.response?.data?.message || err.message));
-        } finally {
-            setCompletingPhase(false);
-        }
-    };
 
     const PhaseCard = ({ phaseId, label, iconTheme }) => {
         const isSelected = selectedPhase === phaseId;
@@ -604,38 +577,6 @@ export default function AuditWorkspace() {
                                             </tbody>
                                         </table>
                                     </div>
-
-                                    {/* Team Leader Sign-Off — status tracking only, does NOT lock any phase */}
-                                    {canMarkComplete() && (
-                                        <div className="px-6 py-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-4">
-                                            {isPhaseCompleted(selectedPhase) ? (
-                                                <div className="flex items-center gap-2 text-emerald-600">
-                                                    <CheckCircle2 className="w-5 h-5" />
-                                                    <div>
-                                                        <p className="text-xs font-black uppercase tracking-widest">Phase Signed Off</p>
-                                                        <p className="text-[10px] font-bold text-emerald-500 mt-0.5">
-                                                            Completed on {new Date(engagement.phase_completions?.[selectedPhase]).toLocaleDateString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div>
-                                                    <p className="text-xs font-black text-slate-700 uppercase tracking-widest">Team Leader Sign-Off</p>
-                                                    <p className="text-[10px] font-bold text-slate-400 mt-0.5">Mark this phase as complete for record-keeping purposes.</p>
-                                                </div>
-                                            )}
-                                            {!isPhaseCompleted(selectedPhase) && (
-                                                <button
-                                                    onClick={() => handleCompletePhase(selectedPhase)}
-                                                    disabled={completingPhase}
-                                                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-300 text-white rounded-xl text-xs font-black uppercase tracking-widest transition-colors shadow-sm shrink-0"
-                                                >
-                                                    <Lock className="w-3.5 h-3.5" />
-                                                    {completingPhase ? 'Saving...' : 'Mark as Complete'}
-                                                </button>
-                                            )}
-                                        </div>
-                                    )}
                                 </div>
                             )}
                         </div>

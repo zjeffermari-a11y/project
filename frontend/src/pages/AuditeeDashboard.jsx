@@ -339,10 +339,16 @@ export default function AuditeeDashboard() {
                         </div>
                         <div className="mt-8 pt-8 border-t border-slate-100">
                             <button 
-                                onClick={() => navigate('/auditor/workspace/all')}
+                                onClick={() => {
+                                    if (ongoingAudits && ongoingAudits.length > 0) {
+                                        navigate(`/auditor/workspace/${ongoingAudits[0].eng.id}`);
+                                    } else {
+                                        alert("No active engagement workspace available.");
+                                    }
+                                }}
                                 className="w-full flex items-center justify-between p-4 bg-slate-900 text-white rounded-2xl hover:bg-indigo-600 transition-all group"
                             >
-                                <span className="text-[10px] font-black uppercase tracking-widest">View Masterfile</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">View Workspace</span>
                                 <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                             </button>
                         </div>
